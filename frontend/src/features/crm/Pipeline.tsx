@@ -1,5 +1,6 @@
+import { useStageDragDrop } from "./useStageDragDrop";
 import { useEffect, useState, type FormEvent } from "react";
-import { Plus, Save, History, RefreshCw } from "lucide-react";
+import { Plus, Save, History, RefreshCw, GripVertical } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import {
   opportunityStages,
@@ -96,6 +97,7 @@ export default function Pipeline({
     }
   }
   async function changeStage(item: Opportunity, stage: OpportunityStage) {
+    if (busy || loading || form || item.stage === stage) return;
     setBusy(true);
     setError("");
     try {
@@ -140,6 +142,7 @@ export default function Pipeline({
     });
     setMessage("");
   }
+  const drag = useStageDragDrop(items, busy || loading || !!form, changeStage);
   return (
     <>
       <div className="section-heading">
@@ -322,6 +325,11 @@ export default function Pipeline({
           )}
         </section>
       )}
+      <p className="section-hint">
+        Prevucite karticu u drugu kolonu ili promenite fazu izborom na kartici.
+        Na telefonu koristite izbor faze. Nova kolona se potvrđuje tek kada baza
+        sačuva promenu.
+      </p>
       <div className="pipeline-status">
         <span>
           {loading
@@ -335,7 +343,14 @@ export default function Pipeline({
         aria-label="Prodajne prilike po fazama"
       >
         {opportunityStages.map((stage) => (
-          <section className="kanban-column" key={stage}>
+          <section
+            {...drag.columnProps(stage)}
+            data-stage={stage}
+            className={
+              "kanban-column" + (drag.over === stage ? " drop-target" : "")
+            }
+            key={stage}
+          >
             <h2>
               {stage}
               <span>{items.filter((item) => item.stage === stage).length}</span>
@@ -344,11 +359,22 @@ export default function Pipeline({
               .filter((item) => item.stage === stage)
               .map((item) => (
                 <article
-                  className="deal opportunity-card"
+                  {...drag.cardProps(item)}
+                  className={
+                    "deal opportunity-card draggable-deal" +
+                    (drag.dragged === item.id ? " dragging" : "")
+                  }
                   key={item.id}
                   data-opportunity-id={item.id}
                 >
-                  <h3>{item.title}</h3>
+                  <h3>
+                    <GripVertical
+                      size={14}
+                      className="drag-grip"
+                      aria-hidden="true"
+                    />
+                    {item.title}
+                  </h3>
                   <small>
                     {item.company_name}
                     {item.is_demo ? " · DEMO" : ""}
@@ -364,7 +390,7 @@ export default function Pipeline({
                     Faza
                     <select
                       aria-label={"Faza prilike " + item.title}
-                      disabled={busy || loading}
+                      disabled={busy || loading || !!form}
                       value={item.stage}
                       onChange={(e) =>
                         changeStage(item, e.target.value as OpportunityStage)

@@ -1,3 +1,4 @@
+import { opportunityStages, type OpportunityStage } from "./features/crm/types";
 export type Unit = "LUU" | "INVEKTA";
 export type Company = {
   id: number;
@@ -6,7 +7,7 @@ export type Company = {
   sector: string;
   owner: string;
   value: number;
-  stage: string;
+  stage: OpportunityStage;
   unit: Unit;
 };
 export const companies: Company[] = [
@@ -27,7 +28,7 @@ export const companies: Company[] = [
     sector: "Kancelarije",
     owner: "Marko",
     value: 72000,
-    stage: "Kontakt",
+    stage: "Kontaktiran",
     unit: "LUU",
   },
   {
@@ -57,7 +58,7 @@ export const companies: Company[] = [
     sector: "Industrija",
     owner: "Ivan",
     value: 280000,
-    stage: "Kontakt",
+    stage: "Kontaktiran",
     unit: "INVEKTA",
   },
   {
@@ -71,7 +72,7 @@ export const companies: Company[] = [
     unit: "INVEKTA",
   },
 ];
-export const stages = ["Kontakt", "Ponuda", "Pregovori"];
+export const stages = opportunityStages;
 export function selectCompanies(unit: Unit | "all", search = "") {
   const term = search.trim().toLocaleLowerCase("sr");
   return companies.filter(

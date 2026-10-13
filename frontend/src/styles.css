@@ -1061,3 +1061,43 @@ form label {
     grid-template-columns: repeat(7, minmax(250px, 1fr));
   }
 }
+
+.draggable-deal[draggable="true"] {
+  cursor: grab;
+}
+.draggable-deal[draggable="true"]:active {
+  cursor: grabbing;
+}
+.draggable-deal h3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.drag-grip {
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.draggable-deal select,
+.draggable-deal button {
+  cursor: pointer;
+}
+.dragging {
+  opacity: 0.45;
+}
+.kanban-column.drop-target {
+  background: #e0edff;
+  outline: 2px dashed var(--blue);
+  outline-offset: -3px;
+}
+.kanban-column {
+  transition: background-color 0.15s;
+}
+.stage-Dobijeno {
+  background: #e5f8ef;
+  color: #138b60;
+}
+.stage-Izgubljeno {
+  background: #fbeceb;
+  color: #9a413c;
+}

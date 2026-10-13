@@ -10,4 +10,12 @@
 - Privremeni browser zapisi uklonjeni po tačnom ID-u i nazivu, zajedno sa svojim kontaktima/prilikama/istorijom. Seed demo podaci nisu brisani.
 
 ## Ograničenja
-Istorija faza nije potpuna audit evidencija. Odgovorna osoba prilike se nasleđuje iz kompanije; samostalna raspodela prilika nije uvedena. Paginacija kompanija, pretraga kontakata preko cele baze, trajni zadaci i dokumenti ostaju za naredne faze. Kanban koristi izbor faze na kartici, bez drag-and-drop operacije. MVP je razvojni; nije javno objavljen niti spreman za stvarne poslovne podatke.
+Istorija faza nije potpuna audit evidencija. Odgovorna osoba prilike se nasleđuje iz kompanije; samostalna raspodela prilika nije uvedena. Paginacija kompanija, pretraga kontakata preko cele baze, trajni zadaci i dokumenti ostaju za naredne faze. Kanban podržava prevlačenje i izbor faze na kartici. MVP je razvojni; nije javno objavljen niti spreman za stvarne poslovne podatke.
+
+## Pomeranje statusa u levku
+- Browser provera pravog mouse drag-and-drop pomeranja u demo i povezanom levku.
+- Demo status se zadržava posle refresh-a, a mobilni izbor statusa menja kolonu i broj otvorenih prilika.
+- Povezana promena ostaje u PostgreSQL-u posle refresh-a i ulazi u istoriju.
+- Simuliran API odgovor 409: kartica i izbor ostaju u staroj koloni, uz poruku o konfliktu.
+- Kontrole sprečavaju promene tokom čuvanja i otvorene forme. Spoljni drag bez interne aktivne kartice ne pokreće promenu.
+- TypeScript/Vite build i postojeća dva frontend testa prolaze. Backend kod nije menjan.

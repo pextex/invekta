@@ -12,7 +12,7 @@ Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, 
 - Unos, izmena i pretraga kompanija, uz odvojene poslovne jedinice.
 - Profil kompanije: više kontakt osoba, e-mail, telefon i pozicija; trajni unos i izmena.
 - Više prodajnih prilika po kompaniji: naslov, vrednost u RSD, faza, očekivani datum zatvaranja i beleška.
-- Kanban sa fazama Novi lead, Kontaktiran, Sastanak, Ponuda, Pregovori, Dobijeno i Izgubljeno. Faza se menja izborom na kartici; promene ostaju u bazi.
+- Kanban sa fazama Novi lead, Kontaktiran, Sastanak, Ponuda, Pregovori, Dobijeno i Izgubljeno. Faza se menja prevlačenjem kartice ili izborom na kartici; promene ostaju u bazi.
 - Istorija kreiranja i promena faze sa korisnikom i vremenom. Zastarela izmena prilike vraća konflikt umesto prepisivanja novijih podataka.
 - Povezani dashboard i osnovni izveštaj računaju kompanije, kontakte, otvorene prilike, potencijalnu vrednost i dobijene poslove iz baze, prema pravima korisnika.
 - Prijava, serverske sesije, hash lozinki, odjava i osnovno ograničenje pokušaja prijave.
@@ -26,8 +26,15 @@ Ponude, trajni zadaci, aktivnosti, raspodela kompanija, upravljanje nalozima kro
 2. U **Kompanije** dodajte kompaniju ili kliknite **Otvori profil →**.
 3. U profilu, kroz **Kontakt osobe**, unesite kontakt i sačuvajte ga.
 4. Otvorite karticu **Prodajne prilike** i kreirajte jednu ili više prilika.
-5. U meniju **Prodajni levak** menjajte fazu izborom na kartici. Dugme **Istorija** prikazuje promene. Ako se pojavi konflikt, osvežite levak pre nove izmene.
+5. U meniju **Prodajni levak** prevucite karticu u drugu kolonu ili promenite fazu izborom na kartici. Na telefonu koristite izbor faze. Dugme **Istorija** prikazuje promene. Ako se pojavi konflikt, osvežite levak pre nove izmene.
 6. **Početna tabla** prikazuje aktuelne pokazatelje iz baze. Refresh zadržava otvorenu stranicu, profil i poslovnu jedinicu.
+
+## Interaktivni demo levak
+Preuzeti demo HTML sada podržava sedam statusa, prevlačenje i izbor statusa na kartici. Statusi su sačuvani lokalno kada browser dozvoljava localStorage, uz pamćenje otvorene demo stranice. Otvarajte isti fajl u istom browseru da biste videli prethodne izmene. Demo ne šalje ove promene backend-u. Kada lokalno čuvanje nije dostupno, prikazuje se poruka da promena važi samo tokom tog prikaza.
+
+Pokazatelji demo dashboard-a odmah prate promene: Dobijeno i Izgubljeno ne ulaze u otvorene prilike i njihovu potencijalnu vrednost. Zadaci u demo prikazu i dalje nisu trajni.
+
+U povezanom levku kartica menja kolonu tek posle uspešnog API čuvanja. Kod greške ili konflikta ostaje u prethodnoj koloni. Tokom čuvanja ili otvorene forme blokirane su dodatne promene faze. Istorija i serverska kontrola pristupa važe i za prevlačenje.
 
 ## Prelazak sa verzije 0.2
 Pokrenite `alembic upgrade head` iz foldera `backend`. Migracija prenosi raniju vrednost i fazu kompanije u jednu početnu prodajnu priliku. Stara polja kompanije nisu uklonjena ni resetovana, ali se više ne koriste za novi levak i KPI. Kontakt postaje zaseban zapis. Početnim prenetim prilikama se ne izmišlja korisnik ili istorija promena; istorija počinje novim eksplicitnim promenama.

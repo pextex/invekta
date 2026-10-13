@@ -1,7 +1,16 @@
+import {
+  loadDemoStages,
+  saveDemoStages,
+  readDemoPage,
+  writeDemoPage,
+} from "./lib/demoPipeline";
+import { useStageDragDrop } from "./features/crm/useStageDragDrop";
+import { type OpportunityStage } from "./features/crm/types";
 import { isCrmRoute } from "./lib/routes";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
+  GripVertical,
   ListTodo,
   Plus,
   Search,
@@ -30,17 +39,42 @@ const demoTasks = {
 export default function App() {
   const [live, setLive] = useState(() => isCrmRoute());
   const [unit, setUnit] = useState<Scope>("all");
-  const [page, setPage] = useState("Početna tabla");
+  const [page, setPage] = useState(readDemoPage);
+  const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
+  const [stageMessage, setStageMessage] = useState("");
   const [search, setSearch] = useState("");
   const [done, setDone] = useState<string[]>([]);
   useEffect(() => {
-    const onHash = () => setLive(isCrmRoute());
+    const onHash = () => {
+      setLive(isCrmRoute());
+      if (!isCrmRoute()) setPage(readDemoPage());
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  const rows = selectCompanies(unit, search);
-  const all = selectCompanies(unit);
-  const total = all.reduce((sum, c) => sum + c.value, 0);
+  const rows = selectCompanies(unit, search).map((c) => ({
+    ...c,
+    stage: stageOverrides[c.id] ?? c.stage,
+  }));
+  const all = selectCompanies(unit).map((c) => ({
+    ...c,
+    stage: stageOverrides[c.id] ?? c.stage,
+  }));
+  const open = all.filter(
+    (c) => c.stage !== "Dobijeno" && c.stage !== "Izgubljeno",
+  );
+  const total = open.reduce((sum, c) => sum + c.value, 0);
+  function moveDemo(item: (typeof all)[number], stage: OpportunityStage) {
+    if (item.stage === stage) return;
+    const next = { ...stageOverrides, [item.id]: stage };
+    setStageOverrides(next);
+    setStageMessage(
+      saveDemoStages(next)
+        ? "Demo status je sačuvan u ovom browseru. Ne upisuje se u CRM bazu."
+        : "Status je promenjen za ovaj prikaz. Browser ne dozvoljava lokalno čuvanje.",
+    );
+  }
+  const drag = useStageDragDrop(all, false, moveDemo);
   const tasks = (
     unit === "all" ? (["LUU", "INVEKTA"] as Unit[]) : [unit]
   ).flatMap((u) => demoTasks[u].map((title) => ({ title, unit: u })));
@@ -51,6 +85,7 @@ export default function App() {
   }
   function navigate(next: string) {
     setPage(next);
+    writeDemoPage(next);
     setSearch("");
   }
   const metrics = [
@@ -61,11 +96,11 @@ export default function App() {
     },
     {
       label: "Otvorene prilike",
-      value: String(all.length),
-      note: "U demonstracionom procesu",
+      value: String(open.length),
+      note: "Bez dobijenih i izgubljenih poslova",
     },
     {
-      label: "Vrednost prilika",
+      label: "Vrednost otvorenih prilika",
       value: money(total),
       note: "Potencijalna vrednost · nije prihod",
     },
@@ -258,7 +293,10 @@ export default function App() {
       search={search}
       onSearch={(value) => {
         setSearch(value);
-        if (value.trim()) setPage("Kompanije");
+        if (value.trim()) {
+          setPage("Kompanije");
+          writeDemoPage("Kompanije");
+        }
       }}
       unit={unit}
       units={[
@@ -341,12 +379,25 @@ export default function App() {
       {page === "Prodajni levak" && (
         <>
           <p className="section-hint">
-            Demonstracioni prikaz trenutnih faza. Zasebne prodajne prilike i
-            njihovo upravljanje slede u narednom koraku.
+            Prevucite karticu u drugu kolonu ili izaberite status na kartici. Na
+            telefonu koristite izbor statusa. Demo promene čuvaju se samo u ovom
+            browseru.
           </p>
-          <div className="kanban">
+          {stageMessage && (
+            <p className="success-message" role="status">
+              {stageMessage}
+            </p>
+          )}
+          <div className="kanban live-kanban">
             {stages.map((stage) => (
-              <section className="kanban-column" key={stage}>
+              <section
+                {...drag.columnProps(stage)}
+                data-stage={stage}
+                className={
+                  "kanban-column" + (drag.over === stage ? " drop-target" : "")
+                }
+                key={stage}
+              >
                 <h2>
                   {stage}
                   <span>{all.filter((c) => c.stage === stage).length}</span>
@@ -354,13 +405,41 @@ export default function App() {
                 {all
                   .filter((c) => c.stage === stage)
                   .map((c) => (
-                    <article className="deal" key={c.id}>
-                      <h3>{c.name}</h3>
+                    <article
+                      {...drag.cardProps(c)}
+                      className={
+                        "deal draggable-deal" +
+                        (drag.dragged === c.id ? " dragging" : "")
+                      }
+                      data-demo-id={c.id}
+                      key={c.id}
+                    >
+                      <h3>
+                        <GripVertical
+                          size={14}
+                          className="drag-grip"
+                          aria-hidden="true"
+                        />
+                        {c.name}
+                      </h3>
                       <small>
                         {c.unit} · {c.city}
                       </small>
                       <strong>{money(c.value)}</strong>
-                      <span className={"stage stage-" + stage}>{stage}</span>
+                      <label className="stage-control">
+                        Status
+                        <select
+                          aria-label={"Status demo prilike " + c.name}
+                          value={c.stage}
+                          onChange={(e) =>
+                            moveDemo(c, e.target.value as OpportunityStage)
+                          }
+                        >
+                          {stages.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </label>
                       <div>{c.owner} · Demo korisnik</div>
                     </article>
                   ))}
