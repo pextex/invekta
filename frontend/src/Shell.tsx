@@ -78,7 +78,7 @@ export default function Shell({
           }}
           aria-label={`${brand?.name ?? "CRM"}, početna stranica`}
         >
-          <div>{brand?.name ?? "CRM"}<small className="workspace-brand-label">Prodajni CRM</small></div>
+          <div>{brand ? <img className="brand-logo" src={brand.logo} alt={brand.name + " logo"} /> : "CRM"}<small className="workspace-brand-label">Prodajni CRM</small></div>
         </a>
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">

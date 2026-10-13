@@ -1,0 +1,1 @@
+Brand previews prepared from user-supplied screenshots with image extraction/reconstruction. They are not original vector brand files. Replace these PNGs with original approved brand assets when available. LUU: yellow/gray; Invekta: blue/orange; Cenobots: black/white. Assets are bundled inline so the downloaded demo also works offline.

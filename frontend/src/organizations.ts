@@ -1,33 +1,39 @@
+import luuLogo from "./assets/luu-logo.png?inline";
+import invektaLogo from "./assets/invekta-logo.png?inline";
+import cenobotsLogo from "./assets/cenobots-logo.png?inline";
 export const organizations = [
   {
     code: "LUU",
+    logo: luuLogo,
     name: "LUU",
     initials: "LU",
     website: "https://luu.rs/",
     domain: "luu.rs",
-    accent: "#14966d",
-    nav: "#103c31",
-    background: "#f1f8f5",
+    accent: "#f6d451",
+    nav: "#383a3c",
+    background: "#faf9f3",
   },
   {
     code: "INVEKTA",
+    logo: invektaLogo,
     name: "Invekta",
     initials: "IN",
     website: "https://invekta.rs/",
     domain: "invekta.rs",
-    accent: "#2868e8",
-    nav: "#10243c",
+    accent: "#34349a",
+    nav: "#202464",
     background: "#f3f6fb",
   },
   {
     code: "CENOBOTS",
+    logo: cenobotsLogo,
     name: "Cenobots",
     initials: "CB",
     website: "https://cenobots.rs/",
     domain: "cenobots.rs",
-    accent: "#7553d6",
-    nav: "#292044",
-    background: "#f6f3fb",
+    accent: "#22272c",
+    nav: "#090d10",
+    background: "#f4f5f6",
   },
 ] as const;
 export type OrganizationCode = (typeof organizations)[number]["code"];

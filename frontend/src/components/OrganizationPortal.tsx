@@ -44,6 +44,7 @@ export default function OrganizationPortal({
               key={org.code}
               aria-label={"Izaberi " + org.name}
               aria-pressed={selected === org.code}
+              data-organization={org.code}
               className={
                 "organization-card" + (selected === org.code ? " selected" : "")
               }
@@ -51,7 +52,7 @@ export default function OrganizationPortal({
               onClick={() => onSelect(org.code)}
               style={{ "--org-accent": org.accent } as CSSProperties}
             >
-              <span className="organization-mark">{org.initials}</span>
+              <span className="organization-mark"><img className="company-logo" src={org.logo} alt={org.name + " logo"} /></span>
               <span className="organization-copy">
                 <strong>{org.name}</strong>
                 <small>{org.domain}</small>

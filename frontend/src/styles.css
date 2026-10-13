@@ -1354,3 +1354,19 @@ form label {
 .workspace-brand-label { display: block; font-size: 12px; font-weight: 400; letter-spacing: .5px; margin-top: 4px; color: #d1dfec; }
 .app .sales-banner { background: var(--nav); }
 .app input, .app select { outline-color: var(--blue); }
+
+.app[data-organization="LUU"] .primary-button,
+.app[data-organization="LUU"] nav button.active,
+.app[data-organization="LUU"] nav button:hover { color: #282a2c; }
+.app[data-organization="INVEKTA"] .primary-button { background: #fc9051; color: #272442; }
+.organization-card[style*="f6d451"] .organization-mark { color: #383a3c; }
+.company-logo { width: 100%; height: 100%; object-fit: contain; }
+.organization-mark:has(.company-logo) { width: 110px; height: 70px; background: white; padding: 4px; }
+.brand-logo { width: 190px; height: 82px; object-fit: contain; background: white; padding: 7px; border-radius: 8px; display: block; }
+
+.organization-card[data-organization="LUU"].selected .organization-select-label,
+.app[data-organization="LUU"] .text-button { color: #62521b; }
+.organization-card[data-organization="CENOBOTS"] .organization-mark,
+.app[data-organization="CENOBOTS"] .brand-logo { background: #090d10; }
+.organization-card { grid-template-columns: 110px 1fr auto; }
+.app[data-organization="INVEKTA"] .primary-button { border-color: #fc9051; }
