@@ -4,16 +4,16 @@
 Modularni monolit: React + TypeScript + Vite frontend, FastAPI backend, SQLAlchemy 2 + Alembic i PostgreSQL. Razvoj u cloud okruženju, bez instalacija na korisnikovom Windows računaru. Produkcioni hosting bira se kasnije; ovaj korak ne kreira plaćene servise.
 
 ## Struktura
-- `frontend/src/`: početni UI i izdvojeni demonstracioni podaci; kasnije `app`, `components`, `features`, `lib` i `types`.
-- `backend/app/`: budući API, core, db, models, schemas, services i integrations.
-- `backend/alembic/` i `backend/tests/`: migracije i testovi backend-a u narednim koracima.
-- `database/seed/`: eksplicitno označeni demo podaci kada uvedemo bazu.
-- `docs/architecture/`: odluke i plan. Docker Compose dolazi sa backend-om i bazom.
+- `frontend/src/`: App i zajednički Shell; `features/crm` sadrži profile, kontakte, levak i dashboard, a `lib` API klijent i rute. Demo podaci su izdvojeni.
+- `backend/app/`: API, modeli, šeme, autorizacija, konfiguracija, seed i test runner. CRM endpointi su u `api/sales.py`.
+- `backend/alembic/` i `backend/tests/`: izvršene migracije i PostgreSQL integracioni testovi.
+- `backend/app/seed.py`: eksplicitan seed izmišljenih demo zapisa.
+- `docs/architecture/`: odluke i plan. Docker Compose upravlja razvojnom PostgreSQL bazom.
 
-## Osnovni model baze (plan, još nije implementiran)
+## Model baze — implementirano jezgro i plan proširenja
 `business_units` (LUU, INVEKTA) ima više `memberships`, koji povezuju `users` sa ulogom po jedinici: komercijalista, menadžer, administrator.
 `companies` pripadaju jedinici i odgovornom korisniku; imaju više `contacts`, `locations`, `opportunities`, `activities` i `tasks`.
-`pipeline_stages` pripadaju jedinici; prilika pripada kompaniji, fazi i odgovornom korisniku.
+Prilika pripada kompaniji i nasleđuje njenu odgovornu osobu. Trenutno koristimo sedam unapred definisanih faza; budući `pipeline_stages` omogućiće podešavanje faza po jedinici.
 `quotes` imaju `quote_items`; LUU dodaje `products`, `price_lists` i porudžbine; Invekta `services`, `contracts` i tendere.
 `lead_sources` čuvaju URL, datum provere i status potvrđenosti podatka; `audit_logs` beleže promene.
 
@@ -23,13 +23,17 @@ Svaki poslovni zapis nosi business_unit_id. Složeni strani ključevi treba da s
 1. **Završeno:** responzivan srpski frontend, izbor modula, dashboard, pretraga demo kompanija, prikaz levka i privremeni demo zadaci. Build i testovi filtriranja.
 2. **Završeno:** FastAPI i PostgreSQL, Alembic migracije, health/readiness provere i eksplicitni demo seed.
 3. **Osnova završena:** Prijava, sesije i backend autorizacija po jedinici, ulozi i vlasniku; testovi neovlašćenog pristupa. Pre stvarnih podataka.
-4. **Kompanije završene; kontakti slede:** Trajno dodavanje/izmena, validacija i pretraga.
-5. Prodajne prilike, promene faze, aktivnosti i zadaci. Dashboard računa KPI iz baze.
+4. **Završeno:** Trajno dodavanje/izmena kompanija i kontakt osoba; pretraga kompanija.
+5. **Prilike i KPI završeni:** više prilika po kompaniji, promene faze, istorija i pokazatelji iz baze. Aktivnosti i trajni zadaci slede.
 6. Provera korisničkih tokova, izolacije podataka i dokumentacije.
 
 Kasnije: LUU katalog i potrošnja, Invekta ugovori, PDF ponude, CSV, napredni izveštaji, AI adapteri sa proverljivim izvorima i nacrtima poruka, backup i produkcija. Bez automatskog masovnog slanja.
 
-## Trenutno stanje — verzija 0.2
-Postoje PostgreSQL, migracije, prijava, serverske sesije i backend kontrola kompanija po jedinici/ulozi/vlasniku. Povezani ekran omogućava trajni unos i izmenu kompanija. Seed kreira samo jasno označene demo kompanije i demo menadžera; nove ručno unete kompanije nisu označene kao seed demo, ali je čitavo okruženje razvojno.
+## Trenutno stanje — verzija 0.3
+Postoje kompanije, kontakti, prilike i istorija faza, uz PostgreSQL, migracije, prijavu i backend autorizaciju po jedinici i kompaniji. Komercijalista nasleđuje pravo na kontakte i prilike svojih kompanija; menadžer i administrator imaju pregled u dozvoljenim jedinicama. Menadžer ne može automatski videti objedinjene podatke drugih jedinica.
 
-Demo dashboard i privremeni zadaci i dalje koriste izdvojene izmišljene podatke. Nema kontakata, zasebnog modela prilika, produkcionog hostinga, UI administracije korisnika, audit-a, AI ili backup rešenja. Pre stvarnih podataka završiti produkcionu pripremu. Trenutne faza i vrednost kompanije su prelazna osnova; zasebni opportunities dolaze u narednoj fazi.
+Složeni FK na (company_id, business_unit_id) obezbeđuju vezu kontakta i prilike sa kompanijom iste jedinice. Složeni FK istorije vezuju zapis za priliku i korisnikovo članstvo u istoj jedinici. `opportunities.version` i zaključavanje reda štite izmene prilika od prepisivanja zastarele verzije. Datumi promena su sa vremenskom zonom, prikaz vremena u Europe/Belgrade. Očekivani datum zatvaranja je kalendarski DATE.
+
+Migracija verzije 0.3 prenosi stara company.stage/potential_value polja u jednu početnu priliku. Vrednost je NUMERIC(14,2). Stara polja su sačuvana radi kompatibilnosti; nisu izvor za nove KPI. Ne pokretati downgrade na poslovnoj bazi: uklonio bi nove tabele i njihove podatke. Provera downgrade-a rađena je samo nad izolovanom test šemom.
+
+Anonimni demo i njegovi zadaci ostaju izdvojeni. Povezani dashboard koristi podatke razvojne baze, uključujući označene demo zapise. Produkcioni hosting, puna audit evidencija, UI administracija naloga, trajni zadaci i AI nisu pripremljeni za poslovnu upotrebu.

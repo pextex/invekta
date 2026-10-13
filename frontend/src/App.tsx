@@ -1,3 +1,4 @@
+import { isCrmRoute } from "./lib/routes";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -29,13 +30,13 @@ const demoTasks = {
   ],
 };
 export default function App() {
-  const [live, setLive] = useState(() => window.location.hash === "#crm");
+  const [live, setLive] = useState(() => isCrmRoute());
   const [unit, setUnit] = useState<Scope>("all");
   const [page, setPage] = useState("Početna tabla");
   const [search, setSearch] = useState("");
   const [done, setDone] = useState<string[]>([]);
   useEffect(() => {
-    const onHash = () => setLive(window.location.hash === "#crm");
+    const onHash = () => setLive(isCrmRoute());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -425,7 +426,7 @@ export default function App() {
         </section>
       )}
       <footer>
-        LUU × INVEKTA <span>Razvojna verzija 0.2 · Demo podaci</span>
+        LUU × INVEKTA <span>Razvojna verzija 0.3 · Demo podaci</span>
       </footer>
     </Shell>
   );

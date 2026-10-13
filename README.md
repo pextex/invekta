@@ -1,20 +1,36 @@
 # LUU × INVEKTA — AI Sales CRM
 
-Zajednička CRM platforma za LUU i Invektu. **Razvojna verzija 0.2**, samo za testne podatke. Produkcioni hosting još nije postavljen.
+Zajednička CRM platforma za LUU i Invektu. **Razvojna verzija 0.3**, samo za testne podatke. Produkcioni hosting još nije postavljen.
 
 ## Izgled interfejsa
 
 Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga i izbor jedinice su u zaglavlju. „Sve demo kompanije“ objedinjeno prikazuje isključivo izmišljene demo zapise; povezani CRM nudi samo jedinice iz korisnikovih ovlašćenja. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
 
 ## Šta sada radi
-- Srpski responzivan demo pregled, odvojeni LUU/Invekta primeri, levak i privremeni zadaci.
-- Dugme **Otvori povezani CRM** vodi na prijavu i kompanije iz PostgreSQL baze.
-- Unos, izmena i pretraga kompanija; podaci ostaju posle osvežavanja i odjave.
-- Serverske sesije, hash lozinki, odjava i ograničenje pokušaja prijave.
-- Backend proverava članstvo u jedinici. Komercijalista vidi i menja svoje kompanije; menadžer i administrator imaju pregled kompanija u svojim jedinicama.
-- Demo seed je eksplicitan i idempotentan; postojeće podatke i lozinke ne menja bez zahteva za reset.
+- Unos, izmena i pretraga kompanija, uz odvojene poslovne jedinice.
+- Profil kompanije: više kontakt osoba, e-mail, telefon i pozicija; trajni unos i izmena.
+- Više prodajnih prilika po kompaniji: naslov, vrednost u RSD, faza, očekivani datum zatvaranja i beleška.
+- Kanban sa fazama Novi lead, Kontaktiran, Sastanak, Ponuda, Pregovori, Dobijeno i Izgubljeno. Faza se menja izborom na kartici; promene ostaju u bazi.
+- Istorija kreiranja i promena faze sa korisnikom i vremenom. Zastarela izmena prilike vraća konflikt umesto prepisivanja novijih podataka.
+- Povezani dashboard i osnovni izveštaj računaju kompanije, kontakte, otvorene prilike, potencijalnu vrednost i dobijene poslove iz baze, prema pravima korisnika.
+- Prijava, serverske sesije, hash lozinki, odjava i osnovno ograničenje pokušaja prijave.
+- Backend i baza sprečavaju povezivanje kontakata/prilika sa kompanijom iz druge jedinice. Komercijalista vidi podatke svojih kompanija; menadžer i administrator vide podatke u svojim jedinicama.
+- Eksplicitan demo seed čuva postojeće zapise i lozinke. Demo kontakti i prilike su označeni; svi razvojni podaci služe samo testiranju.
 
-Kontakti, zasebne prodajne prilike, dodeljivanje kompanija, trajni zadaci, upravljanje korisnicima kroz UI, audit evidencija i AI još nisu implementirani. Trenutna vrednost i faza na kompaniji su privremena osnova za budući model prodajnih prilika.
+Ponude, trajni zadaci, aktivnosti, raspodela kompanija, upravljanje nalozima kroz UI, potpuna audit evidencija i AI još nisu implementirani. Istorija faza je trenutno jedina poslovna istorija promena. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
+
+## Kako koristiti povezani CRM
+1. Kliknite **Otvori povezani CRM**, prijavite se i izaberite dozvoljenu poslovnu jedinicu.
+2. U **Kompanije** dodajte kompaniju ili kliknite **Otvori profil →**.
+3. U profilu, kroz **Kontakt osobe**, unesite kontakt i sačuvajte ga.
+4. Otvorite karticu **Prodajne prilike** i kreirajte jednu ili više prilika.
+5. U meniju **Prodajni levak** menjajte fazu izborom na kartici. Dugme **Istorija** prikazuje promene. Ako se pojavi konflikt, osvežite levak pre nove izmene.
+6. **Početna tabla** prikazuje aktuelne pokazatelje iz baze. Refresh zadržava otvorenu stranicu, profil i poslovnu jedinicu.
+
+## Prelazak sa verzije 0.2
+Pokrenite `alembic upgrade head` iz foldera `backend`. Migracija prenosi raniju vrednost i fazu kompanije u jednu početnu prodajnu priliku. Stara polja kompanije nisu uklonjena ni resetovana, ali se više ne koriste za novi levak i KPI. Kontakt postaje zaseban zapis. Početnim prenetim prilikama se ne izmišlja korisnik ili istorija promena; istorija počinje novim eksplicitnim promenama.
+
+API lista prilika koristi paginaciju (100 po strani u UI, najviše 200 po API zahtevu). Dashboard računa sve ovlašćene zapise, nezavisno od stranice. Tabela kompanija i izbor kompanije pri kreiranju prilike i dalje prikazuju najviše 200 pogodaka. Pretragom pronađite kompaniju i otvorite njen profil za unos prilike ako je nema u početnom izboru.
 
 ## Pokretanje u privatnom cloud / Codespaces razvoju
 Potrebni: Node.js 22/24 LTS, Python 3.12+, `uv` i Docker sa Compose-om. Koristite postojeći checkout; ne kreirajte dodatni projekat.
@@ -68,11 +84,11 @@ npm test
 npm run build
 ```
 
-Health: `/api/health`. Readiness proverava bazu i tabelu iz migracije: `/api/ready`.
+Health: `/api/health`. Readiness proverava bazu i nove tabele iz migracije: `/api/ready`.
 
 ## Podaci i konfiguracija
 `.env`, lozinke, sesije, `node_modules`, virtuelno okruženje i build izlazi nisu u Git-u. `.env.example` opisuje imena promenljivih. Docker named volume `crm_data` čuva bazu pri restartu u istom okruženju. `docker compose down -v` briše podatke — ne koristite ga za redovan restart. Obnova baze u novom cloud okruženju zahteva sačuvan volume ili backup; GitHub ne čuva bazu.
 
 Pre stvarne poslovne upotrebe ostaju produkcioni deployment, HTTPS, backup/restore provera, audit, upravljanje nalozima, dodatna zaštita prijave i testovi svih korisničkih tokova. GitHub čuva kod, ne hostuje ovu aplikaciju automatski.
 
-[Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.2](docs/architecture/validation-0.2.md)
+[Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.3](docs/architecture/validation-0.3.md)

@@ -1,76 +1,47 @@
-import Shell from "./Shell";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Building2, Plus, Save } from "lucide-react";
-import { money } from "./demo";
-
-type Unit = { id: number; code: string; role: string };
-type User = { name: string; units: Unit[] };
-type Company = {
-  id: number;
-  business_unit_id: number;
-  name: string;
-  city: string;
-  sector: string;
-  stage: string;
-  potential_value: string;
-  is_demo: boolean;
-};
-type Form = {
-  name: string;
-  city: string;
-  sector: string;
-  stage: string;
-  potential_value: string;
-};
-const blank: Form = {
-  name: "",
-  city: "",
-  sector: "",
-  stage: "Kontakt",
-  potential_value: "0",
-};
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  if (window.location.protocol === "file:")
-    throw new Error(
-      "Povezani CRM zahteva pokrenut backend. Ovaj HTML fajl služi za demo pregled.",
-    );
-  const response = await fetch("/api" + path, {
-    credentials: "same-origin",
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-  if (!response.headers.get("content-type")?.includes("application/json"))
-    throw new Error(
-      "Backend trenutno nije dostupan. Pokušajte ponovo kada bude pokrenut.",
-    );
-  const data = await response.json();
-  if (!response.ok)
-    throw new Error(
-      typeof data.detail === "string"
-        ? data.detail
-        : "Proverite uneta polja i pokušajte ponovo.",
-    );
-  return data as T;
-}
+import Shell from "./Shell";
+import { api, errorText } from "./lib/api";
+import { readRoute, writeRoute } from "./lib/routes";
+import CompanyProfile from "./features/crm/CompanyProfile";
+import Pipeline from "./features/crm/Pipeline";
+import Dashboard from "./features/crm/Dashboard";
+import type { User, Company, CompanyForm } from "./features/crm/types";
+const blank: CompanyForm = { name: "", city: "", sector: "" };
 export default function Workspace({ onBack }: { onBack: () => void }) {
-  const [page, setPage] = useState("Kompanije");
-  const [user, setUser] = useState<User | null>(null);
-  const [checking, setChecking] = useState(true);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [unit, setUnit] = useState(0);
-  const [rows, setRows] = useState<Company[]>([]);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [reload, setReload] = useState(0);
-  const [form, setForm] = useState<Form | null>(null);
-  const [editing, setEditing] = useState<number | null>(null);
-  const [message, setMessage] = useState("");
+  const [page, setPage] = useState(() => readRoute().page),
+    [selectedCompany, setSelectedCompany] = useState(() => readRoute().company);
+  const [user, setUser] = useState<User | null>(null),
+    [checking, setChecking] = useState(true);
+  const [username, setUsername] = useState(""),
+    [password, setPassword] = useState(""),
+    [unit, setUnit] = useState(0);
+  const [rows, setRows] = useState<Company[]>([]),
+    [search, setSearch] = useState(""),
+    [error, setError] = useState("");
+  const [busy, setBusy] = useState(false),
+    [loading, setLoading] = useState(false),
+    [reload, setReload] = useState(0);
+  const [form, setForm] = useState<CompanyForm | null>(null),
+    [editing, setEditing] = useState<number | null>(null),
+    [message, setMessage] = useState("");
   function acceptUser(next: User) {
+    const desired = readRoute().unit;
+    const nextUnit =
+      next.units.find((u) => u.id === desired)?.id ?? next.units[0]?.id ?? 0;
     setUser(next);
-    setUnit(next.units[0]?.id ?? 0);
+    setUnit(nextUnit);
+    writeRoute(page, nextUnit, selectedCompany, true);
+  }
+  function navigate(next: string, company?: number) {
+    if (busy) return;
+    setPage(next);
+    setSelectedCompany(company);
+    setForm(null);
+    setMessage("");
+    setSearch("");
+    setError("");
+    writeRoute(next, unit, company);
   }
   useEffect(() => {
     let active = true;
@@ -87,6 +58,17 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     };
   }, []);
   useEffect(() => {
+    function onHash() {
+      const route = readRoute();
+      setPage(route.page);
+      setSelectedCompany(route.company);
+      setForm(null);
+      if (user?.units.some((u) => u.id === route.unit)) setUnit(route.unit!);
+    }
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [user]);
+  useEffect(() => {
     if (!user || !unit) return;
     const controller = new AbortController();
     setLoading(true);
@@ -98,14 +80,14 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     )
       .then(setRows)
       .catch((e) => {
-        if (!controller.signal.aborted) setError(e.message);
+        if (!controller.signal.aborted) setError(errorText(e));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
   }, [user, unit, search, reload]);
-  async function login(e: React.FormEvent) {
+  async function login(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
@@ -117,7 +99,7 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
       acceptUser(await api<User>("/auth/me"));
       setPassword("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Backend nije dostupan.");
+      setError(errorText(e));
     } finally {
       setBusy(false);
     }
@@ -131,13 +113,14 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
       setRows([]);
       setForm(null);
       setMessage("");
+      setSelectedCompany(undefined);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Odjava nije uspela.");
+      setError(errorText(e));
     } finally {
       setBusy(false);
     }
   }
-  async function save(e: React.FormEvent) {
+  async function save(e: FormEvent) {
     e.preventDefault();
     if (!form) return;
     setBusy(true);
@@ -148,11 +131,10 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
         body: JSON.stringify(form),
       });
       setForm(null);
-      setEditing(null);
       setMessage("Kompanija je sačuvana u PostgreSQL bazi.");
       setReload((v) => v + 1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Čuvanje nije uspelo.");
+      setError(errorText(e));
     } finally {
       setBusy(false);
     }
@@ -164,15 +146,18 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
         ? "Menadžer prodaje"
         : "Administrator";
   const activeRole = user?.units.find((u) => u.id === unit)?.role;
+  const supported = [
+    "Kompanije",
+    "Novi klijenti",
+    "Početna tabla",
+    "Izveštaji",
+    "Prodajni levak",
+  ].includes(page);
   return (
     <Shell
       page={user ? page : "Prijava"}
       onPage={(next) => {
-        if (user) {
-          setPage(next);
-          setForm(null);
-          setMessage("");
-        }
+        if (user) navigate(next);
       }}
       search={search}
       onSearch={
@@ -180,6 +165,9 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
           ? (value) => {
               setSearch(value);
               setPage("Kompanije");
+              setSelectedCompany(undefined);
+              setForm(null);
+              writeRoute("Kompanije", unit, undefined, true);
             }
           : undefined
       }
@@ -193,9 +181,13 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
       onUnit={
         user
           ? (value) => {
-              setUnit(Number(value));
+              const id = Number(value);
+              setUnit(id);
+              setSelectedCompany(undefined);
               setForm(null);
+              setSearch("");
               setMessage("");
+              writeRoute(page, id);
             }
           : undefined
       }
@@ -208,7 +200,7 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     >
       <div className="demo-notice">
         Razvojni CRM · trajna baza i kontrola pristupa su uključeni. Koristite
-        samo testne podatke dok ne završimo produkcionu pripremu.
+        samo testne podatke do završetka produkcione pripreme.
       </div>
       {error && (
         <p className="error-message" role="alert">
@@ -257,24 +249,52 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
             </button>
           </form>
         </section>
-      ) : page !== "Kompanije" ? (
+      ) : !unit ? (
+        <p className="empty">
+          Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
+        </p>
+      ) : selectedCompany && page === "Kompanije" ? (
+        <CompanyProfile
+          key={`${unit}-${selectedCompany}`}
+          unit={unit}
+          id={selectedCompany}
+          onBack={() => navigate("Kompanije")}
+        />
+      ) : page === "Prodajni levak" ? (
         <>
           <div className="page-heading">
             <div>
-              <h1>{page}</h1>
-              <p>LUU × Invekta · povezani CRM</p>
+              <h1>Prodajne prilike</h1>
+              <p>Pregled procesa od prvog kontakta do odluke klijenta.</p>
             </div>
+          </div>
+          <Pipeline key={unit} unit={unit} companies={rows} />
+          <p className="section-hint">
+            Izbor kompanije nudi najviše 200 kompanija iz odabrane jedinice. Za
+            ostale otvorite profil kompanije preko pretrage.
+          </p>
+        </>
+      ) : page === "Početna tabla" || page === "Izveštaji" ? (
+        <Dashboard
+          key={unit}
+          unit={unit}
+          onPipeline={() => navigate("Prodajni levak")}
+        />
+      ) : !supported ? (
+        <>
+          <div className="page-heading">
+            <h1>{page}</h1>
           </div>
           <section className="panel placeholder">
             <Building2 size={36} />
             <h2>Ovaj ekran je u pripremi</h2>
             <p>
-              Prijava, poslovne jedinice i trajno upravljanje kompanijama su
-              dostupni. Ostali moduli biće povezani u narednim fazama.
+              Kompanije, kontakti, prodajni levak i osnovni pokazatelji su
+              dostupni. Ostali moduli slede u narednim fazama.
             </p>
             <button
               className="primary-button"
-              onClick={() => setPage("Kompanije")}
+              onClick={() => navigate("Kompanije")}
             >
               Otvori kompanije
             </button>
@@ -285,24 +305,30 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
           <div className="page-heading">
             <div>
               <div className="eyebrow">DOBRO DOŠLI · {user.name}</div>
-              <h1>Kompanije</h1>
-              <p>Zapisi dostupni prema vašoj poslovnoj jedinici i ulozi.</p>
+              <h1>
+                {page === "Novi klijenti"
+                  ? "Novi klijenti"
+                  : "Kompanije i kontakti"}
+              </h1>
+              <p>Otvorite profil kompanije za kontakte i prodajne prilike.</p>
             </div>
             <button
               className="primary-button"
-              disabled={!unit || loading || busy}
+              disabled={loading || busy}
               onClick={() => {
                 setForm({ ...blank });
                 setEditing(null);
                 setMessage("");
               }}
             >
-              <Plus size={17} /> Nova kompanija
+              <Plus size={17} />
+              Nova kompanija
             </button>
           </div>
-          {user.units.length === 0 && (
-            <p className="empty">
-              Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
+          {page === "Novi klijenti" && (
+            <p className="section-hint">
+              Ručni unos novih klijenata. Automatsko pronalaženje i AI
+              kvalifikacija još nisu uključeni.
             </p>
           )}
           {form && (
@@ -310,55 +336,32 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
               <h2>{editing ? "Izmena kompanije" : "Nova kompanija"}</h2>
               <form onSubmit={save}>
                 <div className="form-grid">
-                  {(["name", "city", "sector", "potential_value"] as const).map(
-                    (key) => (
-                      <label key={key}>
+                  {(["name", "city", "sector"] as const).map((key) => (
+                    <label key={key}>
+                      {
                         {
-                          {
-                            name: "Naziv kompanije",
-                            city: "Grad",
-                            sector: "Delatnost",
-                            potential_value: "Potencijalna vrednost (RSD)",
-                          }[key]
-                        }
-                        <input
-                          required
-                          disabled={busy}
-                          type={key === "potential_value" ? "number" : "text"}
-                          min={key === "potential_value" ? 0 : undefined}
-                          step={key === "potential_value" ? "0.01" : undefined}
-                          minLength={key === "potential_value" ? undefined : 2}
-                          maxLength={
-                            key === "name"
-                              ? 200
-                              : key === "potential_value"
-                                ? undefined
-                                : 100
-                          }
-                          value={form[key]}
-                          onChange={(e) =>
-                            setForm({ ...form, [key]: e.target.value })
-                          }
-                        />
-                      </label>
-                    ),
-                  )}
-                  <label>
-                    Faza
-                    <select
-                      aria-label="Faza"
-                      disabled={busy}
-                      value={form.stage}
-                      onChange={(e) =>
-                        setForm({ ...form, stage: e.target.value })
+                          name: "Naziv kompanije",
+                          city: "Grad",
+                          sector: "Delatnost",
+                        }[key]
                       }
-                    >
-                      {["Kontakt", "Ponuda", "Pregovori"].map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </label>
+                      <input
+                        required
+                        disabled={busy}
+                        minLength={2}
+                        maxLength={key === "name" ? 200 : 100}
+                        value={form[key]}
+                        onChange={(e) =>
+                          setForm({ ...form, [key]: e.target.value })
+                        }
+                      />
+                    </label>
+                  ))}
                 </div>
+                <p className="section-hint">
+                  Vrednost i fazu prodaje sada unosite kroz zasebne prilike u
+                  profilu kompanije.
+                </p>
                 <div className="form-actions">
                   <button className="primary-button" disabled={busy}>
                     <Save size={16} />
@@ -389,8 +392,8 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
                   <thead>
                     <tr>
                       <th>Kompanija</th>
-                      <th>Faza</th>
-                      <th>Potencijalna vrednost</th>
+                      <th>Delatnost</th>
+                      <th>Kontakti i prilike</th>
                       <th>Izmena</th>
                     </tr>
                   </thead>
@@ -400,16 +403,19 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
                         <td>
                           <strong>{c.name}</strong>
                           <small>
-                            {c.city} · {c.sector}
+                            {c.city}
                             {c.is_demo ? " · DEMO" : ""}
                           </small>
                         </td>
+                        <td>{c.sector}</td>
                         <td>
-                          <span className={"stage stage-" + c.stage}>
-                            {c.stage}
-                          </span>
+                          <button
+                            className="text-button"
+                            onClick={() => navigate("Kompanije", c.id)}
+                          >
+                            Otvori profil →
+                          </button>
                         </td>
-                        <td>{money(Number(c.potential_value))}</td>
                         <td>
                           <button
                             className="text-button"
@@ -420,8 +426,6 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
                                 name: c.name,
                                 city: c.city,
                                 sector: c.sector,
-                                stage: c.stage,
-                                potential_value: c.potential_value,
                               });
                               setMessage("");
                             }}
@@ -435,8 +439,8 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
                 </table>
                 {rows.length === 0 && !error && (
                   <p className="empty">
-                    Nema kompanija za prikaz. Dodajte prvu kompaniju ili
-                    promenite pretragu.
+                    Nema kompanija za prikaz. Dodajte prvu ili promenite
+                    pretragu.
                   </p>
                 )}
               </div>

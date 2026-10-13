@@ -87,6 +87,7 @@ export default function Shell({
             {navigation.map(({ title, icon: Icon }) => (
               <button
                 key={title}
+                disabled={busy}
                 aria-current={page === title ? "page" : undefined}
                 className={page === title ? "active" : ""}
                 onClick={() => navigate(title)}
@@ -101,6 +102,7 @@ export default function Shell({
             {modules.map(({ title, icon: Icon }) => (
               <button
                 key={title}
+                disabled={busy}
                 aria-current={page === title ? "page" : undefined}
                 className={page === title ? "active" : ""}
                 onClick={() => navigate(title)}
@@ -137,7 +139,7 @@ export default function Shell({
           <label className="global-search">
             <Search size={16} />
             <input
-              disabled={!onSearch}
+              disabled={busy || !onSearch}
               aria-label="Globalna pretraga kompanija"
               placeholder="Pretraži kompanije i delatnosti…"
               value={search}
