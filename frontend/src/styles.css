@@ -228,13 +228,6 @@ button:disabled {
   font-size: 14px;
   min-height: 43px;
 }
-.nav-label {
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: #8197b4;
-  margin: 30px 12px 12px;
-  font-size: 10px;
-}
 .settings-nav {
   margin-top: 20px;
 }
@@ -793,7 +786,6 @@ form label {
   .brand {
     margin: 5px 10px 12px;
   }
-  .nav-label,
   .sidebar-status,
   .settings-nav {
     display: none !important;

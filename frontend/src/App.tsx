@@ -7,8 +7,6 @@ import {
   Search,
   Sparkles,
   FileText,
-  Package,
-  BriefcaseBusiness,
   ChartNoAxesCombined,
   UsersRound,
 } from "lucide-react";
@@ -252,19 +250,7 @@ export default function App() {
             title: "AI Sales Assistant",
             text: "Pretraga leadova, proverljivi izvori i predlozi poruka dolaze kasnije. U ovoj verziji nema AI poziva niti slanja poruka.",
           }
-        : page === "LUU proizvodi"
-          ? {
-              icon: Package,
-              title: "LUU — katalog proizvoda",
-              text: "Proizvodi, cenovnici i kalkulator potrošnje biće povezani sa bazom u fazi poslovnih modula.",
-            }
-          : page === "Invekta usluge"
-            ? {
-                icon: BriefcaseBusiness,
-                title: "Invekta — katalog usluga",
-                text: "Usluge, poslovni objekti, tenderi i ugovori planirani su za fazu poslovnih modula.",
-              }
-            : null;
+        : null;
   return (
     <Shell
       page={page}

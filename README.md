@@ -4,6 +4,8 @@ Zajednička CRM platforma za LUU i Invektu. **Razvojna verzija 0.3**, samo za te
 
 ## Izgled interfejsa
 
+Odeljak „Specijalizovani moduli“ i posebne stavke za proizvode/usluge uklonjeni su iz menija. Izbor poslovne jedinice LUU/Invekta ostaje u zaglavlju.
+
 Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga i izbor jedinice su u zaglavlju. „Sve demo kompanije“ objedinjeno prikazuje isključivo izmišljene demo zapise; povezani CRM nudi samo jedinice iz korisnikovih ovlašćenja. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
 
 ## Šta sada radi

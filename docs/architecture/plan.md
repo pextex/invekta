@@ -27,7 +27,7 @@ Svaki poslovni zapis nosi business_unit_id. Složeni strani ključevi treba da s
 5. **Prilike i KPI završeni:** više prilika po kompaniji, promene faze, istorija i pokazatelji iz baze. Aktivnosti i trajni zadaci slede.
 6. Provera korisničkih tokova, izolacije podataka i dokumentacije.
 
-Kasnije: LUU katalog i potrošnja, Invekta ugovori, PDF ponude, CSV, napredni izveštaji, AI adapteri sa proverljivim izvorima i nacrtima poruka, backup i produkcija. Bez automatskog masovnog slanja.
+Specijalizovani odeljci za LUU proizvode i Invekta usluge uklonjeni su iz obima na zahtev korisnika. Kasnije: PDF ponude, CSV, napredni izveštaji, AI adapteri sa proverljivim izvorima i nacrtima poruka, backup i produkcija. Bez automatskog masovnog slanja.
 
 ## Trenutno stanje — verzija 0.3
 Postoje kompanije, kontakti, prilike i istorija faza, uz PostgreSQL, migracije, prijavu i backend autorizaciju po jedinici i kompaniji. Komercijalista nasleđuje pravo na kontakte i prilike svojih kompanija; menadžer i administrator imaju pregled u dozvoljenim jedinicama. Menadžer ne može automatski videti objedinjene podatke drugih jedinica.

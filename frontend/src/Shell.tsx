@@ -7,8 +7,6 @@ import {
   Sparkles,
   Settings,
   Search,
-  Package,
-  BriefcaseBusiness,
   UsersRound,
   FileText,
   ChartNoAxesCombined,
@@ -26,10 +24,6 @@ export const navigation = [
   { title: "Zadaci", icon: ListTodo },
   { title: "Izveštaji", icon: ChartNoAxesCombined },
   { title: "AI asistent", icon: Sparkles },
-];
-const modules = [
-  { title: "LUU proizvodi", icon: Package },
-  { title: "Invekta usluge", icon: BriefcaseBusiness },
 ];
 type Props = {
   page: string;
@@ -85,21 +79,6 @@ export default function Shell({
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">
             {navigation.map(({ title, icon: Icon }) => (
-              <button
-                key={title}
-                disabled={busy}
-                aria-current={page === title ? "page" : undefined}
-                className={page === title ? "active" : ""}
-                onClick={() => navigate(title)}
-              >
-                <Icon size={16} />
-                {title}
-              </button>
-            ))}
-          </nav>
-          <div className="nav-label">Specijalizovani moduli</div>
-          <nav aria-label="Poslovni moduli">
-            {modules.map(({ title, icon: Icon }) => (
               <button
                 key={title}
                 disabled={busy}
