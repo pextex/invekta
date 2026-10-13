@@ -34,6 +34,8 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(150))
     password_hash: Mapped[str] = mapped_column(String(300))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_platform_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    version: Mapped[int] = mapped_column(Integer, default=1)
 
 
 class Membership(Base):
@@ -48,6 +50,7 @@ class Membership(Base):
         ForeignKey("business_units.id"), primary_key=True
     )
     role: Mapped[str] = mapped_column(String(20))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class LoginSession(Base):

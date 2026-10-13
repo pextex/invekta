@@ -57,6 +57,6 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
 
 def membership(db: Session, user: User, unit_id: int) -> Membership:
     member = db.get(Membership, (user.id, unit_id))
-    if member is None:
+    if member is None or not member.enabled:
         raise HTTPException(403, "Nemate pristup ovoj poslovnoj jedinici.")
     return member

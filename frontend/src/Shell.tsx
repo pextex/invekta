@@ -35,6 +35,7 @@ type Props = {
   user: string;
   role: string;
   connected?: boolean;
+  canManageUsers?: boolean;
   busy?: boolean;
   onConnect?: () => void;
   onBack?: () => void;
@@ -50,6 +51,7 @@ export default function Shell({
   user,
   role,
   connected = false,
+  canManageUsers = false,
   busy = false,
   onConnect,
   onBack,
@@ -89,14 +91,14 @@ export default function Shell({
               </button>
             ))}
           </nav>
-          {connected && (
+          {connected && canManageUsers && (
             <nav className="settings-nav" aria-label="Podešavanja">
               <button
                 className={page === "Podešavanja" ? "active" : ""}
                 onClick={() => navigate("Podešavanja")}
               >
                 <Settings size={16} />
-                Podešavanja
+                Korisnici i pristup
               </button>
             </nav>
           )}

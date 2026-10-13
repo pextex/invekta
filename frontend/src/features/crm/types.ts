@@ -1,5 +1,5 @@
 export type Unit = { id: number; code: string; role: string };
-export type User = { name: string; units: Unit[] };
+export type User = { name: string; units: Unit[]; is_platform_admin: boolean };
 export type Company = {
   id: number;
   business_unit_id: number;

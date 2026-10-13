@@ -122,3 +122,23 @@ Posle `alembic upgrade head`, administrator kreira nalog iz direktorijuma `backe
 ```
 
 Unesite i potvrdite lozinku u skrivenom terminalskom unosu. Za pristup dodatnoj firmi eksplicitno ponovite argument `--unit`. Postojeći email se odbija bez menjanja naloga. Za automatizaciju koristite sigurnu procesnu promenljivu `CRM_ACCOUNT_PASSWORD`, nikad argument komandne linije ili lozinku u repozitorijumu. Kreiranje naloga ne šalje email i ne dodaje izmišljene klijente.
+
+## Administrator platforme i korisnici
+
+Administrator platforme vidi **Korisnici i pristup** u bočnom meniju svakog CRM-a. Može kreirati naloge sa emailom, početnom lozinkom i izabranim firmama/ulogama, izmeniti prava, deaktivirati nalog ili zadati novu lozinku. Izmena profila opoziva postojeće sesije; korisnik se ponovo prijavljuje. Isključeno članstvo blokira prijavu i sve CRM API pozive, uz očuvanje klijenata koje je korisnik ranije vodio. Zastarela izmena profila vraća konflikt. Glavni administrator je zaštićen od deaktivacije kroz ovaj ekran.
+
+Uloga **Administrator firme** ne daje upravljanje nalozima cele platforme. Globalno pravo se dodeljuje samo eksplicitnom administratorskom komandom. Nema samostalne registracije, slanja pozivnica ili automatskog slanja emaila.
+
+Pripremite glavnog administratora posle migracija:
+
+```bash
+.venv/bin/python -m app.bootstrap_admin --email osoba@example.com --name 'Ime Prezime'
+```
+
+Novi nalog ostaje neaktivan, sa pristupom svim trima firmama i nepoznatom nasumičnom lozinkom. Aktivacija kroz skriven unos:
+
+```bash
+.venv/bin/python -m app.bootstrap_admin --email osoba@example.com --name 'Ime Prezime' --activate
+```
+
+Za bezbednu automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz podešavanja okruženja; skripta čita stvarnu procesnu vrednost. Ne postavljati lozinku kao argument, u chat ili u Git. Komanda je eksplicitna: ne izvršava se tokom pokretanja servera. Ponovni poziv bez `--activate` čuva postojeću lozinku i status naloga. Podaci naloga ostaju u PostgreSQL bazi, ne u GitHub-u; za javnu prijavu je i dalje potreban hosting servera i baze.

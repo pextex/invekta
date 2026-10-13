@@ -1370,3 +1370,8 @@ form label {
 .app[data-organization="CENOBOTS"] .brand-logo { background: #090d10; }
 .organization-card { grid-template-columns: 110px 1fr auto; }
 .app[data-organization="INVEKTA"] .primary-button { border-color: #fc9051; }
+
+.user-access { border: 1px solid var(--border); border-radius: 10px; margin: 20px 0; padding: 16px; }
+.user-access-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 9px 0; }
+.user-access-row label, .user-active { display: flex; align-items: center; gap: 10px; }
+.user-access input, .user-active input { width: auto; }

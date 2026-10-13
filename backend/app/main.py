@@ -1,11 +1,14 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from .access import visible_query
 from .api.sales import router as sales_router
+from .api.users import router as users_router
 from .config import get_settings
 from .db import get_db
 from .models import BusinessUnit, Company, LoginAttempt, LoginSession, Membership, User
@@ -23,6 +26,18 @@ from .security import (
 app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
 app.include_router(sales_router)
+app.include_router(users_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    # Validation responses must not echo passwords or other submitted values.
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Proverite uneta polja, email, dužinu lozinke i pristup firmama."
+        },
+    )
 
 
 @app.middleware("http")
@@ -87,7 +102,8 @@ def login(
         )
         if (
             selected_unit is None
-            or db.get(Membership, (user.id, selected_unit.id)) is None
+            or (member := db.get(Membership, (user.id, selected_unit.id))) is None
+            or not member.enabled
         ):
             raise HTTPException(
                 403, "Nemate pristup izabranoj kompaniji. Obratite se administratoru."
@@ -148,11 +164,12 @@ def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
     units = db.execute(
         select(BusinessUnit, Membership.role)
         .join(Membership, Membership.business_unit_id == BusinessUnit.id)
-        .where(Membership.user_id == user.id)
+        .where(Membership.user_id == user.id, Membership.enabled.is_(True))
         .order_by(BusinessUnit.id)
     ).all()
     return {
         "name": user.name,
+        "is_platform_admin": user.is_platform_admin,
         "units": [
             {"id": unit.id, "code": unit.code, "role": role} for unit, role in units
         ],

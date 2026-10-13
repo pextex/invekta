@@ -1,3 +1,4 @@
+import UserManagement from "./features/crm/UserManagement";
 import OrganizationPortal from "./components/OrganizationPortal";
 import {
   organizationName,
@@ -283,6 +284,7 @@ export default function Workspace({
       user={user?.name ?? "Gost"}
       role={activeRole ? roleName(activeRole) : "Prijavite se za pristup"}
       connected
+      canManageUsers={user.is_platform_admin}
       busy={busy}
       onLogout={user ? logout : undefined}
     >
@@ -331,6 +333,8 @@ export default function Workspace({
           unit={unit}
           onPipeline={() => navigate("Prodajni levak")}
         />
+      ) : page === "Podešavanja" && user.is_platform_admin ? (
+        <UserManagement />
       ) : !supported ? (
         <>
           <div className="page-heading">
