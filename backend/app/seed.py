@@ -38,7 +38,34 @@ def main():
         elif "--reset-password" in sys.argv:
             user.password_hash = hash_password(password)
             db.execute(delete(LoginSession).where(LoginSession.user_id == user.id))
-        for code, name in [("LUU", "LUU"), ("INVEKTA", "Invekta")]:
+        demo_rows = {
+            "LUU": [
+                ("Demo Hotel Dunav", "Beograd", "Hotelijerstvo", 185000, "Ponuda"),
+                ("Demo Studio Javor", "Novi Sad", "Kancelarije", 72000, "Kontakt"),
+                ("Demo Restoran Lipa", "Niš", "Ugostiteljstvo", 96000, "Pregovori"),
+            ],
+            "INVEKTA": [
+                (
+                    "Demo Poslovni centar",
+                    "Beograd",
+                    "Poslovni objekti",
+                    420000,
+                    "Ponuda",
+                ),
+                ("Demo Park Sever", "Novi Sad", "Industrija", 280000, "Kontakt"),
+                ("Demo Tržni centar", "Niš", "Maloprodaja", 350000, "Pregovori"),
+            ],
+            "CENOBOTS": [
+                ("Demo partner Alfa", "Beograd", "B2B", 150000, "Kontakt"),
+                ("Demo partner Beta", "Novi Sad", "B2B", 220000, "Ponuda"),
+                ("Demo partner Gama", "Niš", "B2B", 90000, "Pregovori"),
+            ],
+        }
+        for code, name in [
+            ("LUU", "LUU"),
+            ("INVEKTA", "Invekta"),
+            ("CENOBOTS", "Cenobots"),
+        ]:
             unit = db.scalar(select(BusinessUnit).where(BusinessUnit.code == code))
             if unit is None:
                 unit = BusinessUnit(code=code, name=name)
@@ -51,25 +78,7 @@ def main():
                     )
                 )
                 db.flush()
-            for company_name, city, sector, value, stage in (
-                [
-                    ("Demo Hotel Dunav", "Beograd", "Hotelijerstvo", 185000, "Ponuda"),
-                    ("Demo Studio Javor", "Novi Sad", "Kancelarije", 72000, "Kontakt"),
-                    ("Demo Restoran Lipa", "Niš", "Ugostiteljstvo", 96000, "Pregovori"),
-                ]
-                if code == "LUU"
-                else [
-                    (
-                        "Demo Poslovni centar",
-                        "Beograd",
-                        "Poslovni objekti",
-                        420000,
-                        "Ponuda",
-                    ),
-                    ("Demo Park Sever", "Novi Sad", "Industrija", 280000, "Kontakt"),
-                    ("Demo Tržni centar", "Niš", "Maloprodaja", 350000, "Pregovori"),
-                ]
-            ):
+            for company_name, city, sector, value, stage in demo_rows[code]:
                 existing = db.scalar(
                     select(Company).where(
                         Company.business_unit_id == unit.id,

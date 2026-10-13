@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class LoginInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    business_unit_code: Literal["LUU", "INVEKTA", "CENOBOTS"] | None = None
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=256)
 

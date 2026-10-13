@@ -1,10 +1,10 @@
-# LUU × INVEKTA — AI Sales CRM
+# LUU × INVEKTA × CENOBOTS — AI Sales CRM
 
-Zajednička CRM platforma za LUU i Invektu. **Razvojna verzija 0.3**, samo za testne podatke. Produkcioni hosting još nije postavljen.
+Zajednička CRM platforma za LUU, Invektu i Cenobots. **Razvojna verzija 0.4**, samo za testne podatke. Produkcioni hosting još nije postavljen.
 
 ## Izgled interfejsa
 
-Odeljak „Specijalizovani moduli“ i posebne stavke za proizvode/usluge uklonjeni su iz menija. Izbor poslovne jedinice LUU/Invekta ostaje u zaglavlju.
+Odeljak „Specijalizovani moduli“ i posebne stavke za proizvode/usluge uklonjeni su iz menija. Izbor poslovne jedinice LUU/Invekta/Cenobots ostaje u zaglavlju.
 
 Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga i izbor jedinice su u zaglavlju. „Sve demo kompanije“ objedinjeno prikazuje isključivo izmišljene demo zapise; povezani CRM nudi samo jedinice iz korisnikovih ovlašćenja. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
 
@@ -22,7 +22,7 @@ Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, 
 Ponude, trajni zadaci, aktivnosti, raspodela kompanija, upravljanje nalozima kroz UI, potpuna audit evidencija i AI još nisu implementirani. Istorija faza je trenutno jedina poslovna istorija promena. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
 
 ## Kako koristiti povezani CRM
-1. Kliknite **Otvori povezani CRM**, prijavite se i izaberite dozvoljenu poslovnu jedinicu.
+1. Na početnom ekranu izaberite **LUU**, **Invekta** ili **Cenobots**, pa unesite korisničko ime i lozinku. Server proverava pristup izabranoj jedinici pre kreiranja nove sesije.
 2. U **Kompanije** dodajte kompaniju ili kliknite **Otvori profil →**.
 3. U profilu, kroz **Kontakt osobe**, unesite kontakt i sačuvajte ga.
 4. Otvorite karticu **Prodajne prilike** i kreirajte jednu ili više prilika.
@@ -35,6 +35,15 @@ Preuzeti demo HTML sada podržava sedam statusa, prevlačenje i izbor statusa na
 Pokazatelji demo dashboard-a odmah prate promene: Dobijeno i Izgubljeno ne ulaze u otvorene prilike i njihovu potencijalnu vrednost. Zadaci u demo prikazu i dalje nisu trajni.
 
 U povezanom levku kartica menja kolonu tek posle uspešnog API čuvanja. Kod greške ili konflikta ostaje u prethodnoj koloni. Tokom čuvanja ili otvorene forme blokirane su dodatne promene faze. Istorija i serverska kontrola pristupa važe i za prevlačenje.
+
+## Tri poslovne jedinice i prijava
+Cenobots je registrovan kao zasebna jedinica `CENOBOTS`, uz LUU i Invektu. Migracija dodaje nedostajuće jedinice, čuva postojeća imena i podatke i **ne dodeljuje pristup postojećim korisnicima**. Prava se vode u `memberships`; za sada ih priprema administrator van korisničkog interfejsa. Korisnik vidi samo dozvoljene jedinice u povezanom CRM-u.
+
+Razvojni `seed` daje isključivo nalogu `demo` pristup sve tri jedinice i kreira označene izmišljene Cenobots partnere, kontakte i prilike. Cenobots demo podaci ne predstavljaju klijente ili katalog sa sajta. Za pristup Cenobots-u na već pripremljenoj razvojnoj bazi ponovo pokrenite eksplicitni seed uz postojeću demo lozinku, bez `--reset-password`.
+
+Početni URL bez CRM putanje prikazuje novi ekran prijave. `#crm/...` putanja vraća postojeću sesiju i ovlašćenu jedinicu posle refresh-a. U preuzetom HTML-u izaberite kompaniju, pa **Pogledaj demo bez prijave**. Taj ulaz daje samo izmišljene podatke, ne autentifikaciju ili pristup backend-u. Za pravu prijavu potreban je pokrenut backend; u fajlu otvorenom preko `file:` dugme za pravu prijavu je onemogućeno.
+
+Novi frontend šalje `business_unit_code` pri prijavi. API zadržava kompatibilnost sa starim klijentima koji ne šalju izbor; svaki pristup podacima i dalje proverava članstvo i vlasništvo.
 
 ## Prelazak sa verzije 0.2
 Pokrenite `alembic upgrade head` iz foldera `backend`. Migracija prenosi raniju vrednost i fazu kompanije u jednu početnu prodajnu priliku. Stara polja kompanije nisu uklonjena ni resetovana, ali se više ne koriste za novi levak i KPI. Kontakt postaje zaseban zapis. Početnim prenetim prilikama se ne izmišlja korisnik ili istorija promena; istorija počinje novim eksplicitnim promenama.
@@ -56,7 +65,7 @@ uv sync --frozen
 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Seed traži lozinku demo naloga, bez prikaza unosa. Izaberite najmanje 12 znakova. Korisničko ime je **demo**; ovaj razvojni menadžer ima pristup obema jedinicama. Za neinteraktivno pokretanje postavite `CRM_DEMO_PASSWORD` u proces kroz siguran kanal. Ponovni seed ne menja postojeću lozinku. Za izričiti reset samo demo naloga:
+Seed traži lozinku demo naloga, bez prikaza unosa. Izaberite najmanje 12 znakova. Korisničko ime je **demo**; ovaj razvojni menadžer ima pristup svim trima jedinicama. Za neinteraktivno pokretanje postavite `CRM_DEMO_PASSWORD` u proces kroz siguran kanal. Ponovni seed ne menja postojeću lozinku. Za izričiti reset samo demo naloga:
 
 ```bash
 .venv/bin/python -m app.seed --reset-password
@@ -100,4 +109,4 @@ Health: `/api/health`. Readiness proverava bazu i nove tabele iz migracije: `/ap
 
 Pre stvarne poslovne upotrebe ostaju produkcioni deployment, HTTPS, backup/restore provera, audit, upravljanje nalozima, dodatna zaštita prijave i testovi svih korisničkih tokova. GitHub čuva kod, ne hostuje ovu aplikaciju automatski.
 
-[Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.3](docs/architecture/validation-0.3.md)
+[Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.4](docs/architecture/validation-0.4.md)

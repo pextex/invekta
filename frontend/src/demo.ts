@@ -1,5 +1,6 @@
+import { type OrganizationCode } from "./organizations";
 import { opportunityStages, type OpportunityStage } from "./features/crm/types";
-export type Unit = "LUU" | "INVEKTA";
+export type Unit = OrganizationCode;
 export type Company = {
   id: number;
   name: string;
@@ -70,6 +71,36 @@ export const companies: Company[] = [
     value: 350000,
     stage: "Pregovori",
     unit: "INVEKTA",
+  },
+  {
+    id: 7,
+    name: "Demo partner Alfa",
+    city: "Beograd",
+    sector: "B2B",
+    owner: "Mina",
+    value: 150000,
+    stage: "Kontaktiran",
+    unit: "CENOBOTS",
+  },
+  {
+    id: 8,
+    name: "Demo partner Beta",
+    city: "Novi Sad",
+    sector: "B2B",
+    owner: "Mina",
+    value: 220000,
+    stage: "Ponuda",
+    unit: "CENOBOTS",
+  },
+  {
+    id: 9,
+    name: "Demo partner Gama",
+    city: "Niš",
+    sector: "B2B",
+    owner: "Nikola",
+    value: 90000,
+    stage: "Pregovori",
+    unit: "CENOBOTS",
   },
 ];
 export const stages = opportunityStages;

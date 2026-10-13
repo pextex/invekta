@@ -72,9 +72,12 @@ export default function Shell({
             e.preventDefault();
             navigate(connected ? "Kompanije" : "Početna tabla");
           }}
-          aria-label="LUU i Invekta, početna stranica"
+          aria-label="LUU, Invekta i Cenobots, početna stranica"
         >
-          LUU <span>×</span> <em>invekta</em>
+          <div>
+            LUU <span>×</span> <em>invekta</em>
+            <small className="sidebar-cenobots">+ Cenobots</small>
+          </div>
         </a>
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">

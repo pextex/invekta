@@ -1,14 +1,29 @@
+import OrganizationPortal from "./components/OrganizationPortal";
+import {
+  organizationName,
+  isOrganizationCode,
+  type OrganizationCode,
+} from "./organizations";
 import { useEffect, useState, type FormEvent } from "react";
 import { Building2, Plus, Save } from "lucide-react";
 import Shell from "./Shell";
 import { api, errorText } from "./lib/api";
-import { readRoute, writeRoute } from "./lib/routes";
+import { isCrmRoute, readRoute, writeRoute } from "./lib/routes";
 import CompanyProfile from "./features/crm/CompanyProfile";
 import Pipeline from "./features/crm/Pipeline";
 import Dashboard from "./features/crm/Dashboard";
 import type { User, Company, CompanyForm } from "./features/crm/types";
 const blank: CompanyForm = { name: "", city: "", sector: "" };
-export default function Workspace({ onBack }: { onBack: () => void }) {
+export default function Workspace({
+  onBack,
+  onDemo,
+}: {
+  onBack: () => void;
+  onDemo: (code: OrganizationCode) => void;
+}) {
+  const [loginChoice, setLoginChoice] = useState<OrganizationCode | null>(
+    () => readRoute().organization ?? null,
+  );
   const [page, setPage] = useState(() => readRoute().page),
     [selectedCompany, setSelectedCompany] = useState(() => readRoute().company);
   const [user, setUser] = useState<User | null>(null),
@@ -25,10 +40,21 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
   const [form, setForm] = useState<CompanyForm | null>(null),
     [editing, setEditing] = useState<number | null>(null),
     [message, setMessage] = useState("");
-  function acceptUser(next: User) {
+  function acceptUser(next: User, choice?: OrganizationCode) {
     const desired = readRoute().unit;
+    const selectedCode = choice ?? readRoute().organization;
+    const selected = selectedCode
+      ? next.units.find((u) => u.code === selectedCode)
+      : undefined;
+    if (selectedCode && !selected)
+      throw new Error(
+        "Nemate pristup izabranoj kompaniji. Obratite se administratoru.",
+      );
     const nextUnit =
-      next.units.find((u) => u.id === desired)?.id ?? next.units[0]?.id ?? 0;
+      selected?.id ??
+      next.units.find((u) => u.id === desired)?.id ??
+      next.units[0]?.id ??
+      0;
     setUser(next);
     setUnit(nextUnit);
     writeRoute(page, nextUnit, selectedCompany, true);
@@ -44,6 +70,10 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     writeRoute(next, unit, company);
   }
   useEffect(() => {
+    if (!isCrmRoute()) {
+      setChecking(false);
+      return;
+    }
     let active = true;
     api<User>("/auth/me")
       .then((next) => {
@@ -89,14 +119,19 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
   }, [user, unit, search, reload]);
   async function login(e: FormEvent) {
     e.preventDefault();
+    if (!loginChoice) return;
     setBusy(true);
     setError("");
     try {
       await api("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password,
+          business_unit_code: loginChoice,
+        }),
       });
-      acceptUser(await api<User>("/auth/me"));
+      acceptUser(await api<User>("/auth/me"), loginChoice);
       setPassword("");
     } catch (e) {
       setError(errorText(e));
@@ -109,6 +144,9 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     setError("");
     try {
       await api("/auth/logout", { method: "POST", body: "{}" });
+      const currentCode = user?.units.find((u) => u.id === unit)?.code;
+      if (isOrganizationCode(currentCode)) setLoginChoice(currentCode);
+      setPassword("");
       setUser(null);
       setRows([]);
       setForm(null);
@@ -153,6 +191,76 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
     "Izveštaji",
     "Prodajni levak",
   ].includes(page);
+  if (checking)
+    return (
+      <main className="portal-loading">
+        <p>Provera sesije…</p>
+      </main>
+    );
+  if (!user)
+    return (
+      <OrganizationPortal
+        selected={loginChoice}
+        onSelect={(code) => {
+          setLoginChoice(code);
+          setError("");
+        }}
+        busy={busy}
+        error={error}
+      >
+        <form onSubmit={login}>
+          <label>
+            Korisničko ime
+            <input
+              required
+              maxLength={100}
+              autoComplete="username"
+              disabled={busy}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </label>
+          <label>
+            Lozinka
+            <input
+              required
+              maxLength={256}
+              type="password"
+              autoComplete="current-password"
+              disabled={busy}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          <button
+            className="primary-button"
+            disabled={busy || window.location.protocol === "file:"}
+          >
+            {busy
+              ? "Prijavljivanje…"
+              : "Prijavi se u " + organizationName(loginChoice ?? "")}
+          </button>
+        </form>
+        <div className="portal-demo-entry">
+          <span>
+            {window.location.protocol === "file:"
+              ? "Preuzeti HTML nema povezan server za prijavu."
+              : "Želite samo da pogledate razvojni demo?"}
+          </span>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={busy || !loginChoice}
+            onClick={() => {
+              if (loginChoice) onDemo(loginChoice);
+            }}
+          >
+            Pogledaj demo bez prijave
+          </button>
+          <small>Izmišljeni podaci · nema pristupa stvarnom CRM-u.</small>
+        </div>
+      </OrganizationPortal>
+    );
   return (
     <Shell
       page={user ? page : "Prijava"}
@@ -175,7 +283,7 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
       units={
         user?.units.map((u) => ({
           value: String(u.id),
-          label: u.code + " · " + roleName(u.role),
+          label: organizationName(u.code) + " · " + roleName(u.role),
         })) ?? []
       }
       onUnit={
@@ -212,44 +320,7 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
           {message}
         </p>
       )}
-      {checking ? (
-        <p className="empty">Provera sesije…</p>
-      ) : !user ? (
-        <section className="panel login-panel">
-          <Building2 size={32} />
-          <h1>Prijava u CRM</h1>
-          <p>
-            Nalog kreira administrator razvojnog okruženja. Demo prikaz možete
-            otvoriti bez prijave.
-          </p>
-          <form onSubmit={login}>
-            <label>
-              Korisničko ime
-              <input
-                required
-                maxLength={100}
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </label>
-            <label>
-              Lozinka
-              <input
-                required
-                maxLength={256}
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </label>
-            <button className="primary-button" disabled={busy}>
-              {busy ? "Prijavljivanje…" : "Prijavi se"}
-            </button>
-          </form>
-        </section>
-      ) : !unit ? (
+      {!unit ? (
         <p className="empty">
           Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
         </p>

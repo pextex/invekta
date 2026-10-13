@@ -20,7 +20,7 @@ from .security import (
     verify_password,
 )
 
-app = FastAPI(title="LUU × INVEKTA CRM", version="0.3.0")
+app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
 app.include_router(sales_router)
 
@@ -76,6 +76,18 @@ def login(
         db.add(LoginAttempt(username=username))
         db.commit()
         raise HTTPException(401, "Pogrešno korisničko ime ili lozinka.")
+    selected_unit = None
+    if data.business_unit_code:
+        selected_unit = db.scalar(
+            select(BusinessUnit).where(BusinessUnit.code == data.business_unit_code)
+        )
+        if (
+            selected_unit is None
+            or db.get(Membership, (user.id, selected_unit.id)) is None
+        ):
+            raise HTTPException(
+                403, "Nemate pristup izabranoj kompaniji. Obratite se administratoru."
+            )
     db.execute(
         delete(LoginAttempt).where(
             (LoginAttempt.username == username)
@@ -106,7 +118,7 @@ def login(
         samesite="strict",
         path="/api",
     )
-    return {"name": user.name}
+    return {"name": user.name, "unit_id": selected_unit.id if selected_unit else None}
 
 
 @app.post("/api/auth/logout", dependencies=[Depends(require_origin)])

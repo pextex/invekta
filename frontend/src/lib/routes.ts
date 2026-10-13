@@ -1,3 +1,4 @@
+import { isOrganizationCode } from "../organizations";
 const pages: Record<string, string> = {
   companies: "Kompanije",
   pipeline: "Prodajni levak",
@@ -19,6 +20,11 @@ export function readRoute() {
   };
   return {
     page: pages[path.split("/")[1]] ?? "Kompanije",
+    organization: isOrganizationCode(params.get("organization"))
+      ? (params.get(
+          "organization",
+        ) as import("../organizations").OrganizationCode)
+      : undefined,
     unit: positive(params.get("unit")),
     company: positive(params.get("company")),
   };

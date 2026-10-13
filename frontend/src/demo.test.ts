@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { selectCompanies } from "./demo";
 describe("Prikaz demonstracionih kompanija", () => {
   it("razdvaja poslovne module", () => {
-    for (const unit of ["LUU", "INVEKTA"] as const) {
+    for (const unit of ["LUU", "INVEKTA", "CENOBOTS"] as const) {
       const result = selectCompanies(unit);
       expect(result).toHaveLength(3);
       expect(result.every((c) => c.unit === unit)).toBe(true);

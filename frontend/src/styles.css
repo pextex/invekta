@@ -1101,3 +1101,251 @@ form label {
   background: #fbeceb;
   color: #9a413c;
 }
+
+/* Organization selection and authenticated entry */
+.organization-portal {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #eaf1ff 0%, #f3f6fb 65%);
+  padding: 45px 24px;
+}
+.portal-content {
+  max-width: 1080px;
+  margin: auto;
+}
+.portal-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 700;
+}
+.portal-brand i {
+  font-style: normal;
+  color: #8197b4;
+  font-weight: 400;
+}
+.portal-brand small {
+  flex-basis: 100%;
+  text-align: center;
+  letter-spacing: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 3px;
+}
+.cenobots-wordmark,
+.sidebar-cenobots {
+  color: #a898ef;
+}
+.portal-brand .cenobots-wordmark {
+  color: #7553d6;
+}
+.portal-heading {
+  text-align: center;
+  margin: 42px 0 28px;
+}
+.portal-heading h1 {
+  font-size: 34px;
+  margin: 12px 0 8px;
+}
+.portal-heading p {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+.organization-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.organization-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: left;
+  background: white;
+  color: var(--ink);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 26px #18345008;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.organization-card:hover,
+.organization-card.selected {
+  border-color: var(--org-accent);
+  box-shadow: 0 8px 28px #18345014;
+}
+.organization-card.selected .organization-select-label {
+  color: var(--org-accent);
+}
+.organization-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--org-accent);
+  color: white;
+  font-weight: 800;
+  font-size: 18px;
+}
+.organization-copy strong {
+  display: block;
+  font-size: 21px;
+}
+.organization-copy small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.organization-card > svg {
+  color: var(--org-accent);
+}
+.organization-description,
+.organization-select-label {
+  grid-column: 1/-1;
+}
+.organization-description {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.organization-select-label {
+  font-size: 12px;
+  font-weight: 700;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.portal-login {
+  max-width: 480px;
+  margin: 28px auto 0;
+  padding: 28px;
+}
+.portal-login-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+.portal-login-heading > svg {
+  color: var(--blue);
+  flex-shrink: 0;
+}
+.portal-login-heading h2 {
+  font-size: 20px;
+  letter-spacing: 0;
+}
+.portal-login-heading p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 5px 0 0;
+}
+.portal-login form {
+  display: grid;
+  gap: 18px;
+}
+.portal-demo-entry {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+.portal-demo-entry span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.portal-demo-entry small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.portal-error {
+  max-width: 650px;
+  margin: 24px auto;
+}
+.portal-selection-hint {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  padding: 26px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.portal-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 30px 0 0;
+}
+.portal-loading {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.sidebar-cenobots {
+  display: block;
+  font-size: 14px;
+  margin-top: 4px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+@media (max-width: 690px) {
+  .organization-portal {
+    padding: 28px 15px;
+  }
+  .portal-brand {
+    font-size: 19px;
+    gap: 8px;
+  }
+  .portal-heading {
+    margin: 30px 0 22px;
+  }
+  .portal-heading h1 {
+    font-size: 28px;
+  }
+  .portal-heading p {
+    font-size: 13px;
+  }
+  .organization-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .organization-card {
+    padding: 18px;
+    gap: 12px;
+  }
+  .organization-copy strong {
+    font-size: 19px;
+  }
+  .organization-description {
+    margin-top: 0;
+  }
+  .organization-select-label {
+    padding-top: 8px;
+  }
+  .portal-login {
+    padding: 22px;
+    margin-top: 22px;
+  }
+  .sidebar-cenobots {
+    font-size: 12px;
+  }
+  .portal-selection-hint {
+    font-size: 12px;
+    padding: 20px 0;
+  }
+}

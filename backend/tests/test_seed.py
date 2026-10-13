@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from sqlalchemy import func, select
 from app import seed
-from app.models import Company, LoginSession, User
+from app.models import Company, LoginSession, User, BusinessUnit, Membership
 from app.security import verify_password
 
 
@@ -18,6 +18,17 @@ def test_seed_is_idempotent_and_reset_revokes_sessions(db, data, monkeypatch):
     monkeypatch.setattr(seed.sys, "argv", ["seed"])
     seed.main()
     user = db.scalar(select(User).where(User.username == "demo"))
+    cenobots = db.scalar(select(BusinessUnit).where(BusinessUnit.code == "CENOBOTS"))
+    assert cenobots is not None
+    assert db.get(Membership, (user.id, cenobots.id)).role == "manager"
+    assert (
+        db.scalar(
+            select(func.count())
+            .select_from(Company)
+            .where(Company.business_unit_id == cenobots.id)
+        )
+        == 3
+    )
     initial_hash = user.password_hash
     count = db.scalar(select(func.count()).select_from(Company))
     monkeypatch.setenv("CRM_DEMO_PASSWORD", "second-demo-test-password")

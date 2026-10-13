@@ -46,7 +46,7 @@ export default function Dashboard({
       </div>
       <div className="sales-banner">
         <div>
-          <h2>Jedna platforma. Dva prodajna tima.</h2>
+          <h2>Jedna platforma. Tri prodajna tima.</h2>
           <p>Kompanije, kontakti i prodajne prilike na jednom mestu.</p>
         </div>
         <ArrowUpRight size={40} />

@@ -1,4 +1,9 @@
 import {
+  organizations,
+  organizationName,
+  type OrganizationCode,
+} from "./organizations";
+import {
   loadDemoStages,
   saveDemoStages,
   readDemoPage,
@@ -25,6 +30,11 @@ import { selectCompanies, money, stages, type Unit } from "./demo";
 
 type Scope = Unit | "all";
 const demoTasks = {
+  CENOBOTS: [
+    "Pozvati Demo partnera Alfa",
+    "Pripremiti ponudu za Demo partnera Beta",
+    "Dogovoriti sastanak sa Demo partnerom Gama",
+  ],
   LUU: [
     "Pozvati Demo Hotel Dunav",
     "Proveriti potrebe Demo Studija Javor",
@@ -38,6 +48,9 @@ const demoTasks = {
 };
 export default function App() {
   const [live, setLive] = useState(() => isCrmRoute());
+  const [entry, setEntry] = useState(
+    () => !window.location.hash.startsWith("#demo"),
+  );
   const [unit, setUnit] = useState<Scope>("all");
   const [page, setPage] = useState(readDemoPage);
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
@@ -47,6 +60,7 @@ export default function App() {
   useEffect(() => {
     const onHash = () => {
       setLive(isCrmRoute());
+      setEntry(!window.location.hash.startsWith("#demo"));
       if (!isCrmRoute()) setPage(readDemoPage());
     };
     window.addEventListener("hashchange", onHash);
@@ -76,11 +90,11 @@ export default function App() {
   }
   const drag = useStageDragDrop(all, false, moveDemo);
   const tasks = (
-    unit === "all" ? (["LUU", "INVEKTA"] as Unit[]) : [unit]
+    unit === "all" ? organizations.map((org) => org.code) : [unit]
   ).flatMap((u) => demoTasks[u].map((title) => ({ title, unit: u })));
   const openCount = tasks.filter((t) => !done.includes(t.title)).length;
   function connect() {
-    window.location.hash = "crm";
+    window.location.hash = unit === "all" ? "crm" : "crm?organization=" + unit;
     setLive(true);
   }
   function navigate(next: string) {
@@ -206,9 +220,7 @@ export default function App() {
                 </td>
                 <td>{c.sector}</td>
                 <td>
-                  <span className="tag">
-                    {c.unit === "LUU" ? "LUU" : "Invekta"}
-                  </span>
+                  <span className="tag">{organizationName(c.unit)}</span>
                 </td>
                 <td>
                   {c.owner}
@@ -263,12 +275,19 @@ export default function App() {
       </div>
     </section>
   );
-  if (live)
+  if (live || entry)
     return (
       <Workspace
         onBack={() => {
-          window.location.hash = "demo";
+          window.location.hash = "demo/dashboard";
           setLive(false);
+          setEntry(false);
+        }}
+        onDemo={(code: OrganizationCode) => {
+          setUnit(code);
+          setLive(false);
+          setEntry(false);
+          navigate("Početna tabla");
         }}
       />
     );
@@ -276,7 +295,7 @@ export default function App() {
     page === "Ponude"
       ? {
           icon: FileText,
-          title: "Ponude za LUU i Invektu",
+          title: "Ponude za LUU, Invektu i Cenobots",
           text: "Kreiranje ponuda, obračun stavki i PDF izvoz dolaze u narednoj fazi.",
         }
       : page === "AI asistent"
@@ -303,6 +322,7 @@ export default function App() {
         { value: "all", label: "Sve demo kompanije" },
         { value: "LUU", label: "LUU" },
         { value: "INVEKTA", label: "Invekta" },
+        { value: "CENOBOTS", label: "Cenobots" },
       ]}
       onUnit={(value) => {
         setUnit(value as Scope);
@@ -326,7 +346,7 @@ export default function App() {
               ? "Pregled prodaje, prilika i aktivnosti vašeg tima."
               : page === "Kompanije"
                 ? "Centralna baza kupaca i potencijalnih klijenata."
-                : "LUU × Invekta · zajednički prodajni prostor."}
+                : "LUU × Invekta × Cenobots · zajednički prodajni prostor."}
           </p>
         </div>
         {["Početna tabla", "Kompanije", "Novi klijenti"].includes(page) && (
@@ -339,7 +359,7 @@ export default function App() {
       {page === "Početna tabla" && (
         <div className="sales-banner">
           <div>
-            <h2>Jedna platforma. Dva prodajna tima.</h2>
+            <h2>Jedna platforma. Tri prodajna tima.</h2>
             <p>
               Od pronalaženja klijenata do ponude, ugovora i ponovljene prodaje.
             </p>
@@ -491,7 +511,7 @@ export default function App() {
         </section>
       )}
       <footer>
-        LUU × INVEKTA <span>Razvojna verzija 0.3 · Demo podaci</span>
+        LUU × INVEKTA × CENOBOTS <span>Razvojna verzija 0.4 · Demo podaci</span>
       </footer>
     </Shell>
   );
