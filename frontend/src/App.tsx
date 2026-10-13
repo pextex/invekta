@@ -320,17 +320,7 @@ export default function App() {
           writeDemoPage("Kompanije", unit);
         }
       }}
-      unit={unit}
-      units={[
-        { value: "LUU", label: "LUU" },
-        { value: "INVEKTA", label: "Invekta" },
-        { value: "CENOBOTS", label: "Cenobots" },
-      ]}
-      onUnit={(value) => {
-        setUnit(value as Scope);
-        writeDemoPage(page, value);
-        setSearch("");
-      }}
+      onLogout={() => { window.location.hash = ""; setEntry(true); setSearch(""); }}
       user="Demo korisnik"
       role="Razvojni pregled"
       onConnect={connect}

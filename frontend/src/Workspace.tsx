@@ -15,7 +15,6 @@ import Dashboard from "./features/crm/Dashboard";
 import type { User, Company, CompanyForm } from "./features/crm/types";
 const blank: CompanyForm = { name: "", city: "", sector: "" };
 export default function Workspace({
-  onBack,
   onDemo,
 }: {
   onBack: () => void;
@@ -28,7 +27,7 @@ export default function Workspace({
     [selectedCompany, setSelectedCompany] = useState(() => readRoute().company);
   const [user, setUser] = useState<User | null>(null),
     [checking, setChecking] = useState(true);
-  const [username, setUsername] = useState(""),
+  const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [unit, setUnit] = useState(0);
   const [rows, setRows] = useState<Company[]>([]),
@@ -93,11 +92,11 @@ export default function Workspace({
       setPage(route.page);
       setSelectedCompany(route.company);
       setForm(null);
-      if (user?.units.some((u) => u.id === route.unit)) setUnit(route.unit!);
+      if (user && route.unit && route.unit !== unit) writeRoute(route.page, unit, undefined, true);
     }
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [user]);
+  }, [user, unit]);
   useEffect(() => {
     if (!user || !unit) return;
     const controller = new AbortController();
@@ -126,7 +125,7 @@ export default function Workspace({
       await api("/auth/login", {
         method: "POST",
         body: JSON.stringify({
-          username,
+          email,
           password,
           business_unit_code: loginChoice,
         }),
@@ -210,14 +209,15 @@ export default function Workspace({
       >
         <form onSubmit={login}>
           <label>
-            Korisničko ime
+            Email adresa
             <input
               required
-              maxLength={100}
+              maxLength={254}
+              type="email"
               autoComplete="username"
               disabled={busy}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </label>
           <label>
@@ -280,31 +280,10 @@ export default function Workspace({
             }
           : undefined
       }
-      unit={String(unit)}
-      units={
-        user?.units.map((u) => ({
-          value: String(u.id),
-          label: organizationName(u.code) + " · " + roleName(u.role),
-        })) ?? []
-      }
-      onUnit={
-        user
-          ? (value) => {
-              const id = Number(value);
-              setUnit(id);
-              setSelectedCompany(undefined);
-              setForm(null);
-              setSearch("");
-              setMessage("");
-              writeRoute(page, id);
-            }
-          : undefined
-      }
       user={user?.name ?? "Gost"}
       role={activeRole ? roleName(activeRole) : "Prijavite se za pristup"}
       connected
       busy={busy}
-      onBack={onBack}
       onLogout={user ? logout : undefined}
     >
       <div className="demo-notice">

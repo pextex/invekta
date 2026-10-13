@@ -1,7 +1,7 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from app.db import get_db
@@ -20,6 +20,15 @@ def db():
     engine = create_engine(url)
     with engine.connect() as connection:
         transaction = connection.begin()
+        # Fixture IDs are explicit (101–104). Keep generated IDs outside that
+        # range even when repeated test runs advance nontransactional sequences.
+        for table in ("users", "companies", "business_units"):
+            connection.execute(
+                text(
+                    f"SELECT setval('{table}_id_seq', GREATEST((SELECT last_value FROM {table}_id_seq), 1000, COALESCE((SELECT MAX(id) FROM {table}), 0)), true)"
+                )
+            )
+
         session = Session(
             bind=connection,
             join_transaction_mode="create_savepoint",

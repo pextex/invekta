@@ -1,14 +1,28 @@
 from decimal import Decimal
 from datetime import date, datetime
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class LoginInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     business_unit_code: Literal["LUU", "INVEKTA", "CENOBOTS"] | None = None
-    username: str = Field(min_length=1, max_length=100)
+    email: EmailStr | None = Field(default=None, max_length=254)
+    username: str | None = Field(default=None, min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=256)
+
+    @model_validator(mode="after")
+    def one_identifier(self):
+        if (self.email is None) == (self.username is None):
+            raise ValueError("Unesite email adresu.")
+        return self
 
 
 class CompanyInput(BaseModel):

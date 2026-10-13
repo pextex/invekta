@@ -58,7 +58,7 @@ def login(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    username = data.username.strip().lower()
+    username = str(data.email or data.username).strip().lower()
     now = datetime.now(timezone.utc)
     count = db.scalar(
         select(func.count())
@@ -70,12 +70,16 @@ def login(
     )
     if count >= 5:
         raise HTTPException(429, "Previše pokušaja. Pokušajte ponovo za 15 minuta.")
-    user = db.scalar(select(User).where(User.username == username))
+    user = db.scalar(
+        select(User).where(
+            User.email == username if data.email else User.username == username
+        )
+    )
     valid = verify_password(data.password, user.password_hash if user else DUMMY_HASH)
     if not user or not user.active or not valid:
         db.add(LoginAttempt(username=username))
         db.commit()
-        raise HTTPException(401, "Pogrešno korisničko ime ili lozinka.")
+        raise HTTPException(401, "Pogrešan email ili lozinka.")
     selected_unit = None
     if data.business_unit_code:
         selected_unit = db.scalar(

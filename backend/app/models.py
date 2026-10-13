@@ -30,6 +30,7 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True)
+    email: Mapped[str | None] = mapped_column(String(254), unique=True)
     name: Mapped[str] = mapped_column(String(150))
     password_hash: Mapped[str] = mapped_column(String(300))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -61,7 +62,7 @@ class LoginSession(Base):
 class LoginAttempt(Base):
     __tablename__ = "login_attempts"
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(String(100))
+    username: Mapped[str] = mapped_column(String(254))
     attempted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

@@ -32,9 +32,6 @@ type Props = {
   onPage: (page: string) => void;
   search?: string;
   onSearch?: (value: string) => void;
-  unit?: string;
-  units?: { value: string; label: string }[];
-  onUnit?: (value: string) => void;
   user: string;
   role: string;
   connected?: boolean;
@@ -50,9 +47,6 @@ export default function Shell({
   onPage,
   search = "",
   onSearch,
-  unit,
-  units = [],
-  onUnit,
   user,
   role,
   connected = false,
@@ -130,20 +124,6 @@ export default function Shell({
             />
           </label>
           <div className="header-controls">
-            {onUnit && units.length > 0 && (
-              <select
-                aria-label="Poslovna jedinica"
-                disabled={busy}
-                value={unit}
-                onChange={(e) => onUnit(e.target.value)}
-              >
-                {units.map((u) => (
-                  <option value={u.value} key={u.value}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
-            )}
             <span
               className={
                 connected ? "demo-badge connected-badge" : "demo-badge"

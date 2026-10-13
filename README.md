@@ -6,7 +6,7 @@ Zajednička CRM platforma za LUU, Invektu i Cenobots. **Razvojna verzija 0.4**, 
 
 Odeljak „Specijalizovani moduli“ i posebne stavke za proizvode/usluge uklonjeni su iz menija. Izbor poslovne jedinice LUU/Invekta/Cenobots ostaje u zaglavlju.
 
-Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga i izbor jedinice su u zaglavlju. „Sve demo kompanije“ objedinjeno prikazuje isključivo izmišljene demo zapise; povezani CRM nudi samo jedinice iz korisnikovih ovlašćenja. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
+Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga je u zaglavlju. CRM je vezan za izabranu firmu; nema menija za prebacivanje. Za promenu firme odjavite se, izaberite drugu i ponovo se prijavite. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
 
 ## Šta sada radi
 - Unos, izmena i pretraga kompanija, uz odvojene poslovne jedinice.
@@ -110,3 +110,15 @@ Health: `/api/health`. Readiness proverava bazu i nove tabele iz migracije: `/ap
 Pre stvarne poslovne upotrebe ostaju produkcioni deployment, HTTPS, backup/restore provera, audit, upravljanje nalozima, dodatna zaštita prijave i testovi svih korisničkih tokova. GitHub čuva kod, ne hostuje ovu aplikaciju automatski.
 
 [Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.4](docs/architecture/validation-0.4.md)
+
+## Prijava emailom i lozinkom
+
+Prava prijava zahteva server i PostgreSQL; HTML demo ne autentifikuje korisnike. Email je jedinstven, lozinka se čuva kao PBKDF2 hash, a sesija koristi HttpOnly cookie. Prijava proverava i članstvo u izabranoj firmi. Postojeći nalozi i lozinke ostaju sačuvani; stari API unos `username` ostaje podržan radi kompatibilnosti. Postojećim korisnicima nije izmišljena email adresa.
+
+Posle `alembic upgrade head`, administrator kreira nalog iz direktorijuma `backend`:
+
+```bash
+.venv/bin/python -m app.create_user --email osoba@example.com --name 'Ime Prezime' --unit LUU --role manager
+```
+
+Unesite i potvrdite lozinku u skrivenom terminalskom unosu. Za pristup dodatnoj firmi eksplicitno ponovite argument `--unit`. Postojeći email se odbija bez menjanja naloga. Za automatizaciju koristite sigurnu procesnu promenljivu `CRM_ACCOUNT_PASSWORD`, nikad argument komandne linije ili lozinku u repozitorijumu. Kreiranje naloga ne šalje email i ne dodaje izmišljene klijente.
