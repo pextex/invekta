@@ -30,7 +30,11 @@ def login(client, username="sales"):
 def provider(monkeypatch):
     calls = []
     settings = get_settings().model_copy(
-        update={"crm_ai_api_key": "test-placeholder", "crm_ai_model": "test-model"}
+        update={
+            "crm_ai_enabled": True,
+            "crm_ai_api_key": "test-placeholder",
+            "crm_ai_model": "test-model",
+        }
     )
     monkeypatch.setattr(ai, "get_settings", lambda: settings)
 
@@ -176,11 +180,11 @@ def test_access_context_validation_and_disabled_generation(
         "get_settings",
         lambda: get_settings().model_copy(update={"crm_ai_api_key": ""}),
     )
-    assert client.get(BASE + "/status").json()["configured"] is False
+    assert client.get(BASE + "/status").json()["configured"] is True
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 503
+        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 201
     )
-    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 1
 
 
 def test_generation_budget_failure_and_session_revocation(
@@ -226,7 +230,7 @@ def test_responses_protocol_and_invalid_outputs(monkeypatch):
         ai_provider,
         "get_settings",
         lambda: get_settings().model_copy(
-            update={"crm_ai_api_key": "test-placeholder"}
+            update={"crm_ai_enabled": True, "crm_ai_api_key": "test-placeholder"}
         ),
     )
     captured = []
@@ -283,3 +287,26 @@ def test_responses_protocol_and_invalid_outputs(monkeypatch):
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 504
+
+
+def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
+    settings = get_settings().model_copy(
+        update={"crm_ai_enabled": False, "crm_ai_api_key": "test-placeholder"}
+    )
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Free assistant must never call a paid provider")
+
+    monkeypatch.setattr(ai_provider, "urlopen", forbidden)
+    login(client)
+    assert client.get(BASE + "/status").json()["engine"] == "templates"
+    response = client.post(
+        BASE + "/drafts", json=payload(goal="introduction"), headers=ORIGIN
+    )
+    assert response.status_code == 201
+    assert response.json()["model"] == "local-templates"
+    assert "Test LUU" in response.json()["body"]
+    with pytest.raises(HTTPException) as error:
+        ai_provider.generate({})
+    assert error.value.status_code == 503

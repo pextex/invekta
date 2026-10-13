@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
-from ..ai_provider import generate
+from ..message_templates import generate
 from ..config import get_settings
 from ..db import get_db
 from ..models import (
@@ -27,17 +27,16 @@ class GenerateInput(BaseModel):
     company_id: int = Field(gt=0)
     contact_id: int | None = Field(default=None, gt=0)
     opportunity_id: int | None = Field(default=None, gt=0)
+    goal: Literal["meeting", "introduction", "information"] = "meeting"
     mode: Literal["email", "reply", "follow_up"] = "email"
     tone: Literal["professional", "friendly", "concise"] = "professional"
     language: Literal["sr", "en"] = "sr"
-    instructions: str = Field(min_length=3, max_length=4000)
+    instructions: str = Field(default="", max_length=4000)
     incoming_message: str = Field(default="", max_length=10000)
 
     @model_validator(mode="after")
     def valid_text(self):
-        if not self.instructions.strip() or (
-            self.mode == "reply" and not self.incoming_message.strip()
-        ):
+        if self.mode == "reply" and not self.incoming_message.strip():
             raise ValueError("Unesite instrukcije i poruku na koju odgovarate.")
         return self
 
@@ -88,8 +87,12 @@ def status(
     unit_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)
 ):
     membership(db, user, unit_id)
-    settings = get_settings()
-    return {"configured": bool(settings.crm_ai_api_key), "model": settings.crm_ai_model}
+    return {
+        "configured": True,
+        "disabled": False,
+        "model": "local-templates",
+        "engine": "templates",
+    }
 
 
 @router.get("/drafts")
@@ -146,11 +149,6 @@ def create_draft(
             raise HTTPException(
                 404, "Prodajna prilika nije pronađena u ovoj kompaniji."
             )
-    settings = get_settings()
-    if not settings.crm_ai_api_key:
-        raise HTTPException(
-            503, "AI servis nije povezan. Administrator treba da podesi CRM_AI_API_KEY."
-        )
     context = {
         "sender": {
             "name": user.name,
@@ -172,6 +170,7 @@ def create_draft(
         }
         if opportunity
         else None,
+        "goal": data.goal,
         "mode": data.mode,
         "tone": data.tone,
         "language": data.language,
@@ -210,7 +209,7 @@ def create_draft(
         subject=result.subject,
         body=result.body,
         recipient=recipient,
-        model=settings.crm_ai_model,
+        model="local-templates",
     )
     db.add(draft)
     db.commit()

@@ -39,6 +39,8 @@ export default function AiAssistant({
     [language, setLanguage] = useState("sr"),
     [instructions, setInstructions] = useState(""),
     [incoming, setIncoming] = useState("");
+  const [goal, setGoal] = useState("meeting");
+  const [disabled, setDisabled] = useState(false);
   const [configured, setConfigured] = useState(false),
     [checking, setChecking] = useState(!demo),
     [contextLoading, setContextLoading] = useState(false),
@@ -58,10 +60,10 @@ export default function AiAssistant({
     if (demo) return;
     const controller = new AbortController();
     setChecking(true);
-    api<{ configured: boolean }>(`/units/${unit}/ai/status`, {
+    api<{ configured: boolean; disabled?: boolean }>(`/units/${unit}/ai/status`, {
       signal: controller.signal,
     })
-      .then((data) => setConfigured(data.configured))
+      .then((data) => { setConfigured(data.configured); setDisabled(Boolean(data.disabled)); })
       .catch((e) => {
         if (!controller.signal.aborted) setError(errorText(e));
       })
@@ -135,6 +137,7 @@ export default function AiAssistant({
           company_id: company,
           contact_id: contact || null,
           opportunity_id: opportunity || null,
+          goal,
           mode,
           tone,
           language,
@@ -148,7 +151,7 @@ export default function AiAssistant({
       setOffset(0);
       setReload((v) => v + 1);
       setMessage(
-        "AI nacrt je pripremljen i sačuvan. Pregledajte ga pre upotrebe.",
+        "Nacrt iz šablona je pripremljen i sačuvan. Pregledajte ga pre upotrebe.",
       );
     } catch (e) {
       setError(errorText(e));
@@ -212,7 +215,7 @@ export default function AiAssistant({
       <div className="page-heading">
         <div>
           <h1>AI asistent</h1>
-          <p>Pripremite email, odgovor ili follow-up za izabranog klijenta.</p>
+          <p>Besplatni šabloni za emailove, odgovore i follow-up poruke.</p>
         </div>
         <Sparkles size={30} />
       </div>
@@ -229,18 +232,19 @@ export default function AiAssistant({
       {demo ? (
         <p className="demo-notice">
           Ovo je pregled AI asistenta. Generisanje i čuvanje nacrta rade u
-          povezanom CRM-u uz podešen AI servis.
+          povezanom CRM-u bez API ključa.
         </p>
       ) : (
         !checking &&
         !configured && (
           <p className="demo-notice">
-            AI servis još nije povezan. Administrator treba da podesi AI ključ.
+            {disabled ? "AI generisanje je isključeno. Nema poziva AI servisu." : "AI servis još nije povezan. Administrator treba da podesi AI ključ."}
             Sačuvani nacrti ostaju dostupni za pregled i izmene.
           </p>
         )
       )}
-      <div className="ai-grid">
+      <p className="demo-notice">Besplatni asistent radi sa šablonima u CRM-u, bez API ključa i naplate po poruci. Ne tumači automatski poruku klijenta: odgovore i dodatne instrukcije dopunite u nacrtu.</p>
+    <div className="ai-grid">
         <section className="panel">
           <h2>Priprema poruke</h2>
           <form onSubmit={generate}>
@@ -353,11 +357,10 @@ export default function AiAssistant({
                   />
                 </label>
               )}
+              <label>Cilj poruke<select aria-label="Cilj poruke" value={goal} onChange={e => setGoal(e.target.value)}><option value="meeting">Zakazivanje sastanka</option><option value="introduction">Prvi kontakt i predstavljanje</option><option value="information">Traženje dodatnih informacija</option></select></label>
               <label>
-                Šta želite da poruka postigne?
+                Napomene za ručnu dopunu (opciono)
                 <textarea
-                  required
-                  minLength={3}
                   maxLength={4000}
                   rows={5}
                   value={instructions}
@@ -366,8 +369,7 @@ export default function AiAssistant({
                 />
               </label>
               <p className="panel-note">
-                AI dobija instrukcije i podatke izabrane kompanije, kontakta i
-                prilike. Pregledajte činjenice i dopunite mesta označena sa
+                Šablon koristi izabranu kompaniju, ime kontakta i naziv prilike. Pregledajte činjenice i dopunite mesta označena sa
                 [dopuniti].
               </p>
               <button
@@ -381,7 +383,7 @@ export default function AiAssistant({
                   dirty
                 }
               >
-                {busy ? "Pripremanje nacrta…" : "Pripremi AI nacrt"}
+                {busy ? "Pripremanje nacrta…" : "Pripremi besplatan nacrt"}
                 <Sparkles size={16} />
               </button>
               {dirty && (

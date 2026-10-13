@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     database_url: str
     crm_allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     crm_cookie_secure: bool = True
+    crm_ai_enabled: bool = False
     crm_ai_api_key: str = ""
     crm_ai_model: str = "gpt-4.1-mini"
 

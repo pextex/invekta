@@ -26,6 +26,10 @@ Ne dodaj komentare izvan nacrta."""
 
 def generate(context: dict) -> GeneratedDraft:
     settings = get_settings()
+    if not settings.crm_ai_enabled:
+        raise HTTPException(
+            503, "AI generisanje je isključeno. Nema poziva AI servisu."
+        )
     if not settings.crm_ai_api_key:
         raise HTTPException(
             503, "AI servis nije povezan. Administrator treba da podesi CRM_AI_API_KEY."
