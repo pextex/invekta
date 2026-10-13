@@ -335,6 +335,8 @@ export default function Workspace({
         </>
       ) : page === "Početna tabla" || page === "Izveštaji" ? (
         <Dashboard
+          userName={user.name}
+          onNavigate={navigate}
           key={unit}
           unit={unit}
           onPipeline={() => navigate("Prodajni levak")}

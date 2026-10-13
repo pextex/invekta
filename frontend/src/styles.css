@@ -1385,3 +1385,14 @@ form label {
 .ai-fields textarea:focus { outline-color: var(--blue); }
 .ai-fields .form-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 @media (max-width: 1100px) { .ai-grid { grid-template-columns: 1fr; } }
+
+.daily-welcome { padding: 25px; background: var(--nav); color: white; border-radius: 16px; margin-bottom: 24px; }
+.daily-welcome h2 { font-size: 27px; margin: 9px 0; }
+.daily-welcome p { color: #e1e7ef; margin: 7px 0 16px; }
+.daily-date { display: flex; align-items: center; gap: 9px; color: #dce5ee; text-transform: capitalize; }
+.daily-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 20px 0 12px; }
+.daily-actions button { text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #ffffff38; background: #ffffff10; color: white; padding: 14px; border-radius: 10px; }
+.daily-actions button:hover { background: #ffffff22; }
+.daily-actions button svg { flex-shrink: 0; }
+.daily-welcome small { color: #dce5ee; }
+@media(max-width:900px) { .daily-actions { grid-template-columns: 1fr; } .daily-welcome { padding: 20px; } .daily-welcome h2 { font-size: 23px; } }

@@ -1,3 +1,4 @@
+import DailyWelcome, { dailyRecommendations } from "./components/DailyWelcome";
 import AiAssistant from "./features/crm/AiAssistant";
 import {
   organizations,
@@ -356,15 +357,19 @@ export default function App() {
         </div>
       )}
       {page === "Početna tabla" && (
-        <div className="sales-banner">
-          <div>
-            <h2>Jedna platforma. Tri prodajna tima.</h2>
-            <p>
-              Od pronalaženja klijenata do ponude, ugovora i ponovljene prodaje.
-            </p>
-          </div>
-          <ArrowUpRight size={40} />
-        </div>
+        <DailyWelcome
+          name="Demo korisnik"
+          recommendations={dailyRecommendations(
+            Object.fromEntries(
+              stages.map((stage) => [
+                stage,
+                all.filter((c) => c.stage === stage).length,
+              ]),
+            ),
+            all.length,
+          )}
+          onNavigate={navigate}
+        />
       )}
       <div className="demo-notice">
         Demo prikaz — svi klijenti i iznosi su izmišljeni. Za unos i trajno
@@ -503,6 +508,7 @@ export default function App() {
       )}
       {page === "AI asistent" && (
         <AiAssistant
+          key={unit}
           unit={0}
           organization={organizationName(unit)}
           demo

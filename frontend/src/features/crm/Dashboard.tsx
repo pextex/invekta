@@ -1,3 +1,6 @@
+import DailyWelcome, {
+  dailyRecommendations,
+} from "../../components/DailyWelcome";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { api, errorText } from "../../lib/api";
@@ -5,9 +8,13 @@ import { formatAmount, opportunityStages, type Summary } from "./types";
 export default function Dashboard({
   unit,
   onPipeline,
+  userName,
+  onNavigate,
 }: {
   unit: number;
   onPipeline: () => void;
+  userName: string;
+  onNavigate: (page: string) => void;
 }) {
   const [data, setData] = useState<Summary | null>(null),
     [error, setError] = useState(""),
@@ -44,13 +51,14 @@ export default function Dashboard({
           Osveži
         </button>
       </div>
-      <div className="sales-banner">
-        <div>
-          <h2>Jedna platforma. Tri prodajna tima.</h2>
-          <p>Kompanije, kontakti i prodajne prilike na jednom mestu.</p>
-        </div>
-        <ArrowUpRight size={40} />
-      </div>
+      <DailyWelcome
+        name={userName}
+        recommendations={
+          data ? dailyRecommendations(data.stages, data.company_count) : []
+        }
+        onNavigate={onNavigate}
+        loading={loading}
+      />
       {error && (
         <p className="error-message" role="alert">
           {error}
