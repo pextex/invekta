@@ -1,3 +1,4 @@
+import AiAssistant from "./features/crm/AiAssistant";
 import UserManagement from "./features/crm/UserManagement";
 import OrganizationPortal from "./components/OrganizationPortal";
 import {
@@ -93,7 +94,8 @@ export default function Workspace({
       setPage(route.page);
       setSelectedCompany(route.company);
       setForm(null);
-      if (user && route.unit && route.unit !== unit) writeRoute(route.page, unit, undefined, true);
+      if (user && route.unit && route.unit !== unit)
+        writeRoute(route.page, unit, undefined, true);
     }
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -264,7 +266,11 @@ export default function Workspace({
     );
   return (
     <Shell
-      organization={user?.units.find((u) => u.id === unit)?.code as OrganizationCode | undefined}
+      organization={
+        user?.units.find((u) => u.id === unit)?.code as
+          | OrganizationCode
+          | undefined
+      }
       page={user ? page : "Prijava"}
       onPage={(next) => {
         if (user) navigate(next);
@@ -333,6 +339,8 @@ export default function Workspace({
           unit={unit}
           onPipeline={() => navigate("Prodajni levak")}
         />
+      ) : page === "AI asistent" ? (
+        <AiAssistant key={unit} unit={unit} companies={rows} />
       ) : page === "Podešavanja" && user.is_platform_admin ? (
         <UserManagement />
       ) : !supported ? (

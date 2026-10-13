@@ -36,7 +36,7 @@ Složeni FK na (company_id, business_unit_id) obezbeđuju vezu kontakta i prilik
 
 Migracija verzije 0.3 prenosi stara company.stage/potential_value polja u jednu početnu priliku. Vrednost je NUMERIC(14,2). Stara polja su sačuvana radi kompatibilnosti; nisu izvor za nove KPI. Ne pokretati downgrade na poslovnoj bazi: uklonio bi nove tabele i njihove podatke. Provera downgrade-a rađena je samo nad izolovanom test šemom.
 
-Anonimni demo i njegovi zadaci ostaju izdvojeni. Povezani dashboard koristi podatke razvojne baze, uključujući označene demo zapise. Produkcioni hosting, puna audit evidencija, UI administracija naloga, trajni zadaci i AI nisu pripremljeni za poslovnu upotrebu.
+Anonimni demo i njegovi zadaci ostaju izdvojeni. Povezani dashboard koristi podatke razvojne baze, uključujući označene demo zapise. Dodati su UI administracija naloga i AI nacrti poruka. AI čeka povezivanje ključa; produkcioni hosting, puna audit evidencija i trajni zadaci ostaju u planu.
 
 ## Izbor kompanije pri prijavi
 Početni ekran prikazuje tri organizacije: LUU, Invekta i Cenobots. Izbor prosleđuje kod jedinice backend-u, koji proverava aktivnog korisnika i membership pre nove sesije. Sama kartica kompanije nije pravo pristupa. Registracija jedinica kroz migraciju ne menja korisnička prava; samo eksplicitan razvojni seed daje demo nalogu pristup svim trima.

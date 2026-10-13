@@ -1,3 +1,4 @@
+import AiAssistant from "./features/crm/AiAssistant";
 import {
   organizations,
   organizationName,
@@ -51,7 +52,12 @@ export default function App() {
   const [entry, setEntry] = useState(
     () => !window.location.hash.startsWith("#demo"),
   );
-  const [unit, setUnit] = useState<Scope>(() => { const code = new URLSearchParams(window.location.hash.split("?")[1]).get("organization"); return organizations.find((org) => org.code === code)?.code ?? "LUU"; });
+  const [unit, setUnit] = useState<Scope>(() => {
+    const code = new URLSearchParams(window.location.hash.split("?")[1]).get(
+      "organization",
+    );
+    return organizations.find((org) => org.code === code)?.code ?? "LUU";
+  });
   const [page, setPage] = useState(readDemoPage);
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
   const [stageMessage, setStageMessage] = useState("");
@@ -300,13 +306,7 @@ export default function App() {
           title: "Ponude za LUU, Invektu i Cenobots",
           text: "Kreiranje ponuda, obračun stavki i PDF izvoz dolaze u narednoj fazi.",
         }
-      : page === "AI asistent"
-        ? {
-            icon: Sparkles,
-            title: "AI Sales Assistant",
-            text: "Pretraga leadova, proverljivi izvori i predlozi poruka dolaze kasnije. U ovoj verziji nema AI poziva niti slanja poruka.",
-          }
-        : null;
+      : null;
   return (
     <Shell
       organization={unit === "all" ? undefined : unit}
@@ -320,35 +320,41 @@ export default function App() {
           writeDemoPage("Kompanije", unit);
         }
       }}
-      onLogout={() => { window.location.hash = ""; setEntry(true); setSearch(""); }}
+      onLogout={() => {
+        window.location.hash = "";
+        setEntry(true);
+        setSearch("");
+      }}
       user="Demo korisnik"
       role="Razvojni pregled"
       onConnect={connect}
     >
-      <div className="page-heading">
-        <div>
-          <h1>
-            {page === "Početna tabla"
-              ? "Dobrodošli u vaš CRM!"
-              : page === "Kompanije"
-                ? "Kompanije i kontakti"
-                : page}
-          </h1>
-          <p>
-            {page === "Početna tabla"
-              ? "Pregled prodaje, prilika i aktivnosti vašeg tima."
-              : page === "Kompanije"
-                ? "Centralna baza kupaca i potencijalnih klijenata."
-                : "LUU × Invekta × Cenobots · zajednički prodajni prostor."}
-          </p>
+      {page !== "AI asistent" && (
+        <div className="page-heading">
+          <div>
+            <h1>
+              {page === "Početna tabla"
+                ? "Dobrodošli u vaš CRM!"
+                : page === "Kompanije"
+                  ? "Kompanije i kontakti"
+                  : page}
+            </h1>
+            <p>
+              {page === "Početna tabla"
+                ? "Pregled prodaje, prilika i aktivnosti vašeg tima."
+                : page === "Kompanije"
+                  ? "Centralna baza kupaca i potencijalnih klijenata."
+                  : "LUU × Invekta × Cenobots · zajednički prodajni prostor."}
+            </p>
+          </div>
+          {["Početna tabla", "Kompanije", "Novi klijenti"].includes(page) && (
+            <button className="primary-button" onClick={connect}>
+              <Plus size={16} />
+              {page === "Početna tabla" ? "Novi klijent" : "Dodaj kompaniju"}
+            </button>
+          )}
         </div>
-        {["Početna tabla", "Kompanije", "Novi klijenti"].includes(page) && (
-          <button className="primary-button" onClick={connect}>
-            <Plus size={16} />
-            {page === "Početna tabla" ? "Novi klijent" : "Dodaj kompaniju"}
-          </button>
-        )}
-      </div>
+      )}
       {page === "Početna tabla" && (
         <div className="sales-banner">
           <div>
@@ -494,6 +500,21 @@ export default function App() {
             </section>
           </div>
         </>
+      )}
+      {page === "AI asistent" && (
+        <AiAssistant
+          unit={0}
+          demo
+          companies={all.map((c) => ({
+            id: c.id,
+            name: c.name,
+            city: c.city,
+            sector: c.sector,
+            business_unit_id: 0,
+            owner_id: 0,
+            is_demo: true,
+          }))}
+        />
       )}
       {placeholder && (
         <section className="panel placeholder">

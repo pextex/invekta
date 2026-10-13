@@ -19,10 +19,10 @@ Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, 
 - Backend i baza sprečavaju povezivanje kontakata/prilika sa kompanijom iz druge jedinice. Komercijalista vidi podatke svojih kompanija; menadžer i administrator vide podatke u svojim jedinicama.
 - Eksplicitan demo seed čuva postojeće zapise i lozinke. Demo kontakti i prilike su označeni; svi razvojni podaci služe samo testiranju.
 
-Ponude, trajni zadaci, aktivnosti, raspodela kompanija, upravljanje nalozima kroz UI, potpuna audit evidencija i AI još nisu implementirani. Istorija faza je trenutno jedina poslovna istorija promena. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
+Ponude, trajni zadaci, aktivnosti, raspodela kompanija i potpuna audit evidencija još nisu implementirani. Upravljanje nalozima i priprema AI nacrta su dodati; AI zahteva povezivanje servisa. Istorija faza je trenutno jedina poslovna istorija promena. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
 
 ## Kako koristiti povezani CRM
-1. Na početnom ekranu izaberite **LUU**, **Invekta** ili **Cenobots**, pa unesite korisničko ime i lozinku. Server proverava pristup izabranoj jedinici pre kreiranja nove sesije.
+1. Na početnom ekranu izaberite **LUU**, **Invekta** ili **Cenobots**, pa unesite email i lozinku. Server proverava pristup izabranoj jedinici pre kreiranja nove sesije.
 2. U **Kompanije** dodajte kompaniju ili kliknite **Otvori profil →**.
 3. U profilu, kroz **Kontakt osobe**, unesite kontakt i sačuvajte ga.
 4. Otvorite karticu **Prodajne prilike** i kreirajte jednu ili više prilika.
@@ -142,3 +142,15 @@ Novi nalog ostaje neaktivan, sa pristupom svim trima firmama i nepoznatom nasumi
 ```
 
 Za bezbednu automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz podešavanja okruženja; skripta čita stvarnu procesnu vrednost. Ne postavljati lozinku kao argument, u chat ili u Git. Komanda je eksplicitna: ne izvršava se tokom pokretanja servera. Ponovni poziv bez `--activate` čuva postojeću lozinku i status naloga. Podaci naloga ostaju u PostgreSQL bazi, ne u GitHub-u; za javnu prijavu je i dalje potreban hosting servera i baze.
+
+## AI asistent za nacrte poruka
+
+U svakom povezanom CRM-u otvorite **AI asistent**, izaberite klijenta i opciono kontakt/prodajnu priliku. Izaberite novi email, odgovor ili follow-up, ton i srpski/engleski jezik. Za odgovor nalepite primljenu poruku. Navedite cilj poruke i kliknite **Pripremi AI nacrt**. Nacrt se čuva u bazi; predmet, primalac i tekst su izmenjivi. **Kopiraj nacrt** kopira tekst za ručno slanje iz email programa. Ova funkcija ne šalje poruke i nema vezu sa vašim email sandučetom.
+
+Server koristi OpenAI Responses API na `https://api.openai.com/v1/responses`, podrazumevani model `gpt-4.1-mini` i strukturirani JSON odgovor. Podatke čine samo izabrana kompanija, ime/pozicija izabranog kontakta, izabrana prilika, instrukcije i dolazna poruka. Adresa kontakta služi za polje primaoca i ne šalje se modelu. API zahtev koristi `store=false`; to samo po sebi nije obećanje o potpunom odsustvu zadržavanja podataka kod pružaoca usluge. Pristup se proverava pre poziva i ponovo pre čuvanja nakon poziva. Nacrt ostaje privatni zapis autora u firmi, uz pravila vidljivosti klijenta.
+
+Podesite `CRM_AI_API_KEY` kroz bezbedna podešavanja okruženja/servera i dozvolite `api.openai.com`. U ovom cloud okruženju ključ može da se isporuči kroz proxy binding namenjen isključivo tom domenu. Ne koristiti rezervisano ime `OPENAI_API_KEY` za ovu deklaraciju. `CRM_AI_MODEL` je opciona obična promenljiva. Restartujte backend posle izmene konfiguracije. Bez ključa prikazuje se stanje da servis nije povezan; nema lažnog generisanja ili zamenskih tekstova.
+
+Najviše 20 pokušaja generisanja po korisniku u 15 minuta, ukupno kroz njegove firme; neuspešan poziv servisu takođe troši pokušaj. Zahtev ima timeout 45 sekundi. Neispravan, odbijen ili nepotpun AI odgovor ne čuva nacrt. Čuvanje ručnih izmena koristi verziju i vraća konflikt ako je drugi prozor već izmenio zapis. Proverite činjenice i mesta `[dopuniti]` pre slanja. Za izbor kompanije učitava se najviše 200 zapisa i za izabranu kompaniju najviše 100 prilika.
+
+Samostalni HTML prikazuje ekran asistenta, ali ne generiše i ne čuva nacrte. Testovi pokrivaju protokol sa simuliranim AI odgovorima, granice pristupa, kontekst, rate limit, greške i upis/izmenu nacrta; poziv stvarnom OpenAI servisu zahteva podešen ključ i proveru nakon povezivanja.

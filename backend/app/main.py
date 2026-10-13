@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .access import visible_query
 from .api.sales import router as sales_router
 from .api.users import router as users_router
+from .api.ai import router as ai_router
 from .config import get_settings
 from .db import get_db
 from .models import BusinessUnit, Company, LoginAttempt, LoginSession, Membership, User
@@ -27,6 +28,7 @@ app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
 app.include_router(sales_router)
 app.include_router(users_router)
+app.include_router(ai_router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -60,6 +62,9 @@ def ready(db: Session = Depends(get_db)):
             text(
                 "SELECT 1 FROM opportunities LEFT JOIN contacts ON FALSE LEFT JOIN opportunity_stage_changes ON FALSE LIMIT 1"
             )
+        )
+        db.execute(
+            text("SELECT 1 FROM ai_drafts LEFT JOIN ai_attempts ON FALSE LIMIT 1")
         )
     except SQLAlchemyError:
         raise HTTPException(503, "Baza ili migracije nisu spremne.")

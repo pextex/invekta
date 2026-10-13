@@ -196,3 +196,45 @@ class OpportunityStageChange(Base):
     changed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class AiDraft(Base):
+    __tablename__ = "ai_drafts"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "business_unit_id"],
+            ["companies.id", "companies.business_unit_id"],
+        ),
+        ForeignKeyConstraint(
+            ["actor_id", "business_unit_id"],
+            ["memberships.user_id", "memberships.business_unit_id"],
+        ),
+        CheckConstraint("version >= 1", name="positive_ai_draft_version"),
+        Index("ix_ai_draft_actor_unit", "actor_id", "business_unit_id"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(Integer)
+    company_id: Mapped[int] = mapped_column(Integer)
+    actor_id: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[str] = mapped_column(String(20))
+    subject: Mapped[str] = mapped_column(String(200))
+    body: Mapped[str] = mapped_column(Text)
+    recipient: Mapped[str | None] = mapped_column(String(254))
+    model: Mapped[str] = mapped_column(String(100))
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AiAttempt(Base):
+    __tablename__ = "ai_attempts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    __table_args__ = (Index("ix_ai_attempt_actor_time", "actor_id", "created_at"),)

@@ -1375,3 +1375,13 @@ form label {
 .user-access-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 9px 0; }
 .user-access-row label, .user-active { display: flex; align-items: center; gap: 10px; }
 .user-access input, .user-active input { width: auto; }
+
+.ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.ai-grid h2 { font-size: 21px; margin-bottom: 20px; }
+.ai-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
+.ai-fields label { display: grid; gap: 6px; font-weight: 600; }
+.ai-fields select { width: 100%; min-width: 0; }
+.ai-fields textarea { width: 100%; min-width: 0; font: inherit; color: var(--ink); background: white; border: 1px solid var(--border); padding: 12px; border-radius: 9px; resize: vertical; }
+.ai-fields textarea:focus { outline-color: var(--blue); }
+.ai-fields .form-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+@media (max-width: 1100px) { .ai-grid { grid-template-columns: 1fr; } }

@@ -9,3 +9,5 @@ Demo je izvezen iz proverenog Vite build-a; pri promenama aplikacije potrebno je
 U **Prodajni levak** prevucite karticu u drugu kolonu ili izaberite status na njoj. Na telefonu koristite izbor statusa. Promene ostaju u istom fajlu/browseru kada je lokalno čuvanje dostupno, i nisu prenete u CRM bazu. Demo dashboard odmah računa nove otvorene prilike.
 
 Po otvaranju izaberite LUU, Invekta ili Cenobots, pa kliknite **Pogledaj demo bez prijave**. Stvarna prijava ne radi iz samostalnog HTML fajla. Cenobots partneri su izmišljeni i jasno označeni, kao i podaci ostalih jedinica.
+
+AI asistent je vidljiv u demo meniju: izaberite vrstu, ton i jezik poruke. Dugme za generisanje je onemogućeno u demou. Stvarni nacrti, njihove izmene i istorija dostupni su samo u povezanom CRM-u; potreban je podešen AI servis.
