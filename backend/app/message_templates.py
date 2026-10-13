@@ -1,104 +1,99 @@
-"""Local message templates: no model, HTTP requests or API billing."""
+"""Professional local templates, shared wording with the offline frontend."""
 
+import json
+import re
+from pathlib import Path
 from .ai_provider import GeneratedDraft
+
+CATALOG = json.loads(
+    (Path(__file__).resolve().parents[2] / "shared/message_catalog.json").read_text()
+)
 
 
 def generate(context: dict) -> GeneratedDraft:
-    company = context["company"]["name"]
+    en = context.get("language") == "en"
+    catalog = CATALOG["en" if en else "sr"]
+    personal = context.get("personalization") or {}
     sender = context["sender"]
     contact = context.get("contact") or {}
     opportunity = context.get("opportunity") or {}
-    name = contact.get("name")
-    title = opportunity.get("title")
+    topic = personal.get("topic") or opportunity.get("title") or catalog["defaultTopic"]
+    values = {
+        "company": context["company"]["name"],
+        "organization": sender["organization"],
+        "topic": topic,
+        "offering": personal.get("offering", ""),
+        "need": personal.get("need", ""),
+        "meetingTime": personal.get("meeting_time", ""),
+        "details": context.get("instructions", "").strip(),
+    }
+
+    def render(text):
+        return re.sub(r"\{(\w+)\}", lambda match: values.get(match[1], ""), text)
+
     goal = context.get("goal", "meeting")
     mode = context["mode"]
-    english = context["language"] == "en"
-    tone = context["tone"]
-    if english:
-        greeting = (
-            f"Hello {name},"
-            if name and tone == "friendly"
-            else f"Dear {name},"
-            if name
-            else "Hello,"
-            if tone == "friendly"
-            else "Dear Sir or Madam,"
-        )
-        subjects = {
-            "meeting": f"Meeting proposal · {company}",
-            "introduction": f"Introduction · {sender['organization']}",
-            "information": f"Additional information · {company}",
-        }
-        messages = {
-            "meeting": "Would you be available for a short meeting? Please suggest a convenient time so we can discuss your needs and next steps.",
-            "introduction": f"I am contacting you on behalf of {sender['organization']}. We would like to learn more about your needs and explore opportunities to work together.",
-            "information": "Could you share more information about your requirements, scope and preferred timeline? This will help us prepare a relevant proposal.",
-        }
-        subject = subjects[goal]
-        main = messages[goal]
-        if mode == "reply":
-            subject = f"Response to your inquiry · {company}"
-            main = (
-                "Thank you for your message.\n\n[Add answers to the client's questions here.]\n\n"
-                + main
-            )
-        elif mode == "follow_up":
-            subject = f"Next steps · {company}"
-            main = (
-                "I would like to check whether there are any updates or additional questions regarding our potential cooperation.\n\n"
-                + main
-            )
-        if title:
-            main += f"\n\nRegarding: {title}."
-        closing = "Best regards," if tone == "friendly" else "Kind regards,"
+    concise = context.get("tone") == "concise"
+    if mode == "reply":
+        subject = render(catalog["replySubject"])
+        paragraphs = [
+            catalog["replyOpening"],
+            personal.get("reply_text") or catalog["replyPlaceholder"],
+        ]
+    elif mode == "follow_up":
+        subject = render(catalog["followSubject"])
+        paragraphs = [catalog["followOpening"]]
     else:
-        greeting = (
-            f"Zdravo {name},"
-            if name and tone == "friendly"
-            else f"Poštovani/a {name},"
-            if name
-            else "Zdravo,"
-            if tone == "friendly"
-            else "Poštovani,"
-        )
-        subjects = {
-            "meeting": f"Predlog sastanka · {company}",
-            "introduction": f"Predstavljanje · {sender['organization']}",
-            "information": f"Dodatne informacije · {company}",
-        }
-        messages = {
-            "meeting": "Da li biste bili dostupni za kratak sastanak? Molim Vas da predložite termin koji Vam odgovara kako bismo razgovarali o Vašim potrebama i narednim koracima.",
-            "introduction": f"Javljam Vam se u ime kompanije {sender['organization']}. Želeli bismo da saznamo više o Vašim potrebama i razmotrimo mogućnosti za saradnju.",
-            "information": "Molim Vas da nam pošaljete više informacija o Vašim potrebama, obimu i željenim rokovima kako bismo pripremili odgovarajući predlog.",
-        }
-        subject = subjects[goal]
-        main = messages[goal]
-        if mode == "reply":
-            subject = f"Odgovor na upit · {company}"
-            main = (
-                "Hvala Vam na poruci.\n\n[Ovde dopunite odgovore na pitanja klijenta.]\n\n"
-                + main
-            )
-        elif mode == "follow_up":
-            subject = f"Naredni koraci · {company}"
-            main = (
-                "Želeo bih da proverim da li imate novih informacija ili dodatnih pitanja u vezi sa mogućom saradnjom.\n\n"
-                + main
-            )
-        if title:
-            main += f"\n\nTema: {title}."
-        closing = "Srdačan pozdrav," if tone == "friendly" else "S poštovanjem,"
-    if tone == "concise":
-        main = (
-            main.split("\n\n")[0]
-            if mode != "reply"
-            else (
-                "Thank you for your message.\n\n[Add your reply here.]"
-                if english
-                else "Hvala na poruci.\n\n[Dopunite odgovor ovde.]"
-            )
-        )
-    return GeneratedDraft(
-        subject=subject[:200],
-        body=f"{greeting}\n\n{main}\n\n{closing}\n{sender['name']}\n{sender['organization']}",
+        subject = render(catalog["subjects"][goal])
+        opening = {
+            "meeting": "meetingOpening",
+            "information": "informationOpening",
+            "proposal": "proposalOpening",
+        }.get(goal, "opening")
+        paragraphs = [catalog[opening]]
+    for field, key in [
+        ("offering", "offer"),
+        ("need", "needs"),
+        ("details", "details"),
+    ]:
+        if values[field]:
+            paragraphs.append(catalog[key])
+    cta = (
+        "meetingCta"
+        if goal == "meeting" and values["meetingTime"]
+        else "meetingCtaDefault"
+        if goal == "meeting"
+        else goal + "Cta"
     )
+    paragraphs.append(catalog[cta])
+    if not concise:
+        paragraphs.append(catalog["thanks"])
+    greeting = personal.get("greeting") or (
+        f"Dear {contact['name']},"
+        if en and contact.get("name")
+        else "Dear team,"
+        if en
+        else "Poštovani,"
+    )
+    closing = (
+        catalog["friendlyClosing"]
+        if context.get("tone") == "friendly"
+        else catalog["closing"]
+    )
+    signature = [
+        personal.get("sender_name") or sender.get("name") or catalog["namePlaceholder"],
+        personal.get("sender_title"),
+        sender["organization"],
+        personal.get("sender_phone"),
+        personal.get("sender_email"),
+    ]
+    body = (
+        greeting
+        + "\n\n"
+        + "\n\n".join(render(p) for p in paragraphs)
+        + "\n\n"
+        + closing
+        + "\n"
+        + "\n".join(s for s in signature if s)
+    )
+    return GeneratedDraft(subject=subject[:200], body=body)

@@ -302,11 +302,13 @@ def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
     login(client)
     assert client.get(BASE + "/status").json()["engine"] == "templates"
     response = client.post(
-        BASE + "/drafts", json=payload(goal="introduction"), headers=ORIGIN
+        BASE + "/drafts", json=payload(goal="introduction", personalization={"offering":"održavanje poslovnih prostora", "sender_name":"Test Sender"}), headers=ORIGIN
     )
     assert response.status_code == 201
     assert response.json()["model"] == "local-templates"
     assert "Test LUU" in response.json()["body"]
+    assert "održavanje poslovnih prostora" in response.json()["body"]
+    assert "Test Sender" in response.json()["body"]
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 503

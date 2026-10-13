@@ -1,4 +1,28 @@
-// Offline templates use no API, credentials or language model.
+import catalog from "../../../shared/message_catalog.json";
+export type Personalization = {
+  topic: string;
+  offering: string;
+  need: string;
+  meeting_time: string;
+  reply_text: string;
+  greeting: string;
+  sender_name: string;
+  sender_title: string;
+  sender_phone: string;
+  sender_email: string;
+};
+export const blankPersonalization = (): Personalization => ({
+  topic: "",
+  offering: "",
+  need: "",
+  meeting_time: "",
+  reply_text: "",
+  greeting: "",
+  sender_name: "",
+  sender_title: "",
+  sender_phone: "",
+  sender_email: "",
+});
 export function prepareLocalMessage(input: {
   company: string;
   organization: string;
@@ -6,61 +30,72 @@ export function prepareLocalMessage(input: {
   goal: string;
   tone: string;
   language: string;
+  instructions?: string;
+  personalization?: Personalization;
 }) {
-  const en = input.language === "en";
-  const subjectByGoal: Record<string, string> = en
-    ? {
-        meeting: `Meeting proposal · ${input.company}`,
-        introduction: `Introduction · ${input.organization}`,
-        information: `Additional information · ${input.company}`,
-      }
-    : {
-        meeting: `Predlog sastanka · ${input.company}`,
-        introduction: `Predstavljanje · ${input.organization}`,
-        information: `Dodatne informacije · ${input.company}`,
-      };
-  const bodyByGoal: Record<string, string> = en
-    ? {
-        meeting:
-          "Would you be available for a short meeting? Please suggest a convenient time so we can discuss your needs and next steps.",
-        introduction: `I am contacting you on behalf of ${input.organization}. We would like to learn more about your needs and explore opportunities to work together.`,
-        information:
-          "Could you share more information about your requirements, scope and preferred timeline?",
-      }
-    : {
-        meeting:
-          "Da li biste bili dostupni za kratak sastanak? Molim Vas da predložite termin koji Vam odgovara kako bismo razgovarali o Vašim potrebama i narednim koracima.",
-        introduction: `Javljam Vam se u ime kompanije ${input.organization}. Želeli bismo da saznamo više o Vašim potrebama i razmotrimo mogućnosti za saradnju.`,
-        information:
-          "Molim Vas da nam pošaljete više informacija o Vašim potrebama, obimu i željenim rokovima.",
-      };
-  let subject = subjectByGoal[input.goal] ?? subjectByGoal.meeting;
-  let body = bodyByGoal[input.goal] ?? bodyByGoal.meeting;
+  const en = input.language === "en",
+    c = catalog[en ? "en" : "sr"],
+    p = input.personalization ?? blankPersonalization();
+  const values: Record<string, string> = {
+    company: input.company,
+    organization: input.organization,
+    topic: p.topic || c.defaultTopic,
+    offering: p.offering,
+    need: p.need,
+    meetingTime: p.meeting_time,
+    details: input.instructions?.trim() ?? "",
+  };
+  const render = (text: string) =>
+    text.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? "");
+  const goal =
+    input.goal in c.subjects
+      ? (input.goal as keyof typeof c.subjects)
+      : "meeting";
+  let subject: string, paragraphs: string[];
   if (input.mode === "reply") {
-    subject = `${en ? "Response to your inquiry" : "Odgovor na upit"} · ${input.company}`;
-    body =
-      (en
-        ? "Thank you for your message.\n\n[Add answers to the client's questions here.]"
-        : "Hvala Vam na poruci.\n\n[Ovde dopunite odgovore na pitanja klijenta.]") +
-      "\n\n" +
-      body;
+    subject = c.replySubject;
+    paragraphs = [c.replyOpening, p.reply_text || c.replyPlaceholder];
   } else if (input.mode === "follow_up") {
-    subject = `${en ? "Next steps" : "Naredni koraci"} · ${input.company}`;
-    body =
-      (en
-        ? "Are there any updates or additional questions regarding our potential cooperation?"
-        : "Da li imate novih informacija ili dodatnih pitanja u vezi sa mogućom saradnjom?") +
-      "\n\n" +
-      body;
+    subject = c.followSubject;
+    paragraphs = [c.followOpening];
+  } else {
+    subject = c.subjects[goal];
+    paragraphs = [
+      goal === "meeting"
+        ? c.meetingOpening
+        : goal === "information"
+          ? c.informationOpening
+          : goal === "proposal"
+            ? c.proposalOpening
+            : c.opening,
+    ];
   }
-  if (input.tone === "concise")
-    body = body
-      .split("\n\n")
-      .slice(0, input.mode === "reply" ? 2 : 1)
-      .join("\n\n");
-  const friendly = input.tone === "friendly";
+  if (p.offering) paragraphs.push(c.offer);
+  if (p.need) paragraphs.push(c.needs);
+  if (values.details) paragraphs.push(c.details);
+  paragraphs.push(
+    goal === "meeting"
+      ? p.meeting_time
+        ? c.meetingCta
+        : c.meetingCtaDefault
+      : goal === "information"
+        ? c.informationCta
+        : goal === "proposal"
+          ? c.proposalCta
+          : c.introductionCta,
+  );
+  if (input.tone !== "concise") paragraphs.push(c.thanks);
+  const signature = [
+    p.sender_name || c.namePlaceholder,
+    p.sender_title,
+    input.organization,
+    p.sender_phone,
+    p.sender_email,
+  ]
+    .filter(Boolean)
+    .join("\n");
   return {
-    subject: subject.slice(0, 200),
-    body: `${en ? (friendly ? "Hello," : "Dear Sir or Madam,") : friendly ? "Zdravo," : "Poštovani,"}\n\n${body}\n\n${en ? "Kind regards," : "Srdačan pozdrav,"}\n[${en ? "Your name" : "Vaše ime"}]\n${input.organization}`,
+    subject: render(subject).slice(0, 200),
+    body: `${p.greeting || (en ? "Dear team," : "Poštovani,")}\n\n${paragraphs.map(render).join("\n\n")}\n\n${input.tone === "friendly" ? c.friendlyClosing : c.closing}\n${signature}`,
   };
 }

@@ -22,12 +22,27 @@ from ..security import current_user, require_origin, membership
 router = APIRouter(prefix="/api/units/{unit_id}/ai", tags=["AI drafts"])
 
 
+class Personalization(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    topic: str = Field(default="", max_length=120)
+    offering: str = Field(default="", max_length=600)
+    need: str = Field(default="", max_length=600)
+    meeting_time: str = Field(default="", max_length=120)
+    reply_text: str = Field(default="", max_length=4000)
+    greeting: str = Field(default="", max_length=150)
+    sender_name: str = Field(default="", max_length=150)
+    sender_title: str = Field(default="", max_length=150)
+    sender_phone: str = Field(default="", max_length=80)
+    sender_email: str = Field(default="", max_length=254)
+
+
 class GenerateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    personalization: Personalization = Field(default_factory=Personalization)
     company_id: int = Field(gt=0)
     contact_id: int | None = Field(default=None, gt=0)
     opportunity_id: int | None = Field(default=None, gt=0)
-    goal: Literal["meeting", "introduction", "information"] = "meeting"
+    goal: Literal["meeting", "introduction", "information", "proposal"] = "meeting"
     mode: Literal["email", "reply", "follow_up"] = "email"
     tone: Literal["professional", "friendly", "concise"] = "professional"
     language: Literal["sr", "en"] = "sr"
@@ -170,6 +185,7 @@ def create_draft(
         }
         if opportunity
         else None,
+        "personalization": data.personalization.model_dump(),
         "goal": data.goal,
         "mode": data.mode,
         "tone": data.tone,

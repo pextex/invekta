@@ -1,4 +1,7 @@
-import { prepareLocalMessage } from "../../lib/messageTemplates";
+import {
+  prepareLocalMessage,
+  blankPersonalization,
+} from "../../lib/messageTemplates";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Sparkles, Copy, Save } from "lucide-react";
 import { api, errorText } from "../../lib/api";
@@ -43,6 +46,7 @@ export default function AiAssistant({
     [language, setLanguage] = useState("sr"),
     [instructions, setInstructions] = useState(""),
     [incoming, setIncoming] = useState("");
+  const [personalization, setPersonalization] = useState(blankPersonalization);
   const [goal, setGoal] = useState("meeting");
   const [disabled, setDisabled] = useState(false);
   const [configured, setConfigured] = useState(false),
@@ -147,6 +151,8 @@ export default function AiAssistant({
         const text = prepareLocalMessage({
           company: selected.name,
           organization,
+          instructions,
+          personalization,
           mode,
           goal,
           tone,
@@ -181,6 +187,7 @@ export default function AiAssistant({
           contact_id: contact || null,
           opportunity_id: opportunity || null,
           goal,
+          personalization,
           mode,
           tone,
           language,
@@ -436,19 +443,68 @@ export default function AiAssistant({
                   <option value="introduction">
                     Prvi kontakt i predstavljanje
                   </option>
+                  <option value="proposal">
+                    Predstavljanje predloga saradnje
+                  </option>
                   <option value="information">
                     Traženje dodatnih informacija
                   </option>
                 </select>
               </label>
+              <div className="form-grid">
+                {(
+                  [
+                    ["topic", "Tema razgovora / predmet saradnje", 120],
+                    ["offering", "Šta nudimo klijentu", 600],
+                    ["need", "Potrebe klijenta / fokus razgovora", 600],
+                    ["meeting_time", "Predlog termina (opciono)", 120],
+                    ["greeting", "Oslovljavanje (opciono)", 150],
+                    ["sender_name", "Vaše ime i prezime", 150],
+                    ["sender_title", "Vaša pozicija", 150],
+                    ["sender_phone", "Telefon za potpis", 80],
+                    ["sender_email", "Email za potpis", 254],
+                  ] as const
+                ).map(([key, label, limit]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      maxLength={limit}
+                      value={personalization[key]}
+                      onChange={(e) =>
+                        setPersonalization({
+                          ...personalization,
+                          [key]: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+              {mode === "reply" && (
+                <label>
+                  Konkretan odgovor klijentu
+                  <textarea
+                    maxLength={4000}
+                    rows={5}
+                    value={personalization.reply_text}
+                    onChange={(e) =>
+                      setPersonalization({
+                        ...personalization,
+                        reply_text: e.target.value,
+                      })
+                    }
+                    placeholder="Unesite informacije kojima odgovarate na pitanja klijenta."
+                  />
+                </label>
+              )}
               <label>
-                Napomene za ručnu dopunu (opciono)
+                Dodatne informacije za klijenta (ulaze u poruku)
                 <textarea
                   maxLength={4000}
                   rows={5}
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="Npr. predloži kratak sastanak sledeće nedelje i pitaj koje su potrebe klijenta."
+                  placeholder="Npr. Obilazak objekta možemo organizovati uz prethodnu najavu."
                 />
               </label>
               <p className="panel-note">
