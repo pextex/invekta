@@ -6,6 +6,8 @@ export const organizations = [
     website: "https://luu.rs/",
     domain: "luu.rs",
     accent: "#14966d",
+    nav: "#103c31",
+    background: "#f1f8f5",
   },
   {
     code: "INVEKTA",
@@ -14,6 +16,8 @@ export const organizations = [
     website: "https://invekta.rs/",
     domain: "invekta.rs",
     accent: "#2868e8",
+    nav: "#10243c",
+    background: "#f3f6fb",
   },
   {
     code: "CENOBOTS",
@@ -22,6 +26,8 @@ export const organizations = [
     website: "https://cenobots.rs/",
     domain: "cenobots.rs",
     accent: "#7553d6",
+    nav: "#292044",
+    background: "#f6f3fb",
   },
 ] as const;
 export type OrganizationCode = (typeof organizations)[number]["code"];

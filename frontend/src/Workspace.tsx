@@ -263,6 +263,7 @@ export default function Workspace({
     );
   return (
     <Shell
+      organization={user?.units.find((u) => u.id === unit)?.code as OrganizationCode | undefined}
       page={user ? page : "Prijava"}
       onPage={(next) => {
         if (user) navigate(next);

@@ -1349,3 +1349,8 @@ form label {
     padding: 20px 0;
   }
 }
+
+.app { background: var(--bg); min-height: 100vh; }
+.workspace-brand-label { display: block; font-size: 12px; font-weight: 400; letter-spacing: .5px; margin-top: 4px; color: #d1dfec; }
+.app .sales-banner { background: var(--nav); }
+.app input, .app select { outline-color: var(--blue); }

@@ -51,7 +51,7 @@ export default function App() {
   const [entry, setEntry] = useState(
     () => !window.location.hash.startsWith("#demo"),
   );
-  const [unit, setUnit] = useState<Scope>("all");
+  const [unit, setUnit] = useState<Scope>(() => { const code = new URLSearchParams(window.location.hash.split("?")[1]).get("organization"); return organizations.find((org) => org.code === code)?.code ?? "LUU"; });
   const [page, setPage] = useState(readDemoPage);
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
   const [stageMessage, setStageMessage] = useState("");
@@ -99,7 +99,7 @@ export default function App() {
   }
   function navigate(next: string) {
     setPage(next);
-    writeDemoPage(next);
+    writeDemoPage(next, unit);
     setSearch("");
   }
   const metrics = [
@@ -287,7 +287,9 @@ export default function App() {
           setUnit(code);
           setLive(false);
           setEntry(false);
-          navigate("Početna tabla");
+          setPage("Početna tabla");
+          setSearch("");
+          writeDemoPage("Početna tabla", code);
         }}
       />
     );
@@ -307,6 +309,7 @@ export default function App() {
         : null;
   return (
     <Shell
+      organization={unit === "all" ? undefined : unit}
       page={page}
       onPage={navigate}
       search={search}
@@ -314,18 +317,18 @@ export default function App() {
         setSearch(value);
         if (value.trim()) {
           setPage("Kompanije");
-          writeDemoPage("Kompanije");
+          writeDemoPage("Kompanije", unit);
         }
       }}
       unit={unit}
       units={[
-        { value: "all", label: "Sve demo kompanije" },
         { value: "LUU", label: "LUU" },
         { value: "INVEKTA", label: "Invekta" },
         { value: "CENOBOTS", label: "Cenobots" },
       ]}
       onUnit={(value) => {
         setUnit(value as Scope);
+        writeDemoPage(page, value);
         setSearch("");
       }}
       user="Demo korisnik"

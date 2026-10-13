@@ -1,4 +1,5 @@
-import { type ReactNode } from "react";
+import { organizations, type OrganizationCode } from "./organizations";
+import { type CSSProperties, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -26,6 +27,7 @@ export const navigation = [
   { title: "AI asistent", icon: Sparkles },
 ];
 type Props = {
+  organization?: OrganizationCode;
   page: string;
   onPage: (page: string) => void;
   search?: string;
@@ -43,6 +45,7 @@ type Props = {
   children: ReactNode;
 };
 export default function Shell({
+  organization,
   page,
   onPage,
   search = "",
@@ -62,8 +65,9 @@ export default function Shell({
   function navigate(next: string) {
     onPage(next);
   }
+  const brand = organizations.find((org) => org.code === organization);
   return (
-    <div className="app">
+    <div className="app" data-organization={brand?.code} style={brand ? ({ "--blue": brand.accent, "--nav": brand.nav, "--bg": brand.background } as CSSProperties) : undefined}>
       <aside className="sidebar">
         <a
           className="brand"
@@ -72,12 +76,9 @@ export default function Shell({
             e.preventDefault();
             navigate(connected ? "Kompanije" : "Početna tabla");
           }}
-          aria-label="LUU, Invekta i Cenobots, početna stranica"
+          aria-label={`${brand?.name ?? "CRM"}, početna stranica`}
         >
-          <div>
-            LUU <span>×</span> <em>invekta</em>
-            <small className="sidebar-cenobots">+ Cenobots</small>
-          </div>
+          <div>{brand?.name ?? "CRM"}<small className="workspace-brand-label">Prodajni CRM</small></div>
         </a>
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">

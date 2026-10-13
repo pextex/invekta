@@ -49,10 +49,10 @@ const demoPages: Record<string, string> = {
   ai: "AI asistent",
 };
 export const readDemoPage = () =>
-  demoPages[window.location.hash.split("/")[1]] ?? "Početna tabla";
-export function writeDemoPage(page: string) {
+  demoPages[window.location.hash.split("?")[0].split("/")[1]] ?? "Početna tabla";
+export function writeDemoPage(page: string, organization?: string) {
   const key =
     Object.entries(demoPages).find(([, title]) => title === page)?.[0] ??
     "dashboard";
-  window.location.hash = "#demo/" + key;
+  window.location.hash = "#demo/" + key + (organization ? "?organization=" + encodeURIComponent(organization) : "");
 }
