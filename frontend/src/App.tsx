@@ -1,105 +1,152 @@
-import Workspace from "./Workspace";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  Building2,
-  Columns3,
-  ListTodo,
-  Sparkles,
-  Settings,
   ArrowUpRight,
+  ListTodo,
+  Plus,
   Search,
-  Menu,
-  X,
-  ChevronRight,
-  FlaskConical,
+  Sparkles,
+  FileText,
   Package,
   BriefcaseBusiness,
+  ChartNoAxesCombined,
+  UsersRound,
 } from "lucide-react";
+import Workspace from "./Workspace";
+import Shell from "./Shell";
 import { selectCompanies, money, stages, type Unit } from "./demo";
-const navigation = [
-  { title: "Pregled", icon: LayoutDashboard },
-  { title: "Kompanije", icon: Building2 },
-  { title: "Prodajni levak", icon: Columns3 },
-  { title: "Zadaci", icon: ListTodo },
-  { title: "Poslovni modul", icon: BriefcaseBusiness },
-  { title: "AI asistent", icon: Sparkles },
-  { title: "Podešavanja", icon: Settings },
-];
+
+type Scope = Unit | "all";
+const demoTasks = {
+  LUU: [
+    "Pozvati Demo Hotel Dunav",
+    "Proveriti potrebe Demo Studija Javor",
+    "Pripremiti sledeći sastanak",
+  ],
+  INVEKTA: [
+    "Dogovoriti obilazak Demo Poslovnog centra",
+    "Kontaktirati Demo Park Sever",
+    "Pripremiti pregled usluga",
+  ],
+};
 export default function App() {
   const [live, setLive] = useState(() => window.location.hash === "#crm");
+  const [unit, setUnit] = useState<Scope>("all");
+  const [page, setPage] = useState("Početna tabla");
+  const [search, setSearch] = useState("");
+  const [done, setDone] = useState<string[]>([]);
   useEffect(() => {
     const onHash = () => setLive(window.location.hash === "#crm");
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  const [unit, setUnit] = useState<Unit>("LUU");
-  const [page, setPage] = useState("Pregled");
-  const [search, setSearch] = useState("");
-  const [mobile, setMobile] = useState(false);
-  const [done, setDone] = useState<string[]>([]);
   const rows = selectCompanies(unit, search);
   const all = selectCompanies(unit);
   const total = all.reduce((sum, c) => sum + c.value, 0);
-  const tasks =
-    unit === "LUU"
-      ? [
-          "Pozvati Demo Hotel Dunav",
-          "Proveriti potrebe Demo Studija Javor",
-          "Pripremiti sledeći sastanak",
-        ]
-      : [
-          "Dogovoriti obilazak Demo Poslovnog centra",
-          "Kontaktirati Demo Park Sever",
-          "Pripremiti pregled usluga",
-        ];
+  const tasks = (
+    unit === "all" ? (["LUU", "INVEKTA"] as Unit[]) : [unit]
+  ).flatMap((u) => demoTasks[u].map((title) => ({ title, unit: u })));
+  const openCount = tasks.filter((t) => !done.includes(t.title)).length;
+  function connect() {
+    window.location.hash = "crm";
+    setLive(true);
+  }
+  function navigate(next: string) {
+    setPage(next);
+    setSearch("");
+  }
+  const metrics = [
+    {
+      label: "Kompanije u bazi",
+      value: String(all.length),
+      note: "U odabranom demo prikazu",
+    },
+    {
+      label: "Otvorene prilike",
+      value: String(all.length),
+      note: "U demonstracionom procesu",
+    },
+    {
+      label: "Vrednost prilika",
+      value: money(total),
+      note: "Potencijalna vrednost · nije prihod",
+    },
+    {
+      label: "Aktivni zadaci",
+      value: String(openCount),
+      note: "Planirane demo aktivnosti",
+    },
+  ];
+  const metricCards = (
+    <div className="metrics">
+      {metrics.map((m) => (
+        <article className="metric" key={m.label}>
+          <div className="metric-label">{m.label}</div>
+          <strong>{m.value}</strong>
+          <small>● {m.note}</small>
+        </article>
+      ))}
+    </div>
+  );
   const taskPanel = (
     <section className="panel">
       <div className="panel-heading">
-        <div>
-          <h2>Sledeće aktivnosti</h2>
-          <p>Demonstracioni zadaci · promene važe tokom ovog prikaza</p>
-        </div>
-        <ListTodo size={20} />
+        <h2>Aktivnosti tima</h2>
       </div>
-      {tasks.map((task, i) => (
-        <label className="task" key={task}>
-          <input
-            type="checkbox"
-            checked={done.includes(task)}
-            onChange={() =>
-              setDone(
-                done.includes(task)
-                  ? done.filter((t) => t !== task)
-                  : [...done, task],
-              )
-            }
-          />
-          <span className={done.includes(task) ? "completed" : ""}>
-            {task}
-            <small>
-              {i === 0 ? "Danas" : "Sledeće nedelje"} · Demo korisnik
-            </small>
-          </span>
-          <span className="tag">{i === 0 ? "Prioritet" : "Planirano"}</span>
-        </label>
-      ))}
+      <div className="task-list">
+        {(page === "Početna tabla" ? tasks.slice(0, 3) : tasks).map(
+          (task, i) => (
+            <label className="task" key={task.title}>
+              <input
+                type="checkbox"
+                checked={done.includes(task.title)}
+                onChange={() =>
+                  setDone(
+                    done.includes(task.title)
+                      ? done.filter((t) => t !== task.title)
+                      : [...done, task.title],
+                  )
+                }
+              />
+              <span className={done.includes(task.title) ? "completed" : ""}>
+                <strong>{task.title}</strong>
+                <small>
+                  {task.unit} · {i % 3 === 0 ? "Danas" : "Sledeće nedelje"} ·
+                  Demo korisnik
+                </small>
+              </span>
+              <span className={done.includes(task.title) ? "tag green" : "tag"}>
+                {done.includes(task.title) ? "Završeno" : "Planirano"}
+              </span>
+            </label>
+          ),
+        )}
+      </div>
+      {page === "Početna tabla" && (
+        <div className="panel-actions">
+          <button
+            className="secondary-button"
+            onClick={() => navigate("Zadaci")}
+          >
+            Svi zadaci →
+          </button>
+        </div>
+      )}
+      <p className="panel-note">
+        Demo zadaci · resetuju se osvežavanjem stranice.
+      </p>
     </section>
   );
   const table = (
     <section className="panel">
       <div className="panel-heading">
-        <div>
-          <h2>Aktivne kompanije</h2>
-          <p>Primeri zapisa za modul {unit}</p>
-        </div>
-        <span className="tag">{rows.length} zapisa</span>
+        <h2>Kompanije i kontakti</h2>
+        <span className="tag">{rows.length} demo zapisa</span>
       </div>
       <label className="search">
-        <Search size={18} />
+        <Search size={17} />
         <input
           aria-label="Pretraga kompanija"
-          placeholder="Pretraži kompanije, grad ili delatnost…"
+          placeholder="Pretraži naziv, grad ili delatnost"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -109,7 +156,9 @@ export default function App() {
           <thead>
             <tr>
               <th>Kompanija</th>
-              <th>Odgovorna osoba</th>
+              <th>Delatnost</th>
+              <th>Modul</th>
+              <th>Komercijalista</th>
               <th>Faza</th>
               <th>Vrednost prilike</th>
             </tr>
@@ -119,12 +168,17 @@ export default function App() {
               <tr key={c.id}>
                 <td>
                   <strong>{c.name}</strong>
-                  <small>
-                    {c.city} · {c.sector}
-                  </small>
+                  <small>{c.city} · Demo zapis</small>
+                </td>
+                <td>{c.sector}</td>
+                <td>
+                  <span className="tag">
+                    {c.unit === "LUU" ? "LUU" : "Invekta"}
+                  </span>
                 </td>
                 <td>
-                  {c.owner} <small>Demo korisnik</small>
+                  {c.owner}
+                  <small>Demo korisnik</small>
                 </td>
                 <td>
                   <span className={"stage stage-" + c.stage}>{c.stage}</span>
@@ -140,6 +194,41 @@ export default function App() {
       </div>
     </section>
   );
+  const funnel = (
+    <section className="panel">
+      <div className="panel-heading">
+        <h2>Prodajni levak</h2>
+      </div>
+      <div className="bars">
+        {stages.map((stage) => {
+          const count = all.filter((c) => c.stage === stage).length;
+          return (
+            <div className="bar-row" key={stage}>
+              <div>
+                <span>{stage}</span>
+                <strong>{count}</strong>
+              </div>
+              <div className="bar-track">
+                <div
+                  style={{
+                    width: `${all.length ? (count / all.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="panel-actions">
+        <button
+          className="secondary-button"
+          onClick={() => navigate("Prodajni levak")}
+        >
+          Otvori prodajni levak →
+        </button>
+      </div>
+    </section>
+  );
   if (live)
     return (
       <Workspace
@@ -149,291 +238,195 @@ export default function App() {
         }}
       />
     );
+  const placeholder =
+    page === "Ponude"
+      ? {
+          icon: FileText,
+          title: "Ponude za LUU i Invektu",
+          text: "Kreiranje ponuda, obračun stavki i PDF izvoz dolaze u narednoj fazi.",
+        }
+      : page === "AI asistent"
+        ? {
+            icon: Sparkles,
+            title: "AI Sales Assistant",
+            text: "Pretraga leadova, proverljivi izvori i predlozi poruka dolaze kasnije. U ovoj verziji nema AI poziva niti slanja poruka.",
+          }
+        : page === "LUU proizvodi"
+          ? {
+              icon: Package,
+              title: "LUU — katalog proizvoda",
+              text: "Proizvodi, cenovnici i kalkulator potrošnje biće povezani sa bazom u fazi poslovnih modula.",
+            }
+          : page === "Invekta usluge"
+            ? {
+                icon: BriefcaseBusiness,
+                title: "Invekta — katalog usluga",
+                text: "Usluge, poslovni objekti, tenderi i ugovori planirani su za fazu poslovnih modula.",
+              }
+            : null;
   return (
-    <div className="app">
-      <aside className={mobile ? "sidebar open" : "sidebar"}>
-        <a
-          href="#"
-          className="brand"
-          onClick={(e) => {
-            e.preventDefault();
-            setPage("Pregled");
-            setMobile(false);
-          }}
-        >
-          <span className="brand-mark">L×I</span>
-          <span>
-            LUU × INVEKTA<small>SALES WORKSPACE</small>
-          </span>
-        </a>
-        <button
-          className="close-mobile"
-          onClick={() => setMobile(false)}
-          aria-label="Zatvori meni"
-        >
-          <X />
-        </button>
-        <div className="unit-label">POSLOVNA JEDINICA</div>
-        <div className="unit-switch">
-          {(["LUU", "INVEKTA"] as Unit[]).map((u) => (
-            <button
-              aria-pressed={unit === u}
-              className={unit === u ? "selected" : ""}
-              key={u}
-              onClick={() => {
-                setUnit(u);
-                setSearch("");
-              }}
-            >
-              {u}
-            </button>
-          ))}
+    <Shell
+      page={page}
+      onPage={navigate}
+      search={search}
+      onSearch={(value) => {
+        setSearch(value);
+        if (value.trim()) setPage("Kompanije");
+      }}
+      unit={unit}
+      units={[
+        { value: "all", label: "Sve demo kompanije" },
+        { value: "LUU", label: "LUU" },
+        { value: "INVEKTA", label: "Invekta" },
+      ]}
+      onUnit={(value) => {
+        setUnit(value as Scope);
+        setSearch("");
+      }}
+      user="Demo korisnik"
+      role="Razvojni pregled"
+      onConnect={connect}
+    >
+      <div className="page-heading">
+        <div>
+          <h1>
+            {page === "Početna tabla"
+              ? "Dobrodošli u vaš CRM!"
+              : page === "Kompanije"
+                ? "Kompanije i kontakti"
+                : page}
+          </h1>
+          <p>
+            {page === "Početna tabla"
+              ? "Pregled prodaje, prilika i aktivnosti vašeg tima."
+              : page === "Kompanije"
+                ? "Centralna baza kupaca i potencijalnih klijenata."
+                : "LUU × Invekta · zajednički prodajni prostor."}
+          </p>
         </div>
-        <div className="nav-label">RADNI PROSTOR</div>
-        <nav>
-          {navigation.map(({ title, icon: Icon }) => (
-            <button
-              key={title}
-              className={page === title ? "active" : ""}
-              onClick={() => {
-                setPage(title);
-                setSearch("");
-                setMobile(false);
-              }}
-            >
-              <Icon size={19} />
-              {title}
-              {page === title && <ChevronRight size={15} />}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-note">
-          <Sparkles size={22} />
-          <strong>Prodaja sa jasnim fokusom.</strong>
-          <p>Jedna platforma. Dva poslovna modula.</p>
-          <span>FAZA 1 · DEMO</span>
-        </div>
-        <div className="profile">
-          <span className="avatar">DK</span>
-          <div>
-            Demo korisnik<small>Razvojni pregled</small>
-          </div>
-        </div>
-      </aside>
-      {mobile && (
-        <button
-          className="backdrop"
-          aria-label="Zatvori navigaciju"
-          onClick={() => setMobile(false)}
-        />
-      )}
-      <main>
-        <header>
-          <div className="breadcrumb">
-            <button
-              className="mobile-menu"
-              onClick={() => setMobile(true)}
-              aria-label="Otvori meni"
-            >
-              <Menu />
-            </button>
-            <span>Radni prostor</span>
-            <ChevronRight size={14} />
-            <strong>{unit}</strong>
-          </div>
-          <button
-            className="primary-button"
-            onClick={() => {
-              window.location.hash = "crm";
-              setLive(true);
-            }}
-          >
-            Otvori povezani CRM <ArrowUpRight size={15} />
+        {["Početna tabla", "Kompanije", "Novi klijenti"].includes(page) && (
+          <button className="primary-button" onClick={connect}>
+            <Plus size={16} />
+            {page === "Početna tabla" ? "Novi klijent" : "Dodaj kompaniju"}
           </button>
-        </header>
-        <div className="content">
-          <div className="demo-notice">
-            <FlaskConical size={18} />
-            <span>
-              Demo okruženje — svi prikazani klijenti i iznosi su izmišljeni.
-              Ovaj demo ne čuva izmene. Za prijavu i trajnu bazu otvorite
-              povezani CRM.
-            </span>
+        )}
+      </div>
+      {page === "Početna tabla" && (
+        <div className="sales-banner">
+          <div>
+            <h2>Jedna platforma. Dva prodajna tima.</h2>
+            <p>
+              Od pronalaženja klijenata do ponude, ugovora i ponovljene prodaje.
+            </p>
           </div>
-          <div className="page-heading">
+          <ArrowUpRight size={40} />
+        </div>
+      )}
+      <div className="demo-notice">
+        Demo prikaz — svi klijenti i iznosi su izmišljeni. Za unos i trajno
+        čuvanje otvorite povezani CRM i prijavite se.
+      </div>
+      {page === "Početna tabla" && (
+        <>
+          {metricCards}
+          <div className="dashboard-grid">
+            {funnel}
+            {taskPanel}
+          </div>
+        </>
+      )}
+      {page === "Kompanije" && table}
+      {page === "Novi klijenti" && (
+        <>
+          <section className="panel feature-note">
+            <UsersRound size={23} />
             <div>
-              <div className="eyebrow">{unit} / PRODAJNI TIM</div>
-              <h1>{page === "Pregled" ? "Vaš prodajni pregled" : page}</h1>
+              <h2>Potencijalni klijenti</h2>
               <p>
-                {page === "Pregled"
-                  ? "Sve važne prilike i aktivnosti, na jednom mestu."
-                  : "Zajednički CRM, prilagođen vašem poslovanju."}
+                Ovo su demo kompanije. Automatsko pronalaženje i kvalifikacija
+                novih leadova još nisu povezani.
               </p>
             </div>
-            <span className="heading-badge">
-              {unit === "LUU" ? "Proizvodi i oprema" : "Facility management"}
-            </span>
+          </section>
+          {table}
+        </>
+      )}
+      {page === "Prodajni levak" && (
+        <>
+          <p className="section-hint">
+            Demonstracioni prikaz trenutnih faza. Zasebne prodajne prilike i
+            njihovo upravljanje slede u narednom koraku.
+          </p>
+          <div className="kanban">
+            {stages.map((stage) => (
+              <section className="kanban-column" key={stage}>
+                <h2>
+                  {stage}
+                  <span>{all.filter((c) => c.stage === stage).length}</span>
+                </h2>
+                {all
+                  .filter((c) => c.stage === stage)
+                  .map((c) => (
+                    <article className="deal" key={c.id}>
+                      <h3>{c.name}</h3>
+                      <small>
+                        {c.unit} · {c.city}
+                      </small>
+                      <strong>{money(c.value)}</strong>
+                      <span className={"stage stage-" + stage}>{stage}</span>
+                      <div>{c.owner} · Demo korisnik</div>
+                    </article>
+                  ))}
+              </section>
+            ))}
           </div>
-          {page === "Pregled" && (
-            <>
-              <div className="metrics">
-                {[
-                  {
-                    label: "Aktivne kompanije",
-                    value: String(all.length),
-                    note: "U odabranoj poslovnoj jedinici",
-                    icon: Building2,
-                  },
-                  {
-                    label: "Otvorene prilike",
-                    value: String(all.length),
-                    note: "Demonstracioni prodajni levak",
-                    icon: Columns3,
-                  },
-                  {
-                    label: "Vrednost prilika",
-                    value: money(total),
-                    note: "Potencijalna vrednost · nije prihod",
-                    icon: ArrowUpRight,
-                  },
-                  {
-                    label: "Otvoreni zadaci",
-                    value: String(
-                      tasks.filter((t) => !done.includes(t)).length,
-                    ),
-                    note: "Planirane prodajne aktivnosti",
-                    icon: ListTodo,
-                  },
-                ].map(({ label, value, note, icon: Icon }) => (
-                  <article className="metric" key={label}>
+        </>
+      )}
+      {page === "Zadaci" && taskPanel}
+      {page === "Izveštaji" && (
+        <>
+          {metricCards}
+          <div className="dashboard-grid">
+            {funnel}
+            <section className="panel">
+              <div className="panel-heading">
+                <h2>Vrednost po fazama</h2>
+                <ChartNoAxesCombined size={20} />
+              </div>
+              <div className="bars">
+                {stages.map((stage) => (
+                  <div className="bar-row" key={stage}>
                     <div>
-                      {label}
-                      <Icon size={20} />
+                      <span>{stage}</span>
+                      <strong>
+                        {money(
+                          all
+                            .filter((c) => c.stage === stage)
+                            .reduce((s, c) => s + c.value, 0),
+                        )}
+                      </strong>
                     </div>
-                    <strong>{value}</strong>
-                    <small>{note}</small>
-                  </article>
+                  </div>
                 ))}
               </div>
-              <div className="dashboard-grid">
-                <section className="panel">
-                  <div className="panel-heading">
-                    <div>
-                      <h2>Prodajni levak</h2>
-                      <p>Raspodela potencijalne vrednosti po fazama</p>
-                    </div>
-                    <button
-                      className="text-button"
-                      onClick={() => setPage("Prodajni levak")}
-                    >
-                      Otvori levak <ArrowUpRight size={16} />
-                    </button>
-                  </div>
-                  <div className="bars">
-                    {stages.map((stage, i) => {
-                      const value = all
-                        .filter((c) => c.stage === stage)
-                        .reduce((sum, c) => sum + c.value, 0);
-                      return (
-                        <div className="bar-row" key={stage}>
-                          <div>
-                            <span>{stage}</span>
-                            <strong>{money(value)}</strong>
-                          </div>
-                          <div className="bar-track">
-                            <div
-                              style={{
-                                width: `${(value / total) * 100}%`,
-                                background: ["#a8c6b5", "#568d7a", "#254e47"][
-                                  i
-                                ],
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="panel-footer">
-                    3 otvorene prilike <span>Demo podaci</span>
-                  </div>
-                </section>
-                {taskPanel}
-              </div>
-              {table}
-            </>
-          )}
-          {page === "Kompanije" && table}
-          {page === "Prodajni levak" && (
-            <div className="kanban">
-              {stages.map((stage) => (
-                <section className="kanban-column" key={stage}>
-                  <h2>
-                    {stage}
-                    <span>{all.filter((c) => c.stage === stage).length}</span>
-                  </h2>
-                  {all
-                    .filter((c) => c.stage === stage)
-                    .map((c) => (
-                      <article className="deal" key={c.id}>
-                        <span className="eyebrow">DEMO PRILIKA</span>
-                        <h3>{c.name}</h3>
-                        <p>
-                          {c.sector} · {c.city}
-                        </p>
-                        <strong>{money(c.value)}</strong>
-                        <div>{c.owner} · Demo korisnik</div>
-                      </article>
-                    ))}
-                </section>
-              ))}
-            </div>
-          )}
-          {page === "Zadaci" && taskPanel}
-          {page === "Poslovni modul" && (
-            <section className="panel placeholder">
-              <Package size={36} />
-              <h2>
-                {unit === "LUU"
-                  ? "LUU — proizvodi i potrošnja"
-                  : "INVEKTA — usluge i objekti"}
-              </h2>
-              <p>
-                {unit === "LUU"
-                  ? "Katalog proizvoda, cenovnici, ponude i kalkulator potrošnje planirani su za fazu 3."
-                  : "Usluge, poslovni objekti, tenderi i ugovori planirani su za fazu 3."}
+              <p className="panel-note">
+                Izveštaj iz demo zapisa, bez stvarnih prodajnih rezultata.
               </p>
-              <span className="tag">Planirano · još nije implementirano</span>
             </section>
-          )}
-          {page === "AI asistent" && (
-            <section className="panel placeholder">
-              <Sparkles size={36} />
-              <h2>Vaš budući prodajni asistent</h2>
-              <p>
-                Pretraga leadova, proverljivi izvori i nacrti prodajnih poruka
-                dolaze u fazi 5. Trenutno nema AI poziva niti slanja poruka.
-              </p>
-              <span className="tag">Planirano · još nije implementirano</span>
-            </section>
-          )}
-          {page === "Podešavanja" && (
-            <section className="panel placeholder">
-              <Settings size={36} />
-              <h2>Pristup i poslovne jedinice</h2>
-              <p>
-                Ovaj prikaz nema autentifikaciju. Izbor modula služi
-                demonstraciji interfejsa. Backend kontrola pristupa biće uvedena
-                pre unosa stvarnih podataka.
-              </p>
-              <span className="tag">Sledeći korak · autentifikacija</span>
-            </section>
-          )}
-          <footer>
-            LUU × INVEKTA <span>Osnova CRM platforme · Verzija 0.1</span>
-          </footer>
-        </div>
-      </main>
-    </div>
+          </div>
+        </>
+      )}
+      {placeholder && (
+        <section className="panel placeholder">
+          <placeholder.icon size={36} />
+          <h2>{placeholder.title}</h2>
+          <p>{placeholder.text}</p>
+          <span className="tag gray">Planirano · još nije implementirano</span>
+        </section>
+      )}
+      <footer>
+        LUU × INVEKTA <span>Razvojna verzija 0.2 · Demo podaci</span>
+      </footer>
+    </Shell>
   );
 }

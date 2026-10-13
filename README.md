@@ -2,6 +2,10 @@
 
 Zajednička CRM platforma za LUU i Invektu. **Razvojna verzija 0.2**, samo za testne podatke. Produkcioni hosting još nije postavljen.
 
+## Izgled interfejsa
+
+Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga i izbor jedinice su u zaglavlju. „Sve demo kompanije“ objedinjeno prikazuje isključivo izmišljene demo zapise; povezani CRM nudi samo jedinice iz korisnikovih ovlašćenja. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
+
 ## Šta sada radi
 - Srpski responzivan demo pregled, odvojeni LUU/Invekta primeri, levak i privremeni zadaci.
 - Dugme **Otvori povezani CRM** vodi na prijavu i kompanije iz PostgreSQL baze.

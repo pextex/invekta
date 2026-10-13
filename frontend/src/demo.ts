@@ -72,11 +72,11 @@ export const companies: Company[] = [
   },
 ];
 export const stages = ["Kontakt", "Ponuda", "Pregovori"];
-export function selectCompanies(unit: Unit, search = "") {
+export function selectCompanies(unit: Unit | "all", search = "") {
   const term = search.trim().toLocaleLowerCase("sr");
   return companies.filter(
     (c) =>
-      c.unit === unit &&
+      (unit === "all" || c.unit === unit) &&
       `${c.name} ${c.city} ${c.sector}`.toLocaleLowerCase("sr").includes(term),
   );
 }

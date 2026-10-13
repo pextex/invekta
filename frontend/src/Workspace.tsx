@@ -1,5 +1,6 @@
+import Shell from "./Shell";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Building2, LogOut, Plus, Save, Search } from "lucide-react";
+import { Building2, Plus, Save } from "lucide-react";
 import { money } from "./demo";
 
 type Unit = { id: number; code: string; role: string };
@@ -29,11 +30,19 @@ const blank: Form = {
   potential_value: "0",
 };
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  if (window.location.protocol === "file:")
+    throw new Error(
+      "Povezani CRM zahteva pokrenut backend. Ovaj HTML fajl služi za demo pregled.",
+    );
   const response = await fetch("/api" + path, {
     credentials: "same-origin",
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
+  if (!response.headers.get("content-type")?.includes("application/json"))
+    throw new Error(
+      "Backend trenutno nije dostupan. Pokušajte ponovo kada bude pokrenut.",
+    );
   const data = await response.json();
   if (!response.ok)
     throw new Error(
@@ -44,6 +53,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 export default function Workspace({ onBack }: { onBack: () => void }) {
+  const [page, setPage] = useState("Kompanije");
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [username, setUsername] = useState("");
@@ -147,140 +157,161 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
       setBusy(false);
     }
   }
+  const roleName = (role: string) =>
+    role === "sales"
+      ? "Komercijalista"
+      : role === "manager"
+        ? "Menadžer prodaje"
+        : "Administrator";
+  const activeRole = user?.units.find((u) => u.id === unit)?.role;
   return (
-    <div className="workspace">
-      <header>
-        <button className="text-button" onClick={onBack}>
-          <ArrowLeft size={18} /> Demo pregled
-        </button>
-        <strong>LUU × INVEKTA · CRM</strong>
-        {user && (
-          <button className="text-button" disabled={busy} onClick={logout}>
-            <LogOut size={16} /> Odjava
-          </button>
-        )}
-      </header>
-      <div className="workspace-content">
-        <div className="demo-notice">
-          Razvojni CRM · trajna baza i kontrola pristupa su uključeni. Koristite
-          samo testne podatke dok ne završimo produkcionu pripremu.
-        </div>
-        {error && (
-          <p className="error-message" role="alert">
-            {error}
+    <Shell
+      page={user ? page : "Prijava"}
+      onPage={(next) => {
+        if (user) {
+          setPage(next);
+          setForm(null);
+          setMessage("");
+        }
+      }}
+      search={search}
+      onSearch={
+        user
+          ? (value) => {
+              setSearch(value);
+              setPage("Kompanije");
+            }
+          : undefined
+      }
+      unit={String(unit)}
+      units={
+        user?.units.map((u) => ({
+          value: String(u.id),
+          label: u.code + " · " + roleName(u.role),
+        })) ?? []
+      }
+      onUnit={
+        user
+          ? (value) => {
+              setUnit(Number(value));
+              setForm(null);
+              setMessage("");
+            }
+          : undefined
+      }
+      user={user?.name ?? "Gost"}
+      role={activeRole ? roleName(activeRole) : "Prijavite se za pristup"}
+      connected
+      busy={busy}
+      onBack={onBack}
+      onLogout={user ? logout : undefined}
+    >
+      <div className="demo-notice">
+        Razvojni CRM · trajna baza i kontrola pristupa su uključeni. Koristite
+        samo testne podatke dok ne završimo produkcionu pripremu.
+      </div>
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
+      {message && (
+        <p className="success-message" role="status">
+          {message}
+        </p>
+      )}
+      {checking ? (
+        <p className="empty">Provera sesije…</p>
+      ) : !user ? (
+        <section className="panel login-panel">
+          <Building2 size={32} />
+          <h1>Prijava u CRM</h1>
+          <p>
+            Nalog kreira administrator razvojnog okruženja. Demo prikaz možete
+            otvoriti bez prijave.
           </p>
-        )}
-        {message && (
-          <p className="success-message" role="status">
-            {message}
-          </p>
-        )}
-        {checking ? (
-          <p className="empty">Provera sesije…</p>
-        ) : !user ? (
-          <section className="panel login-panel">
-            <Building2 size={32} />
-            <h1>Prijava u CRM</h1>
+          <form onSubmit={login}>
+            <label>
+              Korisničko ime
+              <input
+                required
+                maxLength={100}
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </label>
+            <label>
+              Lozinka
+              <input
+                required
+                maxLength={256}
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+            <button className="primary-button" disabled={busy}>
+              {busy ? "Prijavljivanje…" : "Prijavi se"}
+            </button>
+          </form>
+        </section>
+      ) : page !== "Kompanije" ? (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>{page}</h1>
+              <p>LUU × Invekta · povezani CRM</p>
+            </div>
+          </div>
+          <section className="panel placeholder">
+            <Building2 size={36} />
+            <h2>Ovaj ekran je u pripremi</h2>
             <p>
-              Nalog kreira administrator razvojnog okruženja. Demo prikaz možete
-              otvoriti bez prijave.
+              Prijava, poslovne jedinice i trajno upravljanje kompanijama su
+              dostupni. Ostali moduli biće povezani u narednim fazama.
             </p>
-            <form onSubmit={login}>
-              <label>
-                Korisničko ime
-                <input
-                  required
-                  maxLength={100}
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </label>
-              <label>
-                Lozinka
-                <input
-                  required
-                  maxLength={256}
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </label>
-              <button className="primary-button" disabled={busy}>
-                {busy ? "Prijavljivanje…" : "Prijavi se"}
-              </button>
-            </form>
+            <button
+              className="primary-button"
+              onClick={() => setPage("Kompanije")}
+            >
+              Otvori kompanije
+            </button>
           </section>
-        ) : (
-          <>
-            <div className="page-heading">
-              <div>
-                <div className="eyebrow">DOBRO DOŠLI · {user.name}</div>
-                <h1>Kompanije</h1>
-                <p>Zapisi dostupni prema vašoj poslovnoj jedinici i ulozi.</p>
-              </div>
-              <button
-                className="primary-button"
-                disabled={!unit || loading || busy}
-                onClick={() => {
-                  setForm({ ...blank });
-                  setEditing(null);
-                  setMessage("");
-                }}
-              >
-                <Plus size={17} /> Nova kompanija
-              </button>
+        </>
+      ) : (
+        <>
+          <div className="page-heading">
+            <div>
+              <div className="eyebrow">DOBRO DOŠLI · {user.name}</div>
+              <h1>Kompanije</h1>
+              <p>Zapisi dostupni prema vašoj poslovnoj jedinici i ulozi.</p>
             </div>
-            <div className="workspace-tools">
-              <label>
-                Poslovna jedinica
-                <select
-                  aria-label="Poslovna jedinica"
-                  value={unit}
-                  disabled={busy}
-                  onChange={(e) => {
-                    setUnit(Number(e.target.value));
-                    setForm(null);
-                    setMessage("");
-                  }}
-                >
-                  {user.units.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.code} ·{" "}
-                      {u.role === "sales"
-                        ? "Komercijalista"
-                        : u.role === "manager"
-                          ? "Menadžer"
-                          : "Administrator"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="search">
-                <Search size={18} />
-                <input
-                  placeholder="Pretraži naziv, grad, delatnost…"
-                  aria-label="Pretraga sačuvanih kompanija"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </label>
-            </div>
-            {user.units.length === 0 && (
-              <p className="empty">
-                Nije vam dodeljena poslovna jedinica. Obratite se
-                administratoru.
-              </p>
-            )}
-            {form && (
-              <section className="panel company-form">
-                <h2>{editing ? "Izmena kompanije" : "Nova kompanija"}</h2>
-                <form onSubmit={save}>
-                  <div className="form-grid">
-                    {(
-                      ["name", "city", "sector", "potential_value"] as const
-                    ).map((key) => (
+            <button
+              className="primary-button"
+              disabled={!unit || loading || busy}
+              onClick={() => {
+                setForm({ ...blank });
+                setEditing(null);
+                setMessage("");
+              }}
+            >
+              <Plus size={17} /> Nova kompanija
+            </button>
+          </div>
+          {user.units.length === 0 && (
+            <p className="empty">
+              Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
+            </p>
+          )}
+          {form && (
+            <section className="panel company-form">
+              <h2>{editing ? "Izmena kompanije" : "Nova kompanija"}</h2>
+              <form onSubmit={save}>
+                <div className="form-grid">
+                  {(["name", "city", "sector", "potential_value"] as const).map(
+                    (key) => (
                       <label key={key}>
                         {
                           {
@@ -310,109 +341,109 @@ export default function Workspace({ onBack }: { onBack: () => void }) {
                           }
                         />
                       </label>
-                    ))}
-                    <label>
-                      Faza
-                      <select
-                        aria-label="Faza"
-                        disabled={busy}
-                        value={form.stage}
-                        onChange={(e) =>
-                          setForm({ ...form, stage: e.target.value })
-                        }
-                      >
-                        {["Kontakt", "Ponuda", "Pregovori"].map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="form-actions">
-                    <button className="primary-button" disabled={busy}>
-                      <Save size={16} />
-                      {busy ? "Čuvanje…" : "Sačuvaj"}
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      disabled={busy}
-                      onClick={() => setForm(null)}
-                    >
-                      Otkaži
-                    </button>
-                  </div>
-                </form>
-              </section>
-            )}
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>Sačuvane kompanije</h2>
-                <span className="tag">{rows.length} zapisa · najviše 200</span>
-              </div>
-              {loading ? (
-                <p className="empty">Učitavanje…</p>
-              ) : (
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Kompanija</th>
-                        <th>Faza</th>
-                        <th>Potencijalna vrednost</th>
-                        <th>Izmena</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((c) => (
-                        <tr key={c.id}>
-                          <td>
-                            <strong>{c.name}</strong>
-                            <small>
-                              {c.city} · {c.sector}
-                              {c.is_demo ? " · DEMO" : ""}
-                            </small>
-                          </td>
-                          <td>
-                            <span className={"stage stage-" + c.stage}>
-                              {c.stage}
-                            </span>
-                          </td>
-                          <td>{money(Number(c.potential_value))}</td>
-                          <td>
-                            <button
-                              className="text-button"
-                              disabled={busy}
-                              onClick={() => {
-                                setEditing(c.id);
-                                setForm({
-                                  name: c.name,
-                                  city: c.city,
-                                  sector: c.sector,
-                                  stage: c.stage,
-                                  potential_value: c.potential_value,
-                                });
-                                setMessage("");
-                              }}
-                            >
-                              Izmeni
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {rows.length === 0 && !error && (
-                    <p className="empty">
-                      Nema kompanija za prikaz. Dodajte prvu kompaniju ili
-                      promenite pretragu.
-                    </p>
+                    ),
                   )}
+                  <label>
+                    Faza
+                    <select
+                      aria-label="Faza"
+                      disabled={busy}
+                      value={form.stage}
+                      onChange={(e) =>
+                        setForm({ ...form, stage: e.target.value })
+                      }
+                    >
+                      {["Kontakt", "Ponuda", "Pregovori"].map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-              )}
+                <div className="form-actions">
+                  <button className="primary-button" disabled={busy}>
+                    <Save size={16} />
+                    {busy ? "Čuvanje…" : "Sačuvaj"}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={() => setForm(null)}
+                  >
+                    Otkaži
+                  </button>
+                </div>
+              </form>
             </section>
-          </>
-        )}
-      </div>
-    </div>
+          )}
+          <section className="panel">
+            <div className="panel-heading">
+              <h2>Sačuvane kompanije</h2>
+              <span className="tag">{rows.length} zapisa · najviše 200</span>
+            </div>
+            {loading ? (
+              <p className="empty">Učitavanje…</p>
+            ) : (
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Kompanija</th>
+                      <th>Faza</th>
+                      <th>Potencijalna vrednost</th>
+                      <th>Izmena</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((c) => (
+                      <tr key={c.id}>
+                        <td>
+                          <strong>{c.name}</strong>
+                          <small>
+                            {c.city} · {c.sector}
+                            {c.is_demo ? " · DEMO" : ""}
+                          </small>
+                        </td>
+                        <td>
+                          <span className={"stage stage-" + c.stage}>
+                            {c.stage}
+                          </span>
+                        </td>
+                        <td>{money(Number(c.potential_value))}</td>
+                        <td>
+                          <button
+                            className="text-button"
+                            disabled={busy}
+                            onClick={() => {
+                              setEditing(c.id);
+                              setForm({
+                                name: c.name,
+                                city: c.city,
+                                sector: c.sector,
+                                stage: c.stage,
+                                potential_value: c.potential_value,
+                              });
+                              setMessage("");
+                            }}
+                          >
+                            Izmeni
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {rows.length === 0 && !error && (
+                  <p className="empty">
+                    Nema kompanija za prikaz. Dodajte prvu kompaniju ili
+                    promenite pretragu.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </Shell>
   );
 }
