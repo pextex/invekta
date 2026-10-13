@@ -10,4 +10,5 @@ U **Prodajni levak** prevucite karticu u drugu kolonu ili izaberite status na nj
 
 Po otvaranju izaberite LUU, Invekta ili Cenobots, pa kliknite **Pogledaj demo bez prijave**. Stvarna prijava ne radi iz samostalnog HTML fajla. Cenobots partneri su izmišljeni i jasno označeni, kao i podaci ostalih jedinica.
 
-AI asistent je vidljiv u demo meniju: izaberite vrstu, ton i jezik poruke. Dugme za generisanje je onemogućeno u demou. Stvarni nacrti, njihove izmene i istorija dostupni su samo u povezanom CRM-u; potreban je podešen AI servis.
+
+Besplatni šabloni sada rade i u samostalnom HTML-u bez servera i interneta. U AI asistentu izaberite klijenta i cilj poruke, pa Pripremi besplatan nacrt. Nacrt je običan izmenjiv tekst, sa dugmetom Kopiraj nacrt. Ako browser blokira clipboard, tekst se označi za ručno kopiranje. Nema dugmeta za preuzimanje nacrta. Demo nacrti su samo u memoriji trenutnog prikaza; kopirajte ih pre zatvaranja ili osvežavanja.

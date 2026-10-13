@@ -504,6 +504,7 @@ export default function App() {
       {page === "AI asistent" && (
         <AiAssistant
           unit={0}
+          organization={organizationName(unit)}
           demo
           companies={all.map((c) => ({
             id: c.id,

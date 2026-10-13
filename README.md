@@ -153,10 +153,12 @@ Podesite `CRM_AI_API_KEY` kroz bezbedna podešavanja okruženja/servera i dozvol
 
 Najviše 20 pokušaja generisanja po korisniku u 15 minuta, ukupno kroz njegove firme; neuspešan poziv servisu takođe troši pokušaj. Zahtev ima timeout 45 sekundi. Neispravan, odbijen ili nepotpun AI odgovor ne čuva nacrt. Čuvanje ručnih izmena koristi verziju i vraća konflikt ako je drugi prozor već izmenio zapis. Proverite činjenice i mesta `[dopuniti]` pre slanja. Za izbor kompanije učitava se najviše 200 zapisa i za izabranu kompaniju najviše 100 prilika.
 
-Samostalni HTML prikazuje ekran asistenta, ali ne generiše i ne čuva nacrte. Testovi pokrivaju protokol sa simuliranim AI odgovorima, granice pristupa, kontekst, rate limit, greške i upis/izmenu nacrta; poziv stvarnom OpenAI servisu zahteva podešen ključ i proveru nakon povezivanja.
+Samostalni HTML sada lokalno priprema šablonske nacrte i ispisuje tekst za kopiranje; bez backend-a ne čuva ih u bazi. Testovi pokrivaju protokol sa simuliranim AI odgovorima, granice pristupa, kontekst, rate limit, greške i upis/izmenu nacrta; poziv stvarnom OpenAI servisu zahteva podešen ključ i proveru nakon povezivanja.
 
 AI generisanje je isključeno na zahtev korisnika. `CRM_AI_ENABLED` podrazumevano je `false`; prisustvo ključa ne omogućava pozive. Sačuvani nacrti ostaju dostupni. Za uklanjanje binding-a izbrišite `CRM_AI_API_KEY` u podešavanjima okruženja, a za opoziv samog ključa obrišite ga i na OpenAI API Keys stranici. Ponovno uključivanje naplatnog servisa zahteva izričit zahtev korisnika.
 
 ## Besplatni asistent sa šablonima
 
 Aktivni CRM sada koristi lokalne šablone, ne OpenAI. Izaberite firmu klijenta, kontakt/priliku, novi email/odgovor/follow-up, cilj (sastanak, predstavljanje, dodatne informacije), ton i srpski/engleski jezik. Nacrt se priprema i čuva u PostgreSQL bez API ključa i bez naplate po poruci. Primalac, predmet i telo mogu se uređivati i kopirati. Napomene i pitanja iz dolazne poruke morate ručno uneti u odgovor: šabloni nemaju razumevanje slobodnog teksta. Plaćeni provider je odvojen i isključen; nijedan korisnički endpoint ga više ne poziva. Prethodna uputstva za povezivanje OpenAI opisuju raniju opciju, ne aktivni način rada.
+
+Samostalni demo podržava lokalnu pripremu besplatnih nacrta i kopiranje teksta. Za to nisu potrebni backend ili API ključ. U demou nacrti traju do promene prikaza ili refresh-a; pravo čuvanje u bazi i kontakti iz baze rade samo u prijavljenom CRM-u.

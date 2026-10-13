@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { prepareLocalMessage } from "../../lib/messageTemplates";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Sparkles, Copy, Save } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import type { Company, Contact, Opportunity, OpportunityPage } from "./types";
@@ -24,11 +25,14 @@ export default function AiAssistant({
   unit,
   companies,
   demo = false,
+  organization = "CRM",
 }: {
   unit: number;
   companies: Company[];
   demo?: boolean;
+  organization?: string;
 }) {
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [company, setCompany] = useState(0),
     [contact, setContact] = useState(0),
     [opportunity, setOpportunity] = useState(0);
@@ -60,10 +64,16 @@ export default function AiAssistant({
     if (demo) return;
     const controller = new AbortController();
     setChecking(true);
-    api<{ configured: boolean; disabled?: boolean }>(`/units/${unit}/ai/status`, {
-      signal: controller.signal,
-    })
-      .then((data) => { setConfigured(data.configured); setDisabled(Boolean(data.disabled)); })
+    api<{ configured: boolean; disabled?: boolean }>(
+      `/units/${unit}/ai/status`,
+      {
+        signal: controller.signal,
+      },
+    )
+      .then((data) => {
+        setConfigured(data.configured);
+        setDisabled(Boolean(data.disabled));
+      })
       .catch((e) => {
         if (!controller.signal.aborted) setError(errorText(e));
       })
@@ -131,6 +141,39 @@ export default function AiAssistant({
     setError("");
     setMessage("");
     try {
+      if (demo) {
+        const selected = companies.find((c) => c.id === company);
+        if (!selected) throw new Error("Izaberite kompaniju.");
+        const text = prepareLocalMessage({
+          company: selected.name,
+          organization,
+          mode,
+          goal,
+          tone,
+          language,
+        });
+        const now = new Date().toISOString();
+        const next: Draft = {
+          ...text,
+          id: Date.now(),
+          company_id: company,
+          mode,
+          recipient: null,
+          model: "local-templates-demo",
+          version: 1,
+          created_at: now,
+          updated_at: now,
+        };
+        setDraft(next);
+        setSavedDraft(next);
+        setDirty(false);
+        setItems((previous) => [next, ...previous]);
+        setTotal((previous) => previous + 1);
+        setMessage(
+          "Nacrt je pripremljen. Pregledajte tekst, izmenite ga i kopirajte.",
+        );
+        return;
+      }
       const next = await api<Draft>(`/units/${unit}/ai/drafts`, {
         method: "POST",
         body: JSON.stringify({
@@ -166,6 +209,23 @@ export default function AiAssistant({
     setError("");
     setMessage("");
     try {
+      if (demo) {
+        const next = {
+          ...draft,
+          version: draft.version + 1,
+          updated_at: new Date().toISOString(),
+        };
+        setDraft(next);
+        setSavedDraft(next);
+        setItems((previous) =>
+          previous.map((item) => (item.id === next.id ? next : item)),
+        );
+        setDirty(false);
+        setMessage(
+          "Izmene su sačuvane za ovaj demo prikaz. Kopirajte tekst pre zatvaranja.",
+        );
+        return;
+      }
       const next = await api<Draft>(`/units/${unit}/ai/drafts/${draft.id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -194,8 +254,10 @@ export default function AiAssistant({
       );
       setMessage("Nacrt je kopiran. Nalepite ga u svoj email program.");
     } catch {
+      bodyRef.current?.focus();
+      bodyRef.current?.select();
       setError(
-        "Browser nije dozvolio kopiranje. Označite i kopirajte tekst ručno.",
+        "Browser nije dozvolio kopiranje. Označite tekst poruke i kopirajte ga ručno.",
       );
     }
   }
@@ -231,20 +293,26 @@ export default function AiAssistant({
       )}
       {demo ? (
         <p className="demo-notice">
-          Ovo je pregled AI asistenta. Generisanje i čuvanje nacrta rade u
-          povezanom CRM-u bez API ključa.
+          Demo šabloni rade bez interneta. Nacrti nisu u CRM bazi; osvežavanje
+          stranice ih uklanja. Kopirajte tekst pre zatvaranja.
         </p>
       ) : (
         !checking &&
         !configured && (
           <p className="demo-notice">
-            {disabled ? "AI generisanje je isključeno. Nema poziva AI servisu." : "AI servis još nije povezan. Administrator treba da podesi AI ključ."}
+            {disabled
+              ? "AI generisanje je isključeno. Nema poziva AI servisu."
+              : "AI servis još nije povezan. Administrator treba da podesi AI ključ."}
             Sačuvani nacrti ostaju dostupni za pregled i izmene.
           </p>
         )
       )}
-      <p className="demo-notice">Besplatni asistent radi sa šablonima u CRM-u, bez API ključa i naplate po poruci. Ne tumači automatski poruku klijenta: odgovore i dodatne instrukcije dopunite u nacrtu.</p>
-    <div className="ai-grid">
+      <p className="demo-notice">
+        Besplatni asistent radi sa šablonima u CRM-u, bez API ključa i naplate
+        po poruci. Ne tumači automatski poruku klijenta: odgovore i dodatne
+        instrukcije dopunite u nacrtu.
+      </p>
+      <div className="ai-grid">
         <section className="panel">
           <h2>Priprema poruke</h2>
           <form onSubmit={generate}>
@@ -357,7 +425,22 @@ export default function AiAssistant({
                   />
                 </label>
               )}
-              <label>Cilj poruke<select aria-label="Cilj poruke" value={goal} onChange={e => setGoal(e.target.value)}><option value="meeting">Zakazivanje sastanka</option><option value="introduction">Prvi kontakt i predstavljanje</option><option value="information">Traženje dodatnih informacija</option></select></label>
+              <label>
+                Cilj poruke
+                <select
+                  aria-label="Cilj poruke"
+                  value={goal}
+                  onChange={(e) => setGoal(e.target.value)}
+                >
+                  <option value="meeting">Zakazivanje sastanka</option>
+                  <option value="introduction">
+                    Prvi kontakt i predstavljanje
+                  </option>
+                  <option value="information">
+                    Traženje dodatnih informacija
+                  </option>
+                </select>
+              </label>
               <label>
                 Napomene za ručnu dopunu (opciono)
                 <textarea
@@ -369,14 +452,13 @@ export default function AiAssistant({
                 />
               </label>
               <p className="panel-note">
-                Šablon koristi izabranu kompaniju, ime kontakta i naziv prilike. Pregledajte činjenice i dopunite mesta označena sa
-                [dopuniti].
+                Šablon koristi izabranu kompaniju, ime kontakta i naziv prilike.
+                Pregledajte činjenice i dopunite mesta označena sa [dopuniti].
               </p>
               <button
                 className="primary-button"
                 disabled={
-                  demo ||
-                  !configured ||
+                  (!demo && !configured) ||
                   !company ||
                   contextLoading ||
                   !!contextError ||
@@ -427,6 +509,8 @@ export default function AiAssistant({
                 <label>
                   Tekst poruke
                   <textarea
+                    ref={bodyRef}
+                    aria-label="Tekst poruke"
                     required
                     maxLength={20000}
                     rows={16}
@@ -467,7 +551,11 @@ export default function AiAssistant({
                   )}
                 </div>
                 <p className="panel-note">
-                  {dirty ? "Imate nesačuvane izmene." : "Nacrt je sačuvan."}{" "}
+                  {dirty
+                    ? "Imate nesačuvane izmene."
+                    : demo
+                      ? "Nacrt je u ovom demo prikazu; kopirajte ga pre zatvaranja."
+                      : "Nacrt je sačuvan."}{" "}
                   Email nije poslat.
                 </p>
               </fieldset>
