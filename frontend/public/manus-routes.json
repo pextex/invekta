@@ -1,0 +1,18 @@
+{
+  "routes": [
+    { "path": "/", "title": "LUU × Invekta × Cenobots CRM" },
+    { "path": "/#crm", "title": "CRM prijava" },
+    { "path": "/#crm?organization=:organization", "title": "Izbor poslovne jedinice" },
+    { "path": "/#crm/companies?unit=:unit", "title": "Kompanije" },
+    { "path": "/#crm/companies?unit=:unit&company=:company", "title": "Profil kompanije" },
+    { "path": "/#crm/pipeline?unit=:unit", "title": "Prodajni levak" },
+    { "path": "/#crm/dashboard?unit=:unit", "title": "Početna tabla" },
+    { "path": "/#crm/leads?unit=:unit", "title": "Novi klijenti" },
+    { "path": "/#crm/quotes?unit=:unit", "title": "Ponude" },
+    { "path": "/#crm/tasks?unit=:unit", "title": "Zadaci" },
+    { "path": "/#crm/reports?unit=:unit", "title": "Izveštaji" },
+    { "path": "/#crm/ai?unit=:unit", "title": "AI asistent" },
+    { "path": "/#crm/settings?unit=:unit", "title": "Podešavanja korisnika" },
+    { "path": "/#demo", "title": "Demo prikaz" }
+  ]
+}

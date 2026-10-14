@@ -94,7 +94,7 @@ export default function OrganizationPortal({
           </div>
         )}
         <p className="portal-footer">
-          Razvojna verzija · koristite samo testne podatke.
+          Pristup za ovlašćene korisnike · LUU × Invekta × Cenobots.
         </p>
       </div>
     </main>

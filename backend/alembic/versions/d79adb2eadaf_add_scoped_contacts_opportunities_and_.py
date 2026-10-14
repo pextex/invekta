@@ -27,7 +27,7 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
@@ -58,13 +58,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.CheckConstraint(
@@ -103,7 +103,7 @@ def upgrade():
         sa.Column(
             "changed_at",
             sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.CheckConstraint(
@@ -138,7 +138,7 @@ def upgrade():
         sa.text("""
         INSERT INTO opportunities
           (company_id, business_unit_id, title, amount, stage, notes, is_demo, version)
-        SELECT id, business_unit_id, left('Početna prilika — ' || name, 200), potential_value,
+        SELECT id, business_unit_id, left(concat('Početna prilika — ', name), 200), potential_value,
                CASE WHEN stage = 'Kontakt' THEN 'Kontaktiran' ELSE stage END,
                'Preneto iz prethodne verzije CRM-a.', is_demo, 1
         FROM companies

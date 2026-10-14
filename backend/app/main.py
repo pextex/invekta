@@ -1,8 +1,10 @@
 import secrets
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -92,7 +94,7 @@ def login(
             LoginAttempt.username == username,
             LoginAttempt.attempted_at > now - timedelta(minutes=15),
         )
-    )
+    ) or 0
     if count >= 5:
         raise HTTPException(429, "Previše pokušaja. Pokušajte ponovo za 15 minuta.")
     user = db.scalar(
@@ -145,7 +147,7 @@ def login(
         max_age=8 * 3600,
         httponly=True,
         secure=get_settings().crm_cookie_secure,
-        samesite="strict",
+        samesite="none" if get_settings().crm_cookie_secure else "strict",
         path="/api",
     )
     return {"name": user.name, "unit_id": selected_unit.id if selected_unit else None}
@@ -164,7 +166,7 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         path="/api",
         secure=get_settings().crm_cookie_secure,
         httponly=True,
-        samesite="strict",
+        samesite="none" if get_settings().crm_cookie_secure else "strict",
     )
     return {"status": "ok"}
 
@@ -269,3 +271,8 @@ def update_company(
         )
     db.refresh(company)
     return company
+
+
+STATIC_DIR = Path(__file__).with_name("static")
+if (STATIC_DIR / "index.html").is_file():
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="frontend")

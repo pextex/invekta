@@ -173,7 +173,7 @@ export default function Workspace({
         body: JSON.stringify({ ...form, address: form.address || null, pib: form.pib || null }),
       });
       setForm(null);
-      setMessage("Kompanija je sačuvana u PostgreSQL bazi.");
+      setMessage("Kompanija je sačuvana u CRM bazi.");
       setReload((v) => v + 1);
     } catch (e) {
       setError(errorText(e));
@@ -249,7 +249,7 @@ export default function Workspace({
           <span>
             {window.location.protocol === "file:"
               ? "Preuzeti HTML nema povezan server za prijavu."
-              : "Želite samo da pogledate razvojni demo?"}
+              : "Želite samo da pogledate demo?"}
           </span>
           <button
             type="button"
@@ -296,8 +296,7 @@ export default function Workspace({
       onLogout={user ? logout : undefined}
     >
       <div className="demo-notice">
-        Razvojni CRM · trajna baza i kontrola pristupa su uključeni. Koristite
-        samo testne podatke do završetka produkcione pripreme.
+        CRM podaci se trajno čuvaju uz kontrolu pristupa po poslovnoj jedinici.
       </div>
       {error && (
         <p className="error-message" role="alert">

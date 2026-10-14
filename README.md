@@ -1,6 +1,6 @@
 # LUU × INVEKTA × CENOBOTS — AI Sales CRM
 
-Zajednička CRM platforma za LUU, Invektu i Cenobots. **Razvojna verzija 0.4**, samo za testne podatke. Produkcioni hosting još nije postavljen.
+Zajednička CRM platforma za LUU, Invektu i Cenobots. Ciljani trajni Manus deployment koristi managed MySQL; CRM podaci su dostupni samo posle prijave. Javno objavljivanje je pod kontrolom vlasnika; automatsko objavljivanje nije uključeno.
 
 ## Izgled interfejsa
 
@@ -105,15 +105,15 @@ npm run build
 Health: `/api/health`. Readiness proverava bazu i nove tabele iz migracije: `/api/ready`.
 
 ## Podaci i konfiguracija
-`.env`, lozinke, sesije, `node_modules`, virtuelno okruženje i build izlazi nisu u Git-u. `.env.example` opisuje imena promenljivih. Docker named volume `crm_data` čuva bazu pri restartu u istom okruženju. `docker compose down -v` briše podatke — ne koristite ga za redovan restart. Obnova baze u novom cloud okruženju zahteva sačuvan volume ili backup; GitHub ne čuva bazu.
+`.env`, lozinke, sesije, `node_modules`, virtuelno okruženje i build izlazi nisu u Git-u. `.env.example` opisuje imena promenljivih. Docker named volume `crm_data` čuva lokalnu razvojnu bazu pri restartu u istom okruženju. `docker compose down -v` briše podatke — ne koristite ga za redovan restart. Obnova baze u novom cloud okruženju zahteva sačuvan volume ili backup. Canonical kod za ovaj Manus sajt čuva se kroz Manus-managed checkpoint-e; poslovni CRM podaci se čuvaju samo u bazi.
 
-Pre stvarne poslovne upotrebe ostaju produkcioni deployment, HTTPS, backup/restore provera, audit, upravljanje nalozima, dodatna zaštita prijave i testovi svih korisničkih tokova. GitHub čuva kod, ne hostuje ovu aplikaciju automatski.
+Pre šire poslovne upotrebe i dalje su potrebni dogovoreni backup/restore postupak, poslovni audit i periodična provera korisničkih tokova. Produkcioni hosting koristi trajni Manus/MySQL servis; automatsko objavljivanje novih checkpoint-a nije uključeno, a vlasnik upravlja objavama.
 
 [Arhitektura i plan MVP-a](docs/architecture/plan.md) · [Proverena verzija 0.4](docs/architecture/validation-0.4.md)
 
 ## Prijava emailom i lozinkom
 
-Prava prijava zahteva server i PostgreSQL; HTML demo ne autentifikuje korisnike. Email je jedinstven, lozinka se čuva kao PBKDF2 hash, a sesija koristi HttpOnly cookie. Prijava proverava i članstvo u izabranoj firmi. Postojeći nalozi i lozinke ostaju sačuvani; stari API unos `username` ostaje podržan radi kompatibilnosti. Postojećim korisnicima nije izmišljena email adresa.
+Prava prijava zahteva server i bazu: Manus deployment koristi managed MySQL, a lokalni razvoj PostgreSQL. HTML demo ne autentifikuje korisnike. Email je jedinstven, lozinka se čuva kao PBKDF2 hash, a sesija koristi HttpOnly cookie. Prijava proverava i članstvo u izabranoj firmi. Postojećim korisnicima nije izmišljena email adresa.
 
 Posle `alembic upgrade head`, administrator kreira nalog iz direktorijuma `backend`:
 
@@ -129,19 +129,19 @@ Administrator platforme vidi **Korisnici i pristup** u bočnom meniju svakog CRM
 
 Uloga **Administrator firme** ne daje upravljanje nalozima cele platforme. Globalno pravo se dodeljuje samo eksplicitnom administratorskom komandom. Nema samostalne registracije, slanja pozivnica ili automatskog slanja emaila.
 
-Pripremite glavnog administratora posle migracija:
+Posle migracija, bootstrap komanda može da pripremi **samo prvog** administratora platforme, i to dok još ne postoji nijedan platform admin. Profil se pravi neaktivan, sa administratorskim članstvom u sve tri poslovne jedinice i trajnim markerom `bootstrap_pending`.
 
 ```bash
 .venv/bin/python -m app.bootstrap_admin --email osoba@example.com --name 'Ime Prezime'
 ```
 
-Novi nalog ostaje neaktivan, sa pristupom svim trima firmama i nepoznatom nasumičnom lozinkom. Aktivacija kroz skriven unos:
+Ponovno pokretanje pripreme za isti pending nalog je no-op. Drugi administratorski nalog se odbija. Aktivacija kroz skriven unos:
 
 ```bash
 .venv/bin/python -m app.bootstrap_admin --email osoba@example.com --name 'Ime Prezime' --activate
 ```
 
-Za bezbednu automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz podešavanja okruženja; skripta čita stvarnu procesnu vrednost. Ne postavljati lozinku kao argument, u chat ili u Git. Komanda je eksplicitna: ne izvršava se tokom pokretanja servera. Ponovni poziv bez `--activate` čuva postojeću lozinku i status naloga. Podaci naloga ostaju u PostgreSQL bazi, ne u GitHub-u; za javnu prijavu je i dalje potreban hosting servera i baze.
+Aktivacija prihvata samo postojeći, neaktivan nalog sa `bootstrap_pending=true`; posle uspeha trajno troši marker. Ponovljeni poziv `--activate` ne može resetovati lozinku, aktivirati drugi nalog ili kreirati novog administratora. Za automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz zaštićeni unos okruženja i koristite ga samo za ovu komandu; ne postavljajte lozinku kao argument, u chat ili u Git. Komanda je eksplicitna i ne izvršava se tokom pokretanja servera. U Manus deployment-u podaci naloga ostaju u managed MySQL bazi; PostgreSQL je samo za lokalni razvoj. Lozinku drugih korisnika kasnije menjajte kroz ovlašćeni interfejs, ne bootstrap komandom.
 
 ## AI asistent za nacrte poruka
 
@@ -159,7 +159,7 @@ AI generisanje je isključeno na zahtev korisnika. `CRM_AI_ENABLED` podrazumevan
 
 ## Besplatni asistent sa šablonima
 
-Aktivni CRM sada koristi lokalne šablone, ne OpenAI. Izaberite firmu klijenta, kontakt/priliku, novi email/odgovor/follow-up, cilj (sastanak, predstavljanje, dodatne informacije), ton i srpski/engleski jezik. Nacrt se priprema i čuva u PostgreSQL bez API ključa i bez naplate po poruci. Primalac, predmet i telo mogu se uređivati i kopirati. Napomene i pitanja iz dolazne poruke morate ručno uneti u odgovor: šabloni nemaju razumevanje slobodnog teksta. Plaćeni provider je odvojen i isključen; nijedan korisnički endpoint ga više ne poziva. Prethodna uputstva za povezivanje OpenAI opisuju raniju opciju, ne aktivni način rada.
+Aktivni CRM sada koristi lokalne šablone, ne OpenAI. Izaberite firmu klijenta, kontakt/priliku, novi email/odgovor/follow-up, cilj (sastanak, predstavljanje, dodatne informacije), ton i srpski/engleski jezik. Nacrt se priprema i čuva u CRM bazi bez API ključa i bez naplate po poruci (managed MySQL na hostingu, PostgreSQL lokalno). Primalac, predmet i telo mogu se uređivati i kopirati. Napomene i pitanja iz dolazne poruke morate ručno uneti u odgovor: šabloni nemaju razumevanje slobodnog teksta. Plaćeni provider je odvojen i isključen; nijedan korisnički endpoint ga više ne poziva. Prethodna uputstva za povezivanje OpenAI opisuju raniju opciju, ne aktivni način rada.
 
 Samostalni demo podržava lokalnu pripremu besplatnih nacrta i kopiranje teksta. Za to nisu potrebni backend ili API ključ. U demou se poslednjih 30 nacrta, izmene i potpis pamte u lokalnom browseru po firmi. Čuvanje u bazi i kontakti iz baze rade samo u prijavljenom CRM-u.
 
