@@ -1,3 +1,4 @@
+import { stageLabel } from "./types";
 import {
   loadAssistant,
   saveAssistant,
@@ -454,7 +455,7 @@ export default function AiAssistant({
                     <option value={0}>Bez izabrane prilike</option>
                     {opportunities.map((o) => (
                       <option key={o.id} value={o.id}>
-                        {o.title} · {o.stage}
+                        {o.title} · {stageLabel(o.stage)}
                       </option>
                     ))}
                   </select>

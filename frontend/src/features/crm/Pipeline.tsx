@@ -1,3 +1,4 @@
+import { stageLabel } from "./types";
 import { useStageDragDrop } from "./useStageDragDrop";
 import { useEffect, useState, type FormEvent } from "react";
 import { Plus, Save, History, RefreshCw, GripVertical } from "lucide-react";
@@ -253,7 +254,7 @@ export default function Pipeline({
                   }
                 >
                   {opportunityStages.map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>{stageLabel(s)}</option>
                   ))}
                 </select>
               </label>
@@ -310,7 +311,7 @@ export default function Pipeline({
             history.rows.map((row) => (
               <div className="history-row" key={row.id}>
                 <strong>
-                  {row.from_stage || "Kreiranje"} → {row.to_stage}
+                  {row.from_stage ? stageLabel(row.from_stage) : "Kreiranje"} → {stageLabel(row.to_stage)}
                 </strong>
                 <small>
                   {row.actor_name} · {formatTimestamp(row.changed_at)}
@@ -352,7 +353,7 @@ export default function Pipeline({
             key={stage}
           >
             <h2>
-              {stage}
+              {stageLabel(stage)}
               <span>{items.filter((item) => item.stage === stage).length}</span>
             </h2>
             {items
@@ -397,7 +398,7 @@ export default function Pipeline({
                       }
                     >
                       {opportunityStages.map((s) => (
-                        <option key={s}>{s}</option>
+                        <option key={s} value={s}>{stageLabel(s)}</option>
                       ))}
                     </select>
                   </label>

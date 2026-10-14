@@ -1,3 +1,4 @@
+import { stageLabel } from "./features/crm/types";
 import DailyWelcome, { dailyRecommendations } from "./components/DailyWelcome";
 import AiAssistant from "./features/crm/AiAssistant";
 import {
@@ -118,7 +119,7 @@ export default function App() {
     {
       label: "Otvorene prilike",
       value: String(open.length),
-      note: "Bez dobijenih i izgubljenih poslova",
+      note: "Bez realizovanih i nerealizovanih poslova",
     },
     {
       label: "Vrednost otvorenih prilika",
@@ -234,7 +235,7 @@ export default function App() {
                   <small>Demo korisnik</small>
                 </td>
                 <td>
-                  <span className={"stage stage-" + c.stage}>{c.stage}</span>
+                  <span className={"stage stage-" + c.stage}>{stageLabel(c.stage)}</span>
                 </td>
                 <td>{money(c.value)}</td>
               </tr>
@@ -258,7 +259,7 @@ export default function App() {
           return (
             <div className="bar-row" key={stage}>
               <div>
-                <span>{stage}</span>
+                <span>{stageLabel(stage)}</span>
                 <strong>{count}</strong>
               </div>
               <div className="bar-track">
@@ -423,7 +424,7 @@ export default function App() {
                 key={stage}
               >
                 <h2>
-                  {stage}
+                  {stageLabel(stage)}
                   <span>{all.filter((c) => c.stage === stage).length}</span>
                 </h2>
                 {all
@@ -460,7 +461,7 @@ export default function App() {
                           }
                         >
                           {stages.map((s) => (
-                            <option key={s}>{s}</option>
+                            <option key={s} value={s}>{stageLabel(s)}</option>
                           ))}
                         </select>
                       </label>
@@ -487,7 +488,7 @@ export default function App() {
                 {stages.map((stage) => (
                   <div className="bar-row" key={stage}>
                     <div>
-                      <span>{stage}</span>
+                      <span>{stageLabel(stage)}</span>
                       <strong>
                         {money(
                           all

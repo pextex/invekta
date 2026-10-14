@@ -1,3 +1,4 @@
+import { stageLabel } from "./types";
 import DailyWelcome, {
   dailyRecommendations,
 } from "../../components/DailyWelcome";
@@ -79,7 +80,7 @@ export default function Dashboard({
                 {
                   label: "Otvorene prilike",
                   value: String(data.open_count),
-                  note: "Bez dobijenih i izgubljenih poslova",
+                  note: "Bez realizovanih i nerealizovanih poslova",
                 },
                 {
                   label: "Vrednost otvorenih prilika",
@@ -87,9 +88,9 @@ export default function Dashboard({
                   note: "Potencijalna vrednost, nije prihod",
                 },
                 {
-                  label: "Dobijeni poslovi",
+                  label: "Realizovani poslovi",
                   value: formatAmount(data.won_value),
-                  note: `${data.won_count} dobijenih prilika`,
+                  note: `${data.won_count} realizovanih prilika`,
                 },
               ].map((item) => (
                 <article className="metric" key={item.label}>
@@ -108,7 +109,7 @@ export default function Dashboard({
                 {opportunityStages.map((stage) => (
                   <div className="bar-row" key={stage}>
                     <div>
-                      <span>{stage}</span>
+                      <span>{stageLabel(stage)}</span>
                       <strong>{data.stages[stage]}</strong>
                     </div>
                     <div className="bar-track">

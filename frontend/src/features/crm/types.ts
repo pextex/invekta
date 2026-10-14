@@ -82,3 +82,9 @@ export const formatTimestamp = (value: string) =>
     timeStyle: "short",
     timeZone: "Europe/Belgrade",
   }).format(new Date(value));
+
+export function stageLabel(stage: string): string {
+  if (stage === "Dobijeno") return "Realizovano";
+  if (stage === "Izgubljeno") return "Nije realizovano";
+  return stage;
+}
