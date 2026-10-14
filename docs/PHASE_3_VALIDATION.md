@@ -149,3 +149,9 @@ Tek posle pregledane primene migracije na odgovarajući razvojni CRM, pored post
 `--once` je jednokratna obrada. Normalan operator pokreće worker nad izabranom privatnom DB konfiguracijom; ne pokretati ovu komandu nad poslovnom bazom kao deo sadašnje revizije/provere. Nema produkcionog service/deployment podešavanja u ovoj fazi.
 
 Faza 4 (ponude, proizvodi/usluge, objekti i ugovori) čeka pregled ovih rezultata. Ranije zabeleženi production rizici — runtime DB superuser, RLS i backup/restore operativna priprema — nisu proglašeni rešenim ovim modulom.
+
+## Predaja grane
+
+Grana `feat/crm-phase3-work` je poslata i proverena na remote-u. Pokušaj otvaranja zasebnog Draft PR-a, sa bazom `feat/crm-metrics-sync`, odbijen je sa GitHub API `Forbidden`. Nov PR nije otvoren; [ovaj link priprema pregled/kreiranje PR-a Faze 3](https://github.com/pextex/invekta/compare/feat/crm-metrics-sync...feat/crm-phase3-work?expand=1), bez merge-a. Posle odobrenog spajanja PR #1 bazu sledećeg PR-a treba usaglasiti sa main.
+
+Predložen naslov: **Faza 3: povezani zadaci, aktivnosti i podsetnici**. Opis: proširen postojeći CRM sa verzionisanim zadacima/aktivnostima, istorijom i in-app podsetnicima; povezani Dashboard/profil/izveštaji; 69 backend, 11 frontend i 6 browser testova; bez primene poslovne migracije, deployment-a ili plaćenih servisa. Detalji i ručni scenario su u ovom dokumentu.
