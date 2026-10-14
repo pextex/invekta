@@ -1,3 +1,4 @@
+import TasksCalendar from "./features/crm/TasksCalendar";
 import Reports from "./features/crm/Reports";
 import AiAssistant from "./features/crm/AiAssistant";
 import UserManagement from "./features/crm/UserManagement";
@@ -189,7 +190,6 @@ export default function Workspace({
   const activeRole = user?.units.find((u) => u.id === unit)?.role;
   const supported = [
     "Kompanije",
-    "Novi klijenti",
     "Početna tabla",
     "Izveštaji",
     "Prodajni levak",
@@ -334,6 +334,8 @@ export default function Workspace({
             ostale otvorite profil kompanije preko pretrage.
           </p>
         </>
+      ) : page === "Zadaci" ? (
+        <TasksCalendar key={unit} unit={unit} companies={rows} />
       ) : page === "Izveštaji" ? (
         <Reports key={unit} unit={unit} role={activeRole} />
       ) : page === "Početna tabla" ? (
@@ -373,11 +375,7 @@ export default function Workspace({
           <div className="page-heading">
             <div>
               <div className="eyebrow">DOBRO DOŠLI · {user.name}</div>
-              <h1>
-                {page === "Novi klijenti"
-                  ? "Novi klijenti"
-                  : "Kompanije i kontakti"}
-              </h1>
+              <h1>Kompanije i kontakti</h1>
               <p>Otvorite profil kompanije za kontakte i prodajne prilike.</p>
             </div>
             <button
@@ -393,12 +391,6 @@ export default function Workspace({
               Nova kompanija
             </button>
           </div>
-          {page === "Novi klijenti" && (
-            <p className="section-hint">
-              Ručni unos novih klijenata. Automatsko pronalaženje i AI
-              kvalifikacija još nisu uključeni.
-            </p>
-          )}
           {form && (
             <section className="panel company-form">
               <h2>{editing ? "Izmena kompanije" : "Nova kompanija"}</h2>

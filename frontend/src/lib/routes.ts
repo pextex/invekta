@@ -3,7 +3,7 @@ const pages: Record<string, string> = {
   companies: "Kompanije",
   pipeline: "Prodajni levak",
   dashboard: "Početna tabla",
-  leads: "Novi klijenti",
+  leads: "Kompanije",
   quotes: "Ponude",
   tasks: "Zadaci",
   reports: "Izveštaji",

@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Literal
 from pydantic import (
     BaseModel,
@@ -178,3 +178,45 @@ class SalesReport(BaseModel):
     unrealized_count: int
     stage_counts: dict[str, int]
     items: list[ReportChange]
+
+
+class TaskFields(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    title: str = Field(min_length=2, max_length=200)
+    due_date: date
+    due_time: time | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+    company_id: int | None = Field(default=None, gt=0)
+
+    @field_validator("due_time")
+    @classmethod
+    def local_time(cls, value: time | None):
+        if value is not None and value.tzinfo is not None:
+            raise ValueError("Unesite lokalno vreme u Beogradu bez vremenske zone.")
+        return value
+
+
+class TaskUpdate(TaskFields):
+    version: int = Field(ge=1)
+
+
+class TaskStatusInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: Literal["planned", "done"]
+    version: int = Field(ge=1)
+
+
+class TaskOutput(TaskFields):
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
+    id: int
+    owner_id: int
+    owner_name: str
+    company_name: str | None
+    business_unit_id: int
+    status: Literal["planned", "done"]
+    version: int
+
+
+class TaskPage(BaseModel):
+    items: list[TaskOutput]
+    total: int

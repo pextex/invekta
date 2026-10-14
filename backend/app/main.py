@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from .access import visible_query
+from .api.tasks import router as tasks_router
 from .api.sales import router as sales_router
 from .api.users import router as users_router
 from .api.ai import router as ai_router
@@ -26,6 +27,7 @@ from .security import (
 
 app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
+app.include_router(tasks_router)
 app.include_router(sales_router)
 app.include_router(users_router)
 app.include_router(ai_router)
@@ -65,6 +67,7 @@ def ready(db: Session = Depends(get_db)):
         )
         db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
         db.execute(text("SELECT changes, amount FROM opportunity_stage_changes LIMIT 1"))
+        db.execute(text("SELECT id, due_date FROM tasks LIMIT 1"))
         db.execute(
             text("SELECT 1 FROM ai_drafts LEFT JOIN ai_attempts ON FALSE LIMIT 1")
         )

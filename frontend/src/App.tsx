@@ -1,3 +1,5 @@
+import TasksCalendar from "./features/crm/TasksCalendar";
+import { loadDemoTasks } from "./features/crm/taskCalendar";
 import Reports from "./features/crm/Reports";
 import { loadDemoActivity, saveDemoActivity } from "./lib/demoActivity";
 import { stageLabel } from "./features/crm/types";
@@ -21,35 +23,16 @@ import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   GripVertical,
-  ListTodo,
   Plus,
   Search,
   Sparkles,
   FileText,
-  UsersRound,
 } from "lucide-react";
 import Workspace from "./Workspace";
 import Shell from "./Shell";
 import { selectCompanies, money, stages, type Unit } from "./demo";
 
 type Scope = Unit | "all";
-const demoTasks = {
-  CENOBOTS: [
-    "Pozvati Demo partnera Alfa",
-    "Pripremiti ponudu za Demo partnera Beta",
-    "Dogovoriti sastanak sa Demo partnerom Gama",
-  ],
-  LUU: [
-    "Pozvati Demo Hotel Dunav",
-    "Proveriti potrebe Demo Studija Javor",
-    "Pripremiti sledeći sastanak",
-  ],
-  INVEKTA: [
-    "Dogovoriti obilazak Demo Poslovnog centra",
-    "Kontaktirati Demo Park Sever",
-    "Pripremiti pregled usluga",
-  ],
-};
 export default function App() {
   const [live, setLive] = useState(() => isCrmRoute());
   const [entry, setEntry] = useState(
@@ -66,7 +49,12 @@ export default function App() {
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
   const [stageMessage, setStageMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [done, setDone] = useState<string[]>([]);
+  const [, setTaskReload] = useState(0);
+  useEffect(() => {
+    const update = () => setTaskReload(v => v + 1);
+    window.addEventListener("crm-demo-tasks", update);
+    return () => window.removeEventListener("crm-demo-tasks", update);
+  }, []);
   useEffect(() => {
     const onHash = () => {
       setLive(isCrmRoute());
@@ -104,8 +92,8 @@ export default function App() {
   const drag = useStageDragDrop(all, false, moveDemo);
   const tasks = (
     unit === "all" ? organizations.map((org) => org.code) : [unit]
-  ).flatMap((u) => demoTasks[u].map((title) => ({ title, unit: u })));
-  const openCount = tasks.filter((t) => !done.includes(t.title)).length;
+  ).flatMap((u) => loadDemoTasks(u).map(task => ({ ...task, unit: u })));
+  const openCount = tasks.filter(t => t.status === "planned").length;
   function connect() {
     window.location.hash = unit === "all" ? "crm" : "crm?organization=" + unit;
     setLive(true);
@@ -149,52 +137,10 @@ export default function App() {
     </div>
   );
   const taskPanel = (
-    <section className="panel">
-      <div className="panel-heading">
-        <h2>Aktivnosti tima</h2>
-      </div>
-      <div className="task-list">
-        {(page === "Početna tabla" ? tasks.slice(0, 3) : tasks).map(
-          (task, i) => (
-            <label className="task" key={task.title}>
-              <input
-                type="checkbox"
-                checked={done.includes(task.title)}
-                onChange={() =>
-                  setDone(
-                    done.includes(task.title)
-                      ? done.filter((t) => t !== task.title)
-                      : [...done, task.title],
-                  )
-                }
-              />
-              <span className={done.includes(task.title) ? "completed" : ""}>
-                <strong>{task.title}</strong>
-                <small>
-                  {task.unit} · {i % 3 === 0 ? "Danas" : "Sledeće nedelje"} ·
-                  Demo korisnik
-                </small>
-              </span>
-              <span className={done.includes(task.title) ? "tag green" : "tag"}>
-                {done.includes(task.title) ? "Završeno" : "Planirano"}
-              </span>
-            </label>
-          ),
-        )}
-      </div>
-      {page === "Početna tabla" && (
-        <div className="panel-actions">
-          <button
-            className="secondary-button"
-            onClick={() => navigate("Zadaci")}
-          >
-            Svi zadaci →
-          </button>
-        </div>
-      )}
-      <p className="panel-note">
-        Demo zadaci · resetuju se osvežavanjem stranice.
-      </p>
+    <section className="panel"><div className="panel-heading"><h2>Planirani zadaci</h2></div>
+      {tasks.filter(t => t.status === "planned").slice(0, 3).map(task => <div className="task" key={`${task.unit}-${task.id}`}><span><strong>{task.title}</strong><small>{task.unit} · {task.due_date}{task.due_time ? ` · ${task.due_time.slice(0, 5)}` : ""}</small></span></div>)}
+      {!openCount && <p className="empty">Nema planiranih demo zadataka. Dodajte prvi u kalendaru.</p>}
+      <div className="panel-actions"><button className="secondary-button" onClick={() => navigate("Zadaci")}>Otvori kalendar zadataka →</button></div>
     </section>
   );
   const table = (
@@ -336,7 +282,7 @@ export default function App() {
       role="Razvojni pregled"
       onConnect={connect}
     >
-      {page !== "AI asistent" && (
+      {!["AI asistent", "Zadaci", "Izveštaji"].includes(page) && (
         <div className="page-heading">
           <div>
             <h1>
@@ -354,10 +300,10 @@ export default function App() {
                   : "LUU × Invekta × Cenobots · zajednički prodajni prostor."}
             </p>
           </div>
-          {["Početna tabla", "Kompanije", "Novi klijenti"].includes(page) && (
+          {["Početna tabla", "Kompanije"].includes(page) && (
             <button className="primary-button" onClick={connect}>
               <Plus size={16} />
-              {page === "Početna tabla" ? "Novi klijent" : "Dodaj kompaniju"}
+              Dodaj kompaniju
             </button>
           )}
         </div>
@@ -391,21 +337,6 @@ export default function App() {
         </>
       )}
       {page === "Kompanije" && table}
-      {page === "Novi klijenti" && (
-        <>
-          <section className="panel feature-note">
-            <UsersRound size={23} />
-            <div>
-              <h2>Potencijalni klijenti</h2>
-              <p>
-                Ovo su demo kompanije. Automatsko pronalaženje i kvalifikacija
-                novih leadova još nisu povezani.
-              </p>
-            </div>
-          </section>
-          {table}
-        </>
-      )}
       {page === "Prodajni levak" && (
         <>
           <p className="section-hint">
@@ -478,7 +409,7 @@ export default function App() {
           </div>
         </>
       )}
-      {page === "Zadaci" && taskPanel}
+      {page === "Zadaci" && <TasksCalendar key={unit} unit={0} organization={unit} companies={all} />}
       {page === "Izveštaji" && <Reports key={unit} unit={0} demoItems={activity.filter(row => all.some(c => c.id === row.opportunity_id))} />}
       {page === "AI asistent" && (
         <AiAssistant

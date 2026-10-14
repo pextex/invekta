@@ -19,7 +19,7 @@ Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, 
 - Backend i baza sprečavaju povezivanje kontakata/prilika sa kompanijom iz druge jedinice. Komercijalista vidi podatke svojih kompanija; menadžer i administrator vide podatke u svojim jedinicama.
 - Eksplicitan demo seed čuva postojeće zapise i lozinke. Demo kontakti i prilike su označeni; svi razvojni podaci služe samo testiranju.
 
-Ponude, trajni zadaci, aktivnosti, raspodela kompanija i potpuna audit evidencija još nisu implementirani. Upravljanje nalozima i priprema AI nacrta su dodati; AI zahteva povezivanje servisa. Istorija prodajnih prilika beleži kreiranje, promene statusa i izmene podataka; potpuna audit evidencija ostalih modula još nije implementirana. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
+Ponude, aktivnosti, raspodela kompanija i potpuna audit evidencija još nisu implementirani. Upravljanje nalozima i priprema AI nacrta su dodati; AI zahteva povezivanje servisa. Istorija prodajnih prilika beleži kreiranje, promene statusa i izmene podataka; potpuna audit evidencija ostalih modula još nije implementirana. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
 
 ## Kako koristiti povezani CRM
 1. Na početnom ekranu izaberite **LUU**, **Invekta** ili **Cenobots**, pa unesite email i lozinku. Server proverava pristup izabranoj jedinici pre kreiranja nove sesije.
@@ -32,7 +32,7 @@ Ponude, trajni zadaci, aktivnosti, raspodela kompanija i potpuna audit evidencij
 ## Interaktivni demo levak
 Preuzeti demo HTML sada podržava sedam statusa, prevlačenje i izbor statusa na kartici. Statusi su sačuvani lokalno kada browser dozvoljava localStorage, uz pamćenje otvorene demo stranice. Otvarajte isti fajl u istom browseru da biste videli prethodne izmene. Demo ne šalje ove promene backend-u. Kada lokalno čuvanje nije dostupno, prikazuje se poruka da promena važi samo tokom tog prikaza.
 
-Pokazatelji demo dashboard-a odmah prate promene: Dobijeno i Izgubljeno ne ulaze u otvorene prilike i njihovu potencijalnu vrednost. Zadaci u demo prikazu i dalje nisu trajni.
+Pokazatelji demo dashboard-a odmah prate promene: Dobijeno i Izgubljeno ne ulaze u otvorene prilike i njihovu potencijalnu vrednost. Zadaci iz demo kalendara čuvaju se lokalno u browseru, odvojeno od CRM baze.
 
 U povezanom levku kartica menja kolonu tek posle uspešnog API čuvanja. Kod greške ili konflikta ostaje u prethodnoj koloni. Tokom čuvanja ili otvorene forme blokirane su dodatne promene faze. Istorija i serverska kontrola pristupa važe i za prevlačenje.
 
@@ -186,3 +186,15 @@ Pokazatelji broje događaje (jedna prilika može imati više promena) i različi
 Samostalni HTML demo prikazuje lokalnu istoriju promena statusa od ove verzije, sa dnevnim/mesečnim filterom. Demo istorija se čuva samo u istom browseru kada je localStorage dostupan, ne šalje se serveru i nema izmišljenu prethodnu istoriju.
 
 Posle preuzimanja pokrenite `uv run python -m alembic upgrade head` iz `backend`, zatim restartujte backend.
+
+## Kalendar zadataka
+
+„Novi klijenti“ je uklonjen iz menija; kompanije se dodaju kroz **Kompanije**. Stare `#crm/leads` i `#demo/leads` putanje i dalje otvaraju kompanije.
+
+U **Zadaci** izaberite mesec i dan, pa **Dodaj novi zadatak**. Unesite naziv, datum, opciono vreme u Beogradu, belešku i kompaniju. Moguće je izmeniti zadatak, označiti ga kao završenog i ponovo otvoriti. Nova kompanijska veza proverava se na serveru; nije moguće izabrati kompaniju iz druge firme ili tuđu kompaniju bez ovlašćenja. Zadaci automatski pripadaju korisniku koji ih unosi. Komercijalista vidi samo svoje zadatke i dozvoljene povezane kompanije; menadžer i administrator vide zadatke svoje firme. Promene imaju verziju radi zaštite od prepisivanja novijih podataka.
+
+API: `GET/POST /api/units/{unit_id}/tasks`, `PATCH /api/units/{unit_id}/tasks/{task_id}` i `PATCH /api/units/{unit_id}/tasks/{task_id}/status`. Lista zahteva `date_from` i `date_to`; kalendar učitava sve stranice kako bi broj zadataka ostao tačan i preko 200 zapisa. UI putanja je `#crm/tasks?unit=...`, demo `#demo/tasks?organization=...`.
+
+Nova migracija `d264b37c5f53` dodaje samo tabelu i indeks zadataka, bez seed-a ili promene postojećih podataka. Koristi prenosive SQLAlchemy Date/Time/String tipove i strane ključeve za PostgreSQL i MySQL. Demo ima zaseban kalendar u localStorage po firmi; podaci se ne šalju managed bazi.
+
+**Integracija sa Manus projektom:** dostupni GitHub checkout još ne sadrži objavljeni Manus checkpoint `77e0ede`, root Dockerfile, `app.run_migrations`, `pyrightconfig.json` ni postojeći `frontend/public/manus-routes.json`. Ovu izmenu treba spojiti sa aktuelnim canonical repozitorijumom; proveriti/rebazirati Alembic `down_revision` na njegov head i ažurirati njegov route manifest za zadatke i uklonjene leadove. Ne zamenjivati Dockerfile niti uklanjati COPY za shared katalog. Pyright i clean container build sa statičkim frontend-om i katalogom treba potvrditi u tom projektu. GitHub commit nije Manus checkpoint ili Publish. Ne pokretati seed, testove, reset ili downgrade nad managed bazom.

@@ -40,8 +40,8 @@ export function saveDemoStages(stages: DemoStages): boolean {
 }
 const demoPages: Record<string, string> = {
   dashboard: "Početna tabla",
-  leads: "Novi klijenti",
   companies: "Kompanije",
+  leads: "Kompanije",
   pipeline: "Prodajni levak",
   quotes: "Ponude",
   tasks: "Zadaci",

@@ -1438,3 +1438,50 @@ form label {
 .report-chart-legend small { color: #64748b; text-align: right; }
 @media(max-width:1100px) { .report-charts { grid-template-columns: 1fr; } }
 @media(max-width:600px) { .report-toolbar { gap: 10px; } .report-timezone { display: none; } .report-chart { padding: 16px; } .report-stage-row { grid-template-columns: 110px 1fr 22px; gap: 8px; } .report-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .report-metrics .metric { padding: 15px; } }
+
+.task-calendar-layout { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(290px,1fr); gap: 20px; align-items: start; }
+.task-calendar-panel { padding: 20px; min-width: 0; }
+.task-calendar-toolbar, .task-calendar-toolbar > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-calendar-toolbar h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; margin: 0; text-transform: capitalize; }
+.task-calendar-toolbar .secondary-button { padding: 8px; }
+.task-calendar-summary { color: #64748b; font-size: 12px; margin: 14px 0 18px; }
+.task-calendar-grid { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 3px; }
+.task-calendar-grid th { text-align: center; padding: 8px 0; font-size: 11px; background: transparent; }
+.task-calendar-grid td { padding: 0; border: 0; vertical-align: top; }
+.task-calendar-day { width: 100%; height: 76px; border: 1px solid #e7edf3; background: #fff; border-radius: 8px; display: flex; align-items: center; flex-direction: column; gap: 5px; padding: 8px 2px; font: inherit; font-size: 13px; color: #334155; }
+.task-calendar-day:hover { background: #f1f5ff; border-color: var(--blue); }
+.task-calendar-day.today > span:first-child { font-weight: 800; color: var(--blue); }
+.task-calendar-day.selected { background: #edf4ff; border: 2px solid var(--blue); }
+.task-calendar-day.outside { color: #94a3b8; background: #f8fafc; }
+.task-calendar-day:focus-visible, .task-calendar-toolbar button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.task-calendar-day small { font-size: 10px; }
+.task-day-dots { display: flex; gap: 4px; }
+.task-day-dots i, .task-calendar-legend i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+.task-day-dots .planned, .task-calendar-legend .planned { background: var(--blue); }
+.task-day-dots .done, .task-calendar-legend .done { background: #14b8a6; }
+.task-calendar-legend { display: flex; gap: 18px; font-size: 11px; color: #64748b; margin-top: 14px; }
+.task-calendar-legend span { display: flex; align-items: center; gap: 6px; }
+.task-day-panel .panel-heading h2 { margin-bottom: 4px; }
+.task-day-panel .panel-heading p { margin: 0; font-size: 12px; color: #64748b; }
+.task-day-empty { text-align: center; padding: 36px 18px; color: #64748b; }
+.task-day-empty h3 { color: #334155; font-size: 16px; }
+.task-day-empty p { font-size: 13px; }
+.task-day-empty button { margin: 16px auto 0; }
+.task-calendar-list { padding: 0 18px 18px; display: grid; gap: 12px; }
+.task-calendar-item { padding: 14px; border: 1px solid var(--border); border-radius: 10px; }
+.task-calendar-item h3 { font-size: 14px; margin: 10px 0 5px; overflow-wrap: anywhere; }
+.task-calendar-item.completed h3 { text-decoration: line-through; color: #64748b; }
+.task-calendar-item small { color: #64748b; font-size: 11px; }
+.task-item-top, .task-item-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-item-time { font-size: 12px; font-weight: 700; color: var(--blue); }
+.task-item-actions { margin-top: 14px; font-size: 12px; }
+.task-item-actions label { display: flex; align-items: center; gap: 6px; }
+.task-item-actions input { width: auto; }
+.task-item-notes { font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: #475569; }
+.task-editor { padding: 22px; margin-bottom: 20px; }
+.task-editor fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.task-editor label { display: grid; gap: 6px; font-size: 13px; }
+.task-editor input, .task-editor select, .task-editor textarea { width: 100%; min-width: 0; font: inherit; padding: 10px; border: 1px solid var(--border); border-radius: 8px; }
+.task-editor textarea { resize: vertical; }
+@media(max-width:1100px) { .task-calendar-layout { grid-template-columns: 1fr; } }
+@media(max-width:600px) { .task-calendar-panel { padding: 12px; } .task-calendar-toolbar { flex-wrap: wrap; gap: 12px; } .task-calendar-toolbar h2 { font-size: 16px; } .task-calendar-day { height: 66px; } .task-calendar-grid { border-spacing: 2px; } }

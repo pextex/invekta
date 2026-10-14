@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from sqlalchemy import (
     Boolean,
@@ -13,6 +13,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    Time,
     UniqueConstraint,
     func,
 )
@@ -244,3 +245,27 @@ class AiAttempt(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     __table_args__ = (Index("ix_ai_attempt_actor_time", "actor_id", "created_at"),)
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+    __table_args__ = (
+        ForeignKeyConstraint(["owner_id", "business_unit_id"],
+                             ["memberships.user_id", "memberships.business_unit_id"], name="task_owner_unit_fk"),
+        ForeignKeyConstraint(["company_id", "business_unit_id"],
+                             ["companies.id", "companies.business_unit_id"], name="task_company_unit_fk"),
+        CheckConstraint("status IN ('planned', 'done')", name="valid_task_status"),
+        CheckConstraint("version >= 1", name="positive_task_version"),
+        Index("ix_task_unit_date_owner", "business_unit_id", "due_date", "owner_id"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"))
+    owner_id: Mapped[int] = mapped_column(Integer)
+    company_id: Mapped[int | None] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(200))
+    notes: Mapped[str | None] = mapped_column(Text)
+    due_date: Mapped[date] = mapped_column(Date)
+    due_time: Mapped[time | None] = mapped_column(Time)
+    status: Mapped[str] = mapped_column(String(20), default="planned", server_default="planned")
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

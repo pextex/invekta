@@ -8,7 +8,6 @@ import {
   Sparkles,
   Settings,
   Search,
-  UsersRound,
   FileText,
   ChartNoAxesCombined,
   UserRound,
@@ -18,7 +17,6 @@ import {
 
 export const navigation = [
   { title: "Početna tabla", icon: LayoutDashboard },
-  { title: "Novi klijenti", icon: UsersRound },
   { title: "Kompanije", icon: Building2 },
   { title: "Prodajni levak", icon: Columns3 },
   { title: "Ponude", icon: FileText },
