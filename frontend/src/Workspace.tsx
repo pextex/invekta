@@ -1,3 +1,4 @@
+import Reports from "./features/crm/Reports";
 import AiAssistant from "./features/crm/AiAssistant";
 import UserManagement from "./features/crm/UserManagement";
 import OrganizationPortal from "./components/OrganizationPortal";
@@ -333,7 +334,9 @@ export default function Workspace({
             ostale otvorite profil kompanije preko pretrage.
           </p>
         </>
-      ) : page === "Početna tabla" || page === "Izveštaji" ? (
+      ) : page === "Izveštaji" ? (
+        <Reports key={unit} unit={unit} role={activeRole} />
+      ) : page === "Početna tabla" ? (
         <Dashboard
           userName={user.name}
           onNavigate={navigate}

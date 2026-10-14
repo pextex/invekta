@@ -19,7 +19,7 @@ Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, 
 - Backend i baza sprečavaju povezivanje kontakata/prilika sa kompanijom iz druge jedinice. Komercijalista vidi podatke svojih kompanija; menadžer i administrator vide podatke u svojim jedinicama.
 - Eksplicitan demo seed čuva postojeće zapise i lozinke. Demo kontakti i prilike su označeni; svi razvojni podaci služe samo testiranju.
 
-Ponude, trajni zadaci, aktivnosti, raspodela kompanija i potpuna audit evidencija još nisu implementirani. Upravljanje nalozima i priprema AI nacrta su dodati; AI zahteva povezivanje servisa. Istorija faza je trenutno jedina poslovna istorija promena. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
+Ponude, trajni zadaci, aktivnosti, raspodela kompanija i potpuna audit evidencija još nisu implementirani. Upravljanje nalozima i priprema AI nacrta su dodati; AI zahteva povezivanje servisa. Istorija prodajnih prilika beleži kreiranje, promene statusa i izmene podataka; potpuna audit evidencija ostalih modula još nije implementirana. Dobijeni poslovi predstavljaju vrednost prilika označenih kao dobijene, ne fakturisan prihod.
 
 ## Kako koristiti povezani CRM
 1. Na početnom ekranu izaberite **LUU**, **Invekta** ili **Cenobots**, pa unesite email i lozinku. Server proverava pristup izabranoj jedinici pre kreiranja nove sesije.
@@ -174,3 +174,15 @@ Komercijalista vidi i menja samo svoje kompanije, njihove kontakte i prodajne pr
 Unos nove kompanije sadrži naziv, adresu, PIB (9 cifara), grad i delatnost, kao i jednu ili više kontakt osoba sa imenom, funkcijom, telefonom i emailom. Kompanija i kontakti se čuvaju zajedno. Adresa i PIB postojećih kompanija ostaju prazni do dopune. Kontakte naknadno dodajete i menjate u profilu kompanije.
 
 Posle preuzimanja ove izmene pokrenite iz `backend` direktorijuma `uv run python -m alembic upgrade head`, pa restartujte backend. GitHub ne migrira pokrenutu bazu automatski.
+
+## Dnevni i mesečni izveštaji promena
+
+Odeljak **Izveštaji** prikazuje sve zabeležene događaje u prodajnom levku tokom izabranog dana ili meseca, prema vremenskoj zoni Europe/Belgrade. Podrazumevano se otvara današnji dnevni pregled. Period se odnosi na vreme promene, ne na datum kreiranja prilike.
+
+Hronologija prikazuje kompaniju, priliku, prethodni i novi status, korisnika i vreme promene. Beleže se i kreiranje prilike i izmene naslova, vrednosti, očekivanog datuma zatvaranja i beleške. Vrednost pri promeni čuva se kao istorijski podatak; ponovljeno čuvanje bez stvarne izmene ne pravi događaj. Stariji zapisi sadrže samo istoriju statusa, bez naknadnog izmišljanja ranijih izmena ili vrednosti.
+
+Pokazatelji broje događaje (jedna prilika može imati više promena) i različite prilike u periodu. Menadžer vidi dostupne događaje cele firme, komercijalista događaje na prilikama svojih kompanija. Demo događaji iz baze podrazumevano su isključeni i mogu se uključiti filterom. Sve promene dostupne su kroz stranice od 50 zapisa; zbirni brojevi obuhvataju ceo period.
+
+Samostalni HTML demo prikazuje lokalnu istoriju promena statusa od ove verzije, sa dnevnim/mesečnim filterom. Demo istorija se čuva samo u istom browseru kada je localStorage dostupan, ne šalje se serveru i nema izmišljenu prethodnu istoriju.
+
+Posle preuzimanja pokrenite `uv run python -m alembic upgrade head` iz `backend`, zatim restartujte backend.

@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -188,6 +189,7 @@ class OpportunityStageChange(Base):
             name="valid_history_from_stage",
         ),
         Index("ix_stage_change_opportunity", "opportunity_id"),
+        Index("ix_stage_change_unit_time", "business_unit_id", "changed_at"),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     opportunity_id: Mapped[int] = mapped_column(Integer)
@@ -195,6 +197,8 @@ class OpportunityStageChange(Base):
     actor_id: Mapped[int] = mapped_column(Integer)
     from_stage: Mapped[str | None] = mapped_column(String(30))
     to_stage: Mapped[str] = mapped_column(String(30))
+    changes: Mapped[dict | None] = mapped_column(JSON)
+    amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     changed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

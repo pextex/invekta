@@ -153,3 +153,27 @@ class UnitSummary(BaseModel):
     won_count: int
     won_value: Decimal
     stages: dict[str, int]
+
+
+class ReportChange(BaseModel):
+    id: int
+    changed_at: datetime
+    company_name: str
+    opportunity_id: int
+    title: str
+    amount: Decimal | None
+    from_stage: str | None
+    to_stage: str
+    actor_name: str
+    changes: dict | None
+
+
+class SalesReport(BaseModel):
+    total: int
+    opportunity_count: int
+    created_count: int
+    stage_change_count: int
+    edit_count: int
+    realized_count: int
+    unrealized_count: int
+    items: list[ReportChange]

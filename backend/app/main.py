@@ -64,6 +64,7 @@ def ready(db: Session = Depends(get_db)):
             )
         )
         db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
+        db.execute(text("SELECT changes, amount FROM opportunity_stage_changes LIMIT 1"))
         db.execute(
             text("SELECT 1 FROM ai_drafts LEFT JOIN ai_attempts ON FALSE LIMIT 1")
         )

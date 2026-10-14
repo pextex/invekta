@@ -1396,3 +1396,13 @@ form label {
 .daily-actions button svg { flex-shrink: 0; }
 .daily-welcome small { color: #dce5ee; }
 @media(max-width:900px) { .daily-actions { grid-template-columns: 1fr; } .daily-welcome { padding: 20px; } .daily-welcome h2 { font-size: 23px; } }
+
+.report-filters { margin-bottom: 22px; }
+.report-filters h2 { display: flex; align-items: center; gap: 8px; }
+.report-checkbox { display: flex; flex-direction: row; align-items: center; gap: 10px; align-self: center; }
+.report-checkbox input { width: auto; }
+.report-metrics { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.report-history td { vertical-align: top; }
+.report-history td:nth-child(3) { min-width: 250px; max-width: 440px; }
+.report-change-detail { white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-pagination { padding: 16px 20px; align-items: center; flex-wrap: wrap; }

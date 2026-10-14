@@ -1,3 +1,5 @@
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -7,6 +9,7 @@ from ..constants import CLOSED_STAGES, OPPORTUNITY_STAGES
 from ..db import get_db
 from ..models import Company, Contact, Opportunity, OpportunityStageChange, User
 from ..schemas import (
+    SalesReport,
     CompanyOutput,
     ContactInput,
     ContactOutput,
@@ -201,6 +204,9 @@ def create_opportunity(
             actor_id=user.id,
             from_stage=None,
             to_stage=record.stage,
+            amount=record.amount,
+            changes={key: {"before": None, "after": str(value) if value is not None else None}
+                     for key, value in data.model_dump(exclude={"company_id"}).items()},
         )
     )
     db.commit()
@@ -215,10 +221,13 @@ def apply_opportunity_change(db, user, record, values, version):
             "Priliku je u međuvremenu izmenio drugi korisnik. Osvežite prikaz i pokušajte ponovo.",
         )
     previous = record.stage
+    changes = {key: {"before": str(getattr(record, key)) if getattr(record, key) is not None else None,
+                     "after": str(value) if value is not None else None}
+               for key, value in values.items() if getattr(record, key) != value}
     for key, value in values.items():
         setattr(record, key, value)
     record.version += 1
-    if previous != record.stage:
+    if changes:
         db.add(
             OpportunityStageChange(
                 opportunity_id=record.id,
@@ -226,6 +235,8 @@ def apply_opportunity_change(db, user, record, values, version):
                 actor_id=user.id,
                 from_stage=previous,
                 to_stage=record.stage,
+                amount=record.amount,
+                changes=changes,
             )
         )
     db.commit()
@@ -337,4 +348,57 @@ def summary(
         "won_count": counts["Dobijeno"],
         "won_value": values["Dobijeno"],
         "stages": counts,
+    }
+
+
+@router.get("/reports", response_model=SalesReport)
+def sales_report(
+    unit_id: int,
+    date_from: date,
+    date_to: date,
+    include_demo: bool = False,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    if date_from > date_to or date_to == date.max:
+        raise HTTPException(422, "Proverite početak i kraj perioda.")
+    zone = ZoneInfo("Europe/Belgrade")
+    visible = opportunities_query(db, user, unit_id)
+    if not include_demo:
+        visible = visible.where(Opportunity.is_demo.is_(False))
+    history = OpportunityStageChange
+    criteria = (
+        history.business_unit_id == unit_id,
+        history.opportunity_id.in_(visible.with_only_columns(Opportunity.id)),
+        history.changed_at >= datetime.combine(date_from, time.min, zone),
+        history.changed_at < datetime.combine(date_to + timedelta(days=1), time.min, zone),
+    )
+    grouped = db.execute(
+        select(history.from_stage, history.to_stage, func.count())
+        .where(*criteria).group_by(history.from_stage, history.to_stage)
+    ).all()
+    total = sum(count for _, _, count in grouped)
+    rows = db.execute(
+        select(history, Opportunity.title, Company.name, User.name)
+        .join(Opportunity, Opportunity.id == history.opportunity_id)
+        .join(Company, Company.id == Opportunity.company_id)
+        .join(User, User.id == history.actor_id)
+        .where(*criteria).order_by(history.changed_at.desc(), history.id.desc())
+        .limit(limit).offset(offset)
+    ).all()
+    return {
+        "total": total,
+        "opportunity_count": db.scalar(select(func.count(func.distinct(history.opportunity_id))).where(*criteria)),
+        "created_count": sum(n for before, _, n in grouped if before is None),
+        "stage_change_count": sum(n for before, after, n in grouped if before is not None and before != after),
+        "edit_count": sum(n for before, after, n in grouped if before == after),
+        "realized_count": sum(n for before, after, n in grouped if after == "Dobijeno" and before != after),
+        "unrealized_count": sum(n for before, after, n in grouped if after == "Izgubljeno" and before != after),
+        "items": [{"id": row.id, "changed_at": row.changed_at, "company_name": company,
+                   "opportunity_id": row.opportunity_id, "title": title, "amount": row.amount,
+                   "from_stage": row.from_stage, "to_stage": row.to_stage,
+                   "actor_name": actor, "changes": row.changes}
+                  for row, title, company, actor in rows],
     }

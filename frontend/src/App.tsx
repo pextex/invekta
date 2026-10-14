@@ -1,3 +1,5 @@
+import Reports from "./features/crm/Reports";
+import { loadDemoActivity, saveDemoActivity } from "./lib/demoActivity";
 import { stageLabel } from "./features/crm/types";
 import DailyWelcome, { dailyRecommendations } from "./components/DailyWelcome";
 import AiAssistant from "./features/crm/AiAssistant";
@@ -24,7 +26,6 @@ import {
   Search,
   Sparkles,
   FileText,
-  ChartNoAxesCombined,
   UsersRound,
 } from "lucide-react";
 import Workspace from "./Workspace";
@@ -61,6 +62,7 @@ export default function App() {
     return organizations.find((org) => org.code === code)?.code ?? "LUU";
   });
   const [page, setPage] = useState(readDemoPage);
+  const [activity, setActivity] = useState(loadDemoActivity);
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
   const [stageMessage, setStageMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -90,8 +92,11 @@ export default function App() {
     if (item.stage === stage) return;
     const next = { ...stageOverrides, [item.id]: stage };
     setStageOverrides(next);
+    const events = [...activity, { id: (activity.at(-1)?.id ?? 0) + 1, changed_at: new Date().toISOString(), company_name: item.name, opportunity_id: item.id, title: item.name, amount: String(item.value), from_stage: item.stage, to_stage: stage, actor_name: "Demo korisnik", changes: null }];
+    setActivity(events);
+    const savedHistory = saveDemoActivity(events);
     setStageMessage(
-      saveDemoStages(next)
+      saveDemoStages(next) && savedHistory
         ? "Demo status je sačuvan u ovom browseru. Ne upisuje se u CRM bazu."
         : "Status je promenjen za ovaj prikaz. Browser ne dozvoljava lokalno čuvanje.",
     );
@@ -474,39 +479,7 @@ export default function App() {
         </>
       )}
       {page === "Zadaci" && taskPanel}
-      {page === "Izveštaji" && (
-        <>
-          {metricCards}
-          <div className="dashboard-grid">
-            {funnel}
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>Vrednost po fazama</h2>
-                <ChartNoAxesCombined size={20} />
-              </div>
-              <div className="bars">
-                {stages.map((stage) => (
-                  <div className="bar-row" key={stage}>
-                    <div>
-                      <span>{stageLabel(stage)}</span>
-                      <strong>
-                        {money(
-                          all
-                            .filter((c) => c.stage === stage)
-                            .reduce((s, c) => s + c.value, 0),
-                        )}
-                      </strong>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="panel-note">
-                Izveštaj iz demo zapisa, bez stvarnih prodajnih rezultata.
-              </p>
-            </section>
-          </div>
-        </>
-      )}
+      {page === "Izveštaji" && <Reports key={unit} unit={0} demoItems={activity.filter(row => all.some(c => c.id === row.opportunity_id))} />}
       {page === "AI asistent" && (
         <AiAssistant
           key={unit}
