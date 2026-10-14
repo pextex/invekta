@@ -9,3 +9,6 @@ __pycache__/
 
 .pytest_cache/
 *.pyc
+playwright-report/
+test-results/
+.ruff_cache/

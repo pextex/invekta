@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Plus, Save } from "lucide-react";
-import { api, errorText } from "../../lib/api";
+import { errorText } from "../../lib/api";
+import { useCrmQuery, useCrmRequest } from "../../lib/crmQuery";
 import type { Contact } from "./types";
 type Fields = { name: string; position: string; email: string; phone: string };
 const blank: Fields = { name: "", position: "", email: "", phone: "" };
@@ -11,42 +12,28 @@ export default function Contacts({
   unit: number;
   company: number;
 }) {
-  const [items, setItems] = useState<Contact[]>([]),
-    [loading, setLoading] = useState(true),
-    [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<Fields | null>(null),
     [editing, setEditing] = useState<number | null>(null);
   const [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [reload, setReload] = useState(0);
-  const base = `/units/${unit}/companies/${company}/contacts`;
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    api<Contact[]>(base, { signal: controller.signal })
-      .then(setItems)
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [base, reload]);
+    [message, setMessage] = useState("");
+  const base = `/companies/${company}/contacts`;
+  const query = useCrmQuery<Contact[]>(unit, base);
+  const items = query.error ? [] : (query.data ?? []),
+    loading = query.isPending;
+  const request = useCrmRequest(unit);
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!form) return;
     setBusy(true);
     setError("");
     try {
-      await api(base + (editing ? "/" + editing : ""), {
+      await request(base + (editing ? "/" + editing : ""), {
         method: editing ? "PATCH" : "POST",
         body: JSON.stringify(form),
       });
       setForm(null);
       setMessage("Kontakt je sačuvan.");
-      setReload((v) => v + 1);
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -73,9 +60,9 @@ export default function Contacts({
           Novi kontakt
         </button>
       </div>
-      {error && (
+      {(error || query.error) && (
         <p className="error-message" role="alert">
-          {error}
+          {error || errorText(query.error)}
         </p>
       )}
       {message && (

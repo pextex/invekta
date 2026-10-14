@@ -61,6 +61,20 @@ export type Summary = {
   open_value: string;
   won_count: number;
   won_value: string;
+  lost_count: number;
+  lost_value: string;
+  stage_values: Record<OpportunityStage, string>;
+  owners: { id: number; name: string }[];
+  sales_results: MetricGroup[];
+  company_results: MetricGroup[];
+  transitions: {
+    from_stage: OpportunityStage;
+    to_stage: OpportunityStage;
+    count: number;
+    source_count: number;
+    rate: number;
+  }[];
+  timeline: { month: string; stage: OpportunityStage; count: number }[];
   stages: Record<OpportunityStage, number>;
 };
 export const formatAmount = (value: string | number) =>
@@ -82,3 +96,34 @@ export const formatTimestamp = (value: string) =>
     timeStyle: "short",
     timeZone: "Europe/Belgrade",
   }).format(new Date(value));
+
+export type MetricGroup = Pick<
+  Summary,
+  | "open_count"
+  | "open_value"
+  | "won_count"
+  | "won_value"
+  | "lost_count"
+  | "lost_value"
+  | "opportunity_count"
+> & {
+  name: string;
+  owner_id?: number;
+  company_id?: number;
+};
+export type MetricFilters = {
+  start_date: string;
+  end_date: string;
+  owner_id: string;
+};
+export const emptyMetricFilters: MetricFilters = {
+  start_date: "",
+  end_date: "",
+  owner_id: "",
+};
+export function metricQuery(filters: MetricFilters) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters))
+    if (value) query.set(key, value);
+  return query.toString();
+}
