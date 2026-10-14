@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { api, errorText } from "../../lib/api";
-import { formatAmount, formatTimestamp, stageLabel } from "./types";
+import { formatAmount, formatTimestamp, opportunityStages, stageLabel } from "./types";
 
 export type Change = {
   id: number; changed_at: string; company_name: string; opportunity_id: number;
@@ -11,7 +11,7 @@ export type Change = {
 type SalesReport = {
   total: number; opportunity_count: number; created_count: number;
   stage_change_count: number; edit_count: number; realized_count: number;
-  unrealized_count: number; items: Change[];
+  unrealized_count: number; stage_counts: Record<string, number>; items: Change[];
 };
 export function reportPeriod(mode: "day" | "month", value: string) {
   if (mode === "day") return { from: value, to: value };
@@ -41,6 +41,7 @@ export function summarizeChanges(items: Change[], offset = 0): SalesReport {
     edit_count: items.filter(row => row.from_stage === row.to_stage).length,
     realized_count: items.filter(row => row.to_stage === "Dobijeno" && row.from_stage !== row.to_stage).length,
     unrealized_count: items.filter(row => row.to_stage === "Izgubljeno" && row.from_stage !== row.to_stage).length,
+    stage_counts: Object.fromEntries(opportunityStages.map(stage => [stage, items.filter(row => row.to_stage === stage && row.from_stage !== row.to_stage).length])),
     items: items.slice(offset, offset + 50),
   };
 }
@@ -82,16 +83,16 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
         <p>{role === "sales" ? "Sve promene na prilikama vaših kompanija." : "Sve promene u prodajnom levku vaše firme."}</p></div>
       <button className="secondary-button" disabled={loading || !value} onClick={() => { setOffset(0); setReload(v => v + 1); }}><RefreshCw size={15} />Osveži</button>
     </div>
-    <section className="panel report-filters">
-      <div className="panel-heading"><h2><CalendarDays size={18} /> Period izveštaja</h2><span className="tag">{mode === "day" ? "Dnevni pregled" : "Mesečni pregled"}</span></div>
-      <div className="form-grid">
-        <label>Prikaz<select value={mode} onChange={e => { setMode(e.target.value as "day" | "month"); setOffset(0); }}><option value="day">Dnevno</option><option value="month">Mesečno</option></select></label>
-        <label>{mode === "day" ? "Izaberite dan" : "Izaberite mesec"}
-          {mode === "day" ? <input type="date" required value={day} onChange={e => { setDay(e.target.value); setOffset(0); }} /> : <input type="month" required value={month} onChange={e => { setMonth(e.target.value); setOffset(0); }} />}</label>
-        {!demoItems && <label className="report-checkbox"><input type="checkbox" checked={includeDemo} onChange={e => { setIncludeDemo(e.target.checked); setOffset(0); }} />Uključi demo podatke</label>}
+    <div className="report-toolbar">
+      <div className="report-period-toggle" role="group" aria-label="Period izveštaja">
+        {(["day", "month"] as const).map(option => <button key={option} type="button" aria-pressed={mode === option}
+          className={mode === option ? "active" : ""} onClick={() => { setMode(option); setOffset(0); }}>{option === "day" ? "Dnevno" : "Mesečno"}</button>)}
       </div>
-      <p className="panel-note">Prikazuju se promene koje su napravljene u izabranom periodu, prema vremenu u Beogradu. Svako kreiranje, promena statusa i izmena podataka prilike ima zaseban zapis.</p>
-    </section>
+      <label className="report-date"><CalendarDays size={16} /><span className="report-sr-only">{mode === "day" ? "Izaberite dan" : "Izaberite mesec"}</span>
+        {mode === "day" ? <input type="date" required value={day} onChange={e => { setDay(e.target.value); setOffset(0); }} /> : <input type="month" required value={month} onChange={e => { setMonth(e.target.value); setOffset(0); }} />}</label>
+      {!demoItems && <label className="report-checkbox"><input type="checkbox" checked={includeDemo} onChange={e => { setIncludeDemo(e.target.checked); setOffset(0); }} />Demo podaci</label>}
+      <span className="report-timezone">Vreme u Beogradu</span>
+    </div>
     {demoItems && <p className="section-hint">Demo istorija se beleži u ovom browseru od prve promene statusa. Nema veze sa CRM bazom.</p>}
     {error && <p className="error-message" role="alert">{error}</p>}
     {!value ? <p className="empty">Izaberite {mode === "day" ? "datum" : "mesec"} za pregled.</p> : loading ? <p className="empty" role="status">Učitavanje izveštaja…</p> : data && <>
@@ -104,6 +105,32 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
           { label: "Realizovano", value: data.realized_count, note: "Prelasci u status Realizovano" },
           { label: "Nije realizovano", value: data.unrealized_count, note: "Prelasci u status Nije realizovano" },
         ].map(item => <article className="metric" key={item.label}><div className="metric-label">{item.label}</div><strong>{item.value}</strong><small>{item.note}</small></article>)}
+      </div>
+      <div className="report-charts">
+        <section className="panel report-chart">
+          <div className="report-chart-heading"><div><h2>Kretanje kroz levak</h2><p>Broj ulazaka u svaki status u izabranom periodu</p></div><span className="tag">{data.created_count + data.stage_change_count} događaja</span></div>
+          <div className="report-stage-bars" role="img" aria-label={opportunityStages.map(stage => `${stageLabel(stage)}: ${data.stage_counts[stage] ?? 0}`).join(", ")}>
+            {opportunityStages.map(stage => {
+              const count = data.stage_counts[stage] ?? 0;
+              const max = Math.max(1, ...Object.values(data.stage_counts));
+              return <div className="report-stage-row" key={stage}><span>{stageLabel(stage)}</span><div className="report-stage-track"><div className={stage === "Dobijeno" ? "realized" : stage === "Izgubljeno" ? "unrealized" : ""} style={{ width: `${count / max * 100}%` }} /></div><strong>{count}</strong></div>;
+            })}
+          </div>
+          {!data.created_count && !data.stage_change_count && <p className="report-chart-note">Nema ulazaka u statuse u ovom periodu.</p>}
+        </section>
+        <section className="panel report-chart">
+          <div className="report-chart-heading"><div><h2>Vrste aktivnosti</h2><p>Sve zabeležene promene u periodu</p></div></div>
+          <div className="report-activity-chart">
+            <div className="report-donut" role="img" aria-label={`Nove prilike: ${data.created_count}, promene statusa: ${data.stage_change_count}, izmene podataka: ${data.edit_count}`}
+              style={{ background: data.total ? `conic-gradient(#2563eb 0 ${data.created_count / data.total * 100}%, #14b8a6 ${data.created_count / data.total * 100}% ${(data.created_count + data.stage_change_count) / data.total * 100}%, #a78bfa ${(data.created_count + data.stage_change_count) / data.total * 100}% 100%)` : "#e8edf3" }}>
+              <div><strong>{data.total}</strong><span>promena</span></div>
+            </div>
+            <div className="report-chart-legend">
+              {[{ label: "Nove prilike", count: data.created_count, color: "#2563eb" }, { label: "Promene statusa", count: data.stage_change_count, color: "#14b8a6" }, { label: "Izmene podataka", count: data.edit_count, color: "#a78bfa" }].map(item =>
+                <div key={item.label}><span className="report-legend-dot" style={{ background: item.color }} /><span>{item.label}</span><strong>{item.count}</strong><small>{data.total ? Math.round(item.count / data.total * 100) : 0}%</small></div>)}
+            </div>
+          </div>
+        </section>
       </div>
       <section className="panel">
         <div className="panel-heading"><h2>Hronologija promena</h2><span className="tag">Najnovije prvo</span></div>

@@ -23,4 +23,7 @@ it("counts every event while counting each affected opportunity once", () => {
   expect(result.stage_change_count).toBe(2);
   expect(result.edit_count).toBe(1);
   expect(result.realized_count).toBe(1);
+  expect(result.stage_counts["Novi lead"]).toBe(1);
+  expect(result.stage_counts["Ponuda"]).toBe(1);
+  expect(result.stage_counts["Dobijeno"]).toBe(1);
 });

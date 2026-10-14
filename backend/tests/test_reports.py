@@ -48,6 +48,8 @@ def test_reports_paginate_all_changes_and_keep_amount_snapshot(client, db, sales
     first = client.get("/api/units/101/reports", params=params).json()
     second = client.get("/api/units/101/reports", params={**params, "offset": 50}).json()
     assert first["total"] == second["total"] == 53
+    assert first["stage_counts"]["Ponuda"] == second["stage_counts"]["Ponuda"] == 53
+    assert sum(first["stage_counts"].values()) == 53
     assert len(first["items"]) == 50 and len(second["items"]) == 3
     assert len({row["id"] for row in first["items"] + second["items"]}) == 53
     db.get(Opportunity, 2001).amount = Decimal("999.99")

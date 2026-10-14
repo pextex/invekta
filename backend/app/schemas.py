@@ -176,4 +176,5 @@ class SalesReport(BaseModel):
     edit_count: int
     realized_count: int
     unrealized_count: int
+    stage_counts: dict[str, int]
     items: list[ReportChange]

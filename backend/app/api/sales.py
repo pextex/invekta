@@ -396,6 +396,8 @@ def sales_report(
         "edit_count": sum(n for before, after, n in grouped if before == after),
         "realized_count": sum(n for before, after, n in grouped if after == "Dobijeno" and before != after),
         "unrealized_count": sum(n for before, after, n in grouped if after == "Izgubljeno" and before != after),
+        "stage_counts": {stage: sum(n for before, after, n in grouped if after == stage and before != after)
+                         for stage in OPPORTUNITY_STAGES},
         "items": [{"id": row.id, "changed_at": row.changed_at, "company_name": company,
                    "opportunity_id": row.opportunity_id, "title": title, "amount": row.amount,
                    "from_stage": row.from_stage, "to_stage": row.to_stage,
