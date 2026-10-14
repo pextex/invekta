@@ -272,4 +272,4 @@ class Task(Base):
     due_time: Mapped[time | None] = mapped_column(Time)
     status: Mapped[str] = mapped_column(String(20), default="planned", server_default="planned")
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now())

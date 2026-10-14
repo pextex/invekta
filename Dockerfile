@@ -1,7 +1,10 @@
+# syntax=docker/dockerfile:1
 FROM node:22.13.0-bookworm-slim AS frontend-build
 WORKDIR /src/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm ci
 COPY frontend/ ./
 COPY shared/ /src/shared/
 RUN npm run build
@@ -11,10 +14,14 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /uvx /bin/
 ENV UV_PROJECT_ENVIRONMENT=/app/backend/.venv
 WORKDIR /app/backend
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
+    uv sync --frozen --no-dev --no-install-project
 COPY backend/ ./
 COPY shared/ /app/shared/
-RUN uv sync --frozen --no-dev
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
+    uv sync --frozen --no-dev
 COPY --from=frontend-build /src/frontend/dist /app/backend/app/static
 ENV PATH="/app/backend/.venv/bin:$PATH"
 EXPOSE 3000
