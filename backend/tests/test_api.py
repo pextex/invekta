@@ -203,3 +203,39 @@ def test_database_blocks_owner_from_other_unit(db, data):
     with pytest.raises(IntegrityError):
         db.flush()
     db.rollback()
+
+
+def test_company_details_contacts_and_scoped_search(client, db):
+    login(client, "sales")
+    payload = {**PAYLOAD, "address": "Test ulica 12", "pib": "123456789",
+               "contacts": [{"name": "Petar Test", "position": "Direktor",
+                             "phone": "+381601234567", "email": "petar@example.com"}]}
+    response = client.post("/api/units/101/companies", json=payload, headers=ORIGIN)
+    assert response.status_code == 201
+    record = response.json()
+    assert record["address"] == payload["address"] and record["pib"] == payload["pib"]
+    url = f"/api/units/101/companies/{record['id']}"
+    contacts = client.get(url + "/contacts").json()
+    assert len(contacts) == 1
+    assert all(contacts[0][key] == value for key, value in payload["contacts"][0].items())
+    assert client.get("/api/units/101/companies?search=123456789").json()[0]["id"] == record["id"]
+    login(client, "other")
+    assert client.get(url).status_code == 404
+    assert client.get(url + "/contacts").status_code == 404
+    assert client.get("/api/units/101/companies?search=123456789").json() == []
+    login(client, "manager")
+    assert client.get(url).status_code == 200
+    assert client.get(url + "/contacts").json()[0]["name"] == "Petar Test"
+    update = {**PAYLOAD, "address": "Nova adresa 3", "pib": "987654321"}
+    assert client.patch(url, json=update, headers=ORIGIN).status_code == 200
+    assert client.get(url).json()["pib"] == "987654321"
+    assert len(client.get(url + "/contacts").json()) == 1
+
+
+def test_invalid_company_details_do_not_create_partial_records(client, db):
+    login(client, "sales")
+    for extra in [{"pib": "123"}, {"pib": "abcdefghi"}, {"address": " "},
+                  {"contacts": [{"name": "Test", "email": "invalid"}]}]:
+        response = client.post("/api/units/101/companies", json={**PAYLOAD, **extra}, headers=ORIGIN)
+        assert response.status_code == 422
+    assert db.scalar(select(Company).where(Company.name == PAYLOAD["name"])) is None

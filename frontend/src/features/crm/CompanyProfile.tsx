@@ -52,6 +52,8 @@ export default function CompanyProfile({
               <p>
                 {company.city} · {company.sector}
               </p>
+              <p>Adresa: {company.address || "Nije uneta"} · PIB: {company.pib || "Nije unet"}
+              </p>
             </div>
             <Building2 size={30} />
           </div>

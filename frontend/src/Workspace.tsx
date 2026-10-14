@@ -15,7 +15,7 @@ import CompanyProfile from "./features/crm/CompanyProfile";
 import Pipeline from "./features/crm/Pipeline";
 import Dashboard from "./features/crm/Dashboard";
 import type { User, Company, CompanyForm } from "./features/crm/types";
-const blank: CompanyForm = { name: "", city: "", sector: "" };
+const blank: CompanyForm = { name: "", address: "", pib: "", city: "", sector: "", contacts: [{ name: "", position: "", phone: "", email: "" }] };
 export default function Workspace({
   onDemo,
 }: {
@@ -168,7 +168,7 @@ export default function Workspace({
     try {
       await api(`/units/${unit}/companies${editing ? "/" + editing : ""}`, {
         method: editing ? "PATCH" : "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, address: form.address || null, pib: form.pib || null }),
       });
       setForm(null);
       setMessage("Kompanija je sačuvana u PostgreSQL bazi.");
@@ -401,11 +401,13 @@ export default function Workspace({
               <h2>{editing ? "Izmena kompanije" : "Nova kompanija"}</h2>
               <form onSubmit={save}>
                 <div className="form-grid">
-                  {(["name", "city", "sector"] as const).map((key) => (
+                  {(["name", "address", "pib", "city", "sector"] as const).map((key) => (
                     <label key={key}>
                       {
                         {
                           name: "Naziv kompanije",
+                          address: "Adresa",
+                          pib: "PIB",
                           city: "Grad",
                           sector: "Delatnost",
                         }[key]
@@ -413,8 +415,10 @@ export default function Workspace({
                       <input
                         required
                         disabled={busy}
-                        minLength={2}
-                        maxLength={key === "name" ? 200 : 100}
+                        minLength={key === "pib" ? 9 : 2}
+                        pattern={key === "pib" ? "[0-9]{9}" : undefined}
+                        inputMode={key === "pib" ? "numeric" : undefined}
+                        maxLength={key === "pib" ? 9 : key === "address" ? 300 : key === "name" ? 200 : 100}
                         value={form[key]}
                         onChange={(e) =>
                           setForm({ ...form, [key]: e.target.value })
@@ -423,6 +427,30 @@ export default function Workspace({
                     </label>
                   ))}
                 </div>
+                {!editing && <>
+                  <h3>Kontakt osobe</h3>
+                  {form.contacts?.map((contact, index) => (
+                    <fieldset key={index} disabled={busy}>
+                      <legend>Kontakt osoba {index + 1}</legend>
+                      <div className="form-grid">
+                        {(["name", "position", "phone", "email"] as const).map(key => (
+                          <label key={key}>
+                            {{ name: "Ime i prezime", position: "Funkcija", phone: "Broj telefona", email: "Email" }[key]}
+                            <input required type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+                              maxLength={{ name: 150, position: 100, phone: 40, email: 254 }[key]}
+                              minLength={key === "name" ? 2 : 1} value={contact[key]}
+                              onChange={e => setForm({ ...form, contacts: form.contacts?.map((c, i) => i === index ? { ...c, [key]: e.target.value } : c) })} />
+                          </label>
+                        ))}
+                      </div>
+                      {(form.contacts?.length ?? 0) > 1 && <button type="button" className="text-button"
+                        onClick={() => setForm({ ...form, contacts: form.contacts?.filter((_, i) => i !== index) })}>Ukloni kontakt</button>}
+                    </fieldset>
+                  ))}
+                  <button type="button" className="secondary-button" disabled={busy || (form.contacts?.length ?? 0) >= 50}
+                    onClick={() => setForm({ ...form, contacts: [...(form.contacts ?? []), { name: "", position: "", phone: "", email: "" }] })}>Dodaj kontakt osobu</button>
+                </>}
+                {editing && <p className="section-hint">Kontakt osobe menjate u profilu kompanije.</p>}
                 <p className="section-hint">
                   Vrednost i fazu prodaje sada unosite kroz zasebne prilike u
                   profilu kompanije.
@@ -489,6 +517,8 @@ export default function Workspace({
                               setEditing(c.id);
                               setForm({
                                 name: c.name,
+                                address: c.address ?? "",
+                                pib: c.pib ?? "",
                                 city: c.city,
                                 sector: c.sector,
                               });

@@ -93,6 +93,8 @@ class Company(Base):
     business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"))
     owner_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(String(200))
+    address: Mapped[str | None] = mapped_column(String(300))
+    pib: Mapped[str | None] = mapped_column(String(9))
     city: Mapped[str] = mapped_column(String(100))
     sector: Mapped[str] = mapped_column(String(100))
     stage: Mapped[str] = mapped_column(String(30), default="Kontakt")

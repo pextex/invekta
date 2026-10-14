@@ -516,6 +516,8 @@ export default function App() {
           companies={all.map((c) => ({
             id: c.id,
             name: c.name,
+            address: null,
+            pib: null,
             city: c.city,
             sector: c.sector,
             business_unit_id: 0,

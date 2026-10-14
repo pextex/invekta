@@ -166,3 +166,11 @@ Samostalni demo podržava lokalnu pripremu besplatnih nacrta i kopiranje teksta.
 Profesionalni nacrti: unesite temu, šta nudite, fokus/potrebe klijenta, opcioni termin i potpis. Dodatne informacije ulaze u poruku. Za odgovore unesite konkretan odgovor klijentu; prazno polje ostavlja vidljivo mesto za dopunu. Novi cilj „Predstavljanje predloga saradnje“ ne dodaje izmišljene cene ili uslove. Formulacije sr/en su zajedničke za demo i backend u shared/message_catalog.json.
 
 Dobrodošlica na početnoj tabli prikazuje ime korisnika i datum u vremenskoj zoni Europe/Belgrade. Predlog za danas računa se iz trenutnih faza prilika i broja kompanija; to nisu zadaci sa dodeljenim rokovima. Svaki predlog vodi na odgovarajući ekran. Demo pamti nacrte, kompoziciju poruke i potpis lokalno po firmi; nesačuvane izmene mogu se vratiti nakon navigacije ili refresh-a. Ako localStorage nije dostupan, poruka traži ručno kopiranje. Pretraga nacrta filtrira prikazane zapise; stvarni CRM zadržava paginaciju.
+
+## Unos kompanije i pristup podacima
+
+Komercijalista vidi i menja samo svoje kompanije, njihove kontakte i prodajne prilike. Menadžer i administrator firme vide sve kompanije unutar firme kojoj imaju pristup; prava ne prelaze u druge firme. Nova kompanija automatski pripada korisniku koji je unosi.
+
+Unos nove kompanije sadrži naziv, adresu, PIB (9 cifara), grad i delatnost, kao i jednu ili više kontakt osoba sa imenom, funkcijom, telefonom i emailom. Kompanija i kontakti se čuvaju zajedno. Adresa i PIB postojećih kompanija ostaju prazni do dopune. Kontakte naknadno dodajete i menjate u profilu kompanije.
+
+Posle preuzimanja ove izmene pokrenite iz `backend` direktorijuma `uv run python -m alembic upgrade head`, pa restartujte backend. GitHub ne migrira pokrenutu bazu automatski.

@@ -5,11 +5,14 @@ export type Company = {
   business_unit_id: number;
   owner_id: number;
   name: string;
+  address: string | null;
+  pib: string | null;
   city: string;
   sector: string;
   is_demo: boolean;
 };
-export type CompanyForm = { name: string; city: string; sector: string };
+export type ContactForm = { name: string; position: string; phone: string; email: string };
+export type CompanyForm = { name: string; address: string; pib: string; city: string; sector: string; contacts?: ContactForm[] };
 export type Contact = {
   id: number;
   company_id: number;

@@ -12,8 +12,8 @@ from .api.users import router as users_router
 from .api.ai import router as ai_router
 from .config import get_settings
 from .db import get_db
-from .models import BusinessUnit, Company, LoginAttempt, LoginSession, Membership, User
-from .schemas import CompanyInput, CompanyOutput, LoginInput
+from .models import Contact, BusinessUnit, Company, LoginAttempt, LoginSession, Membership, User
+from .schemas import CompanyCreate, CompanyInput, CompanyOutput, LoginInput
 from .security import (
     COOKIE_NAME,
     DUMMY_HASH,
@@ -63,6 +63,7 @@ def ready(db: Session = Depends(get_db)):
                 "SELECT 1 FROM opportunities LEFT JOIN contacts ON FALSE LEFT JOIN opportunity_stage_changes ON FALSE LIMIT 1"
             )
         )
+        db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
         db.execute(
             text("SELECT 1 FROM ai_drafts LEFT JOIN ai_attempts ON FALSE LIMIT 1")
         )
@@ -198,6 +199,8 @@ def list_companies(
             Company.name.ilike(pattern, escape="\\")
             | Company.city.ilike(pattern, escape="\\")
             | Company.sector.ilike(pattern, escape="\\")
+            | Company.address.ilike(pattern, escape="\\")
+            | Company.pib.ilike(pattern, escape="\\")
         )
     return db.scalars(query.order_by(Company.name).limit(200)).all()
 
@@ -210,16 +213,20 @@ def list_companies(
 )
 def create_company(
     unit_id: int,
-    data: CompanyInput,
+    data: CompanyCreate,
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ):
     membership(db, user, unit_id)
     company = Company(
-        **data.model_dump(), business_unit_id=unit_id, owner_id=user.id, is_demo=False
+        **data.model_dump(exclude={"contacts"}), business_unit_id=unit_id, owner_id=user.id, is_demo=False
     )
     db.add(company)
     try:
+        db.flush()
+        for contact in data.contacts:
+            db.add(Contact(**contact.model_dump(), company_id=company.id,
+                           business_unit_id=unit_id, is_demo=False))
         db.commit()
     except IntegrityError:
         db.rollback()

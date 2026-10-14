@@ -28,6 +28,8 @@ class LoginInput(BaseModel):
 class CompanyInput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     name: str = Field(min_length=2, max_length=200)
+    address: str | None = Field(default=None, min_length=2, max_length=300)
+    pib: str | None = Field(default=None, pattern=r"^[0-9]{9}$")
     city: str = Field(min_length=2, max_length=100)
     sector: str = Field(min_length=2, max_length=100)
     stage: Literal["Kontakt", "Ponuda", "Pregovori"] = "Kontakt"
@@ -49,6 +51,8 @@ class CompanyOutput(BaseModel):
     business_unit_id: int
     owner_id: int
     name: str
+    address: str | None
+    pib: str | None
     city: str
     sector: str
     stage: str
@@ -67,6 +71,10 @@ class ContactInput(BaseModel):
     @classmethod
     def blank_to_none(cls, value):
         return None if isinstance(value, str) and not value.strip() else value
+
+
+class CompanyCreate(CompanyInput):
+    contacts: list[ContactInput] = Field(default_factory=list, max_length=50)
 
 
 class ContactOutput(ContactInput):
