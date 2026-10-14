@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { errorText } from "../../lib/api";
 import { useCrmQuery } from "../../lib/crmQuery";
+import WorkSpace from "./WorkSpace";
 import Contacts from "./Contacts";
 import Pipeline from "./Pipeline";
 import type { Company } from "./types";
@@ -69,8 +70,22 @@ export default function CompanyProfile({
             >
               Prodajne prilike
             </button>
+            <button
+              role="tab"
+              aria-selected={tab === "work"}
+              aria-controls="profile-work"
+              id="work-tab"
+              className={tab === "work" ? "active" : ""}
+              onClick={() => setTab("work")}
+            >
+              Zadaci i aktivnosti
+            </button>
           </div>
-          {tab === "contacts" ? (
+          {tab === "work" ? (
+            <div role="tabpanel" id="profile-work" aria-labelledby="work-tab">
+              <WorkSpace unit={unit} companyId={id} companies={[company]} />
+            </div>
+          ) : tab === "contacts" ? (
             <div
               role="tabpanel"
               id="profile-contacts"

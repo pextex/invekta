@@ -137,6 +137,7 @@ class Opportunity(Base):
             name="opportunity_company_unit_fk",
         ),
         UniqueConstraint("id", "business_unit_id", name="unique_opportunity_id_unit"),
+        UniqueConstraint("id", "company_id", "business_unit_id", name="unique_opportunity_company_unit"),
         CheckConstraint(
             "stage IN ('Novi lead', 'Kontaktiran', 'Sastanak', 'Ponuda', 'Pregovori', 'Dobijeno', 'Izgubljeno')",
             name="valid_opportunity_stage",
@@ -238,3 +239,5 @@ class AiAttempt(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     __table_args__ = (Index("ix_ai_attempt_actor_time", "actor_id", "created_at"),)
+
+from . import work_models  # noqa: E402,F401 -- register additive work metadata

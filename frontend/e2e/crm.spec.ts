@@ -1,38 +1,5 @@
-import type { Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
-async function login(page: Page, name: string, organization = "LUU") {
-  await page.goto("/");
-  await page
-    .getByRole("button", { name: new RegExp(organization, "i") })
-    .first()
-    .click();
-  await page.getByLabel("Email adresa").fill(name + "@example.com");
-  await page
-    .getByLabel("Lozinka", { exact: true })
-    .fill("Browser-test-only-123!");
-  await page
-    .getByRole("button", {
-      name:
-        "Prijavi se u " +
-        (organization === "INVEKTA" ? "Invekta" : organization),
-    })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Početna tabla", exact: true }),
-  ).toBeVisible();
-  await navigate(page, "Početna tabla");
-  await expect(
-    page.getByRole("heading", { name: "Vaš prodajni pregled" }),
-  ).toBeVisible();
-}
-async function navigate(page: Page, label: string) {
-  await page.getByRole("button", { name: label, exact: true }).first().click();
-}
-function metric(page: Page, label: string) {
-  return page
-    .locator(".metric")
-    .filter({ has: page.getByText(label, { exact: true }) });
-}
+import { login, navigate, metric } from "./helpers";
 
 test("persisted sales flow, reports, profile, reload, relogin, manager and foreign unit", async ({
   page,
@@ -61,20 +28,16 @@ test("persisted sales flow, reports, profile, reload, relogin, manager and forei
   await expect(
     page.getByRole("heading", { name: "Izveštaji prodaje" }),
   ).toBeVisible();
-  const stages = page
-    .locator("section")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Broj i vrednost po fazama",
-        exact: true,
-      }),
-    });
+  const stages = page.locator("section").filter({
+    has: page.getByRole("heading", {
+      name: "Broj i vrednost po fazama",
+      exact: true,
+    }),
+  });
   await expect(
-    stages
-      .getByRole("row")
-      .filter({
-        has: page.getByRole("cell", { name: "Dobijeno", exact: true }),
-      }),
+    stages.getByRole("row").filter({
+      has: page.getByRole("cell", { name: "Dobijeno", exact: true }),
+    }),
   ).toContainText("12.500,55");
   await expect(
     page.getByText("Ponuda → Dobijeno", { exact: true }),
@@ -152,11 +115,18 @@ test("new records and amount edits refresh aggregates; stale edits keep the form
   page,
 }) => {
   await login(page, "sales");
-  const initial = await (await page.request.get('/api/units/1/opportunities')).json();
+  const initial = await (
+    await page.request.get("/api/units/1/opportunities")
+  ).json();
   const original = initial.items.find((row: { id: number }) => row.id === 1);
-  expect((await page.request.patch('/api/units/1/opportunities/1/stage', {
-    headers: { Origin: 'http://localhost:5173' }, data: { stage: 'Dobijeno', version: original.version },
-  })).status()).toBe(200);
+  expect(
+    (
+      await page.request.patch("/api/units/1/opportunities/1/stage", {
+        headers: { Origin: "http://localhost:5173" },
+        data: { stage: "Dobijeno", version: original.version },
+      })
+    ).status(),
+  ).toBe(200);
 
   await navigate(page, "Kompanije");
   await page
@@ -260,11 +230,18 @@ test("another logged-in manager automatically receives persisted changes", async
   browser,
 }) => {
   await login(page, "sales");
-  const initial = await (await page.request.get('/api/units/1/opportunities')).json();
+  const initial = await (
+    await page.request.get("/api/units/1/opportunities")
+  ).json();
   const original = initial.items.find((row: { id: number }) => row.id === 1);
-  expect((await page.request.patch('/api/units/1/opportunities/1/stage', {
-    headers: { Origin: 'http://localhost:5173' }, data: { stage: 'Dobijeno', version: original.version },
-  })).status()).toBe(200);
+  expect(
+    (
+      await page.request.patch("/api/units/1/opportunities/1/stage", {
+        headers: { Origin: "http://localhost:5173" },
+        data: { stage: "Dobijeno", version: original.version },
+      })
+    ).status(),
+  ).toBe(200);
 
   const managerContext = await browser.newContext({
     baseURL: "http://localhost:5173",
@@ -285,10 +262,9 @@ test("another logged-in manager automatically receives persisted changes", async
     await page
       .getByRole("button", { name: "Sačuvaj priliku", exact: true })
       .click();
-    await expect(metric(manager, "Dobijeni poslovi")).toContainText(
-      "25.000",
-      { timeout: 35_000 },
-    );
+    await expect(metric(manager, "Dobijeni poslovi")).toContainText("25.000", {
+      timeout: 35_000,
+    });
   } finally {
     await managerContext.close();
   }

@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCrmQuery, useCrmRequest } from "./lib/crmQuery";
 import { emptyMetricFilters, type MetricFilters } from "./features/crm/types";
+import WorkSpace from "./features/crm/WorkSpace";
 import AiAssistant from "./features/crm/AiAssistant";
 import UserManagement from "./features/crm/UserManagement";
 import OrganizationPortal from "./components/OrganizationPortal";
@@ -49,7 +50,7 @@ export default function Workspace({
     `/companies?search=${encodeURIComponent(search)}`,
     !!user,
   );
-  const rows = companies.error ? [] : companies.data ?? [],
+  const rows = companies.error ? [] : (companies.data ?? []),
     loading = companies.isPending;
   function selectAnalyticsUnit(next: number) {
     if (!user?.units.some((u) => u.id === next)) return;
@@ -359,6 +360,16 @@ export default function Workspace({
           unit={unit}
           onPipeline={() => navigate("Prodajni levak")}
         />
+      ) : page === "Zadaci" ? (
+        <>
+          <div className="page-heading">
+            <div>
+              <h1>Zadaci i aktivnosti</h1>
+              <p>Obaveze komercijalista povezane sa kompanijama i prilikama.</p>
+            </div>
+          </div>
+          <WorkSpace key={unit} unit={unit} companies={rows} />
+        </>
       ) : page === "AI asistent" ? (
         <AiAssistant key={unit} unit={unit} companies={rows} />
       ) : page === "Podešavanja" && user.is_platform_admin ? (

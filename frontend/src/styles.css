@@ -1399,3 +1399,6 @@ form label {
 
 .metrics-filters { margin-bottom: 20px; }
 .reports-panels { display: grid; gap: 20px; }
+
+.work-overview { margin-bottom: 20px; }
+.work-counts { display: flex; flex-wrap: wrap; gap: 14px 24px; padding: 12px 0; }

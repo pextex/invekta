@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from threading import Event, Thread
 from uuid import uuid4
 import psycopg
 from psycopg import sql
@@ -26,6 +27,8 @@ def main():
     os.environ["DATABASE_URL"] = target.render_as_string(hide_password=False)
     os.environ["CRM_COOKIE_SECURE"] = "false"
     get_settings.cache_clear()
+    stop = Event()
+    worker = None
     try:
         subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
         from app.models import BusinessUnit, Company, Membership, Opportunity, User
@@ -106,9 +109,19 @@ def main():
                 )
             db.commit()
         engine.dispose()
+        from app.db import SessionLocal
+        from app.reminders import serve
+
+        worker = Thread(
+            target=lambda: serve(SessionLocal, stop=stop, interval=1), daemon=True
+        )
+        worker.start()
         print("Browser tests: fresh disposable PostgreSQL database ready.", flush=True)
         uvicorn.run("app.main:app", host="127.0.0.1", port=18000, log_level="warning")
     finally:
+        stop.set()
+        if worker:
+            worker.join(timeout=5)
         from app.db import engine as app_engine
 
         app_engine.dispose()

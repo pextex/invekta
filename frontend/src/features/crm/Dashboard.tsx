@@ -13,6 +13,7 @@ import {
 } from "./types";
 import { useCrmQuery } from "../../lib/crmQuery";
 import MetricsFilters from "./MetricsFilters";
+import WorkOverview from "./WorkOverview";
 import Reports, { Results } from "./Reports";
 export default function Dashboard({
   unit,
@@ -73,6 +74,12 @@ export default function Dashboard({
           loading={loading}
         />
       )}
+      <WorkOverview
+        unit={unit}
+        filters={reports ? filters : undefined}
+        onNavigate={onNavigate}
+        reports={reports}
+      />
       {error && (
         <p className="error-message" role="alert">
           {error}

@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from .access import visible_query
+from .api.work import router as work_router
 from .api.sales import router as sales_router
 from .api.users import router as users_router
 from .api.ai import router as ai_router
@@ -26,6 +27,7 @@ from .security import (
 
 app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
+app.include_router(work_router)
 app.include_router(sales_router)
 app.include_router(users_router)
 app.include_router(ai_router)
@@ -37,7 +39,11 @@ async def validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=422,
         content={
-            "detail": "Proverite uneta polja, email, dužinu lozinke i pristup firmama."
+            "detail": (
+                "Proverite kompaniju, odgovornu osobu, status i datume sa vremenskom zonom. Podsetnik mora biti pre roka ili zakazane aktivnosti."
+                if any(part in request.url.path for part in ("/tasks", "/activities"))
+                else "Proverite uneta polja, email, dužinu lozinke i pristup firmama."
+            )
         },
     )
 
@@ -63,6 +69,7 @@ def ready(db: Session = Depends(get_db)):
                 "SELECT 1 FROM opportunities LEFT JOIN contacts ON FALSE LEFT JOIN opportunity_stage_changes ON FALSE LIMIT 1"
             )
         )
+        db.execute(text("SELECT 1 FROM tasks LEFT JOIN activities ON FALSE LEFT JOIN reminders ON FALSE LEFT JOIN work_events ON FALSE LIMIT 1"))
         db.execute(
             text("SELECT 1 FROM ai_drafts LEFT JOIN ai_attempts ON FALSE LIMIT 1")
         )
