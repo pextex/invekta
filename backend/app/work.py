@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from fastapi import HTTPException
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, case
 from .access import visible_query, visible_company
 from .security import membership
 from .models import Company, Membership, Opportunity, User
@@ -57,19 +57,25 @@ def context(db, user, unit, data):
         raise HTTPException(422, "Prilika ne pripada izabranoj kompaniji.")
 
 
-def output(db, row):
-    company = db.get(Company, row.company_id)
-    owner = db.get(User, row.assignee_id)
-    opportunity = (
-        db.get(Opportunity, row.opportunity_id) if row.opportunity_id else None
-    )
+def output(db, row, related=None):
+    if related is None:
+        company_name = db.get(Company, row.company_id).name
+        assignee_name = db.get(User, row.assignee_id).name
+        opportunity = (
+            db.get(Opportunity, row.opportunity_id) if row.opportunity_id else None
+        )
+        opportunity_title = opportunity.title if opportunity else None
+    else:
+        company_name = related["companies"][row.company_id]
+        assignee_name = related["assignees"][row.assignee_id]
+        opportunity_title = related["opportunities"].get(row.opportunity_id)
     schema = TaskOutput if isinstance(row, Task) else ActivityOutput
     return schema.model_validate(
         {
             **row.__dict__,
-            "company_name": company.name,
-            "assignee_name": owner.name,
-            "opportunity_title": opportunity.title if opportunity else None,
+            "company_name": company_name,
+            "assignee_name": assignee_name,
+            "opportunity_title": opportunity_title,
         }
     )
 
@@ -191,16 +197,19 @@ def save(db, user, unit, model, data, row=None):
 def archive(db, user, row, version):
     if row.version != version:
         raise HTTPException(409, "Zapis je u međuvremenu izmenjen.")
-    previous = row.status
+    timestamp = datetime.now(timezone.utc)
+    completion = "completed_at" if isinstance(row, Task) else "occurred_at"
+    changes = {
+        "status": {"from": row.status, "to": "cancelled"},
+        "archived_at": {"from": serial(row.archived_at), "to": serial(timestamp)},
+        completion: {"from": serial(getattr(row, completion)), "to": None},
+    }
     row.status = "cancelled"
-    row.archived_at = datetime.now(timezone.utc)
+    row.archived_at = timestamp
     row.version += 1
-    if isinstance(row, Task):
-        row.completed_at = None
-    else:
-        row.occurred_at = None
+    setattr(row, completion, None)
     sync_reminder(db, row)
-    event(db, user, row, "archived", {"status": {"from": previous, "to": "cancelled"}})
+    event(db, user, row, "archived", changes)
     db.commit()
     db.refresh(row)
     return output(db, row)
@@ -248,6 +257,17 @@ def history(db, user, unit, model, id):
     ]
 
 
+def date_column(model):
+    return (
+        model.due_at
+        if model is Task
+        else case(
+            (Activity.status == "done", Activity.occurred_at),
+            else_=Activity.scheduled_at,
+        )
+    )
+
+
 def page(
     db,
     user,
@@ -269,13 +289,34 @@ def page(
     if status:
         query = query.where(model.status == status)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
-    date = (
-        model.due_at
-        if model is Task
-        else func.coalesce(model.scheduled_at, model.occurred_at)
-    )
+    date = date_column(model)
     rows = db.scalars(query.order_by(date, model.id).offset(offset).limit(limit)).all()
-    return {"items": [output(db, row) for row in rows], "total": total}
+    related = {
+        "companies": dict(
+            db.execute(
+                select(Company.id, Company.name).where(
+                    Company.id.in_({row.company_id for row in rows})
+                )
+            ).all()
+        ),
+        "assignees": dict(
+            db.execute(
+                select(User.id, User.name).where(
+                    User.id.in_({row.assignee_id for row in rows})
+                )
+            ).all()
+        ),
+        "opportunities": dict(
+            db.execute(
+                select(Opportunity.id, Opportunity.title).where(
+                    Opportunity.id.in_(
+                        {row.opportunity_id for row in rows if row.opportunity_id}
+                    )
+                )
+            ).all()
+        ),
+    }
+    return {"items": [output(db, row, related) for row in rows], "total": total}
 
 
 def reminder_scope(db, user, unit, company_id=None):

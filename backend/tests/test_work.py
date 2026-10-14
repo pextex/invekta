@@ -351,3 +351,82 @@ def test_history_resolves_assignment_names_without_losing_raw_ids(client):
     event = client.get(path + "/history").json()[-1]
     assert event["changes"]["assignee_id"] == {"from": 102, "to": 101}
     assert event["display_changes"]["assignee_id"] == {"from": "sales", "to": "manager"}
+
+
+def test_completed_activity_pagination_uses_execution_time(client):
+    login(client, "sales")
+    body = {"company_id": 101, "assignee_id": 102, "kind": "call", "status": "done"}
+    first = client.post(
+        "/api/units/101/activities",
+        json={
+            **body,
+            "title": "Prvi izvršeni poziv",
+            "scheduled_at": "2026-12-20T12:00:00+01:00",
+            "occurred_at": "2026-01-01T12:00:00+01:00",
+        },
+        headers=ORIGIN,
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/api/units/101/activities",
+        json={
+            **body,
+            "title": "Drugi izvršeni poziv",
+            "scheduled_at": "2026-01-01T12:00:00+01:00",
+            "occurred_at": "2026-01-02T12:00:00+01:00",
+        },
+        headers=ORIGIN,
+    )
+    assert second.status_code == 201
+    page = client.get("/api/units/101/activities?status=done&limit=1").json()
+    assert page["items"][0]["id"] == first.json()["id"]
+
+
+def test_archiving_a_completed_task_records_all_changed_fields(client):
+    login(client, "sales")
+    task = create(client, status="done")
+    path = f"/api/units/101/tasks/{task['id']}"
+    archived = client.delete(path + "?version=1", headers=ORIGIN).json()
+    event = client.get(path + "/history").json()[-1]
+    assert datetime.fromisoformat(
+        event["changes"]["archived_at"]["to"]
+    ) == datetime.fromisoformat(archived["archived_at"])
+    assert datetime.fromisoformat(
+        event["changes"]["completed_at"]["from"]
+    ) == datetime.fromisoformat(task["completed_at"])
+    assert event["changes"]["completed_at"]["to"] is None
+
+
+def test_work_list_batches_related_names_for_a_full_page(client, db):
+    from app.work_models import Task
+    from sqlalchemy import event
+
+    login(client, "sales")
+    db.add_all(
+        [
+            Task(
+                business_unit_id=101,
+                company_id=101,
+                assignee_id=102,
+                creator_id=102,
+                title=f"Batch {i}",
+                due_at=datetime.now(timezone.utc),
+            )
+            for i in range(200)
+        ]
+    )
+    db.commit()
+    statements = []
+
+    def counted(conn, cursor, statement, params, context, many):
+        if statement.lstrip().upper().startswith("SELECT"):
+            statements.append(statement)
+
+    event.listen(db.bind, "before_cursor_execute", counted)
+    try:
+        response = client.get("/api/units/101/tasks?limit=200")
+    finally:
+        event.remove(db.bind, "before_cursor_execute", counted)
+    assert response.status_code == 200 and len(response.json()["items"]) == 200
+    assert response.json()["items"][0]["company_name"] == "Test firma A"
+    assert len(statements) <= 12

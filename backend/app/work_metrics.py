@@ -1,10 +1,10 @@
 from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
-from sqlalchemy import func, select, case
+from sqlalchemy import func, select
 from .models import Company, User
 from .metrics import scoped_companies
 from .work_models import Task, Activity, Reminder
-from .work import scope, reminder_scope, output
+from .work import scope, reminder_scope, output, date_column
 
 
 def summary(db, user, unit, filters):
@@ -14,9 +14,7 @@ def summary(db, user, unit, filters):
     tasks = filters.period(
         scope(db, user, unit, Task).where(Task.company_id.in_(company_ids)), Task.due_at
     )
-    activity_date = case(
-        (Activity.status == "done", Activity.occurred_at), else_=Activity.scheduled_at
-    )
+    activity_date = date_column(Activity)
     activities = filters.period(
         scope(db, user, unit, Activity).where(Activity.company_id.in_(company_ids)),
         activity_date,

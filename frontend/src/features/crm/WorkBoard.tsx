@@ -109,7 +109,7 @@ export default function WorkBoard({
         </div>
         <button
           className="primary-button"
-          disabled={busy || !companies.length}
+          disabled={busy || !!editor || !companies.length}
           onClick={() => {
             setEditor("new");
             setError("");
@@ -273,7 +273,7 @@ export default function WorkBoard({
                     <div className="button-row">
                       <button
                         className="text-button"
-                        disabled={busy || !!row.archived_at}
+                        disabled={busy || !!editor || !!row.archived_at}
                         onClick={() => {
                           setEditor(row);
                           setError("");
@@ -290,7 +290,7 @@ export default function WorkBoard({
                       </button>
                       <button
                         className="text-button"
-                        disabled={busy}
+                        disabled={busy || !!editor}
                         onClick={() => archive(row)}
                       >
                         {row.archived_at ? "Vrati iz arhive" : "Arhiviraj"}
