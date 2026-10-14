@@ -15,11 +15,12 @@ export const crmQueryClient = new QueryClient({
 export const crmKey = (unit: number, path: string) =>
   ["crm", unit, path] as const;
 export function useCrmQuery<T>(unit: number, path: string, enabled = true) {
-  return useQuery({
+  const query = useQuery({
     queryKey: crmKey(unit, path),
     queryFn: ({ signal }) => api<T>(`/units/${unit}${path}`, { signal }),
     enabled: enabled && unit > 0,
   });
+  return { ...query, data: query.error ? undefined : query.data };
 }
 export async function crmRequest<T>(
   client: QueryClient,

@@ -30,14 +30,14 @@ Novi KPI: broj kompanija/kontakata, otvorenih prilika i vrednost, dobijene/izgub
 | Provera | Rezultat |
 |---|---|
 | Backend celokupan pytest preko test runner-a | 53 passed; samo prethodno Starlette/httpx deprecation upozorenje |
-| Frontend Vitest | 8 passed, 4 test fajla |
+| Frontend Vitest | 9 passed, 5 test fajlova |
 | Browser Playwright/Chromium | 3 passed: kompletan prodajni tok, novi zapisi/iznosi/409, druga menadžerska sesija |
 | Frontend ESLint | Prošao |
 | Backend Ruff | Prošao; greške/undefined/unused provere, bez masovnog preformatiranja starog koda |
 | TypeScript + Vite build | Prošao; zadržano upozorenje velikog paketa, sada približno 4 MB zbog postojećih inline logotipa |
 | Alembic check | Nema razlike modela/šeme; head ostaje a162bced9031 |
 
-Poslovni PostgreSQL zapisi nisu menjani. Pytest koristi zasebnu `crm_phases12_20261014_test` bazu, fixtures rollback; browser runner kreira novu nasumičnu `_test` bazu, migrira i unosi samo sintetičke podatke, pa je briše po gašenju. Kredencijali poslovne baze nisu ispisivani. Ne pokretati seed nad poslovnom bazom radi ove provere.
+Poslovni PostgreSQL zapisi nisu menjani. Pytest koristi zasebnu `crm_phases12_20261014_test` bazu, fixtures rollback; svaki browser test/retry kreira novu nasumičnu `_test` bazu, migrira i unosi samo sintetičke podatke, pa je briše po gašenju. Kredencijali poslovne baze nisu ispisivani. Ne pokretati seed nad poslovnom bazom radi ove provere.
 
 CI workflow instalira locked npm/uv zavisnosti, pokreće PG16, lint/build/pytest/Vitest/Playwright i čuva browser failure artefakte. Lokalni prolaz ne znači da je GitHub Actions run već izvršen; proveriti status na PR-u. Ovo nije produkcioni deployment niti produkciona bezbednosna sertifikacija.
 
@@ -45,8 +45,8 @@ CI workflow instalira locked npm/uv zavisnosti, pokreće PG16, lint/build/pytest
 
 - Razvoj: `.github/workflows/ci.yml`, `.gitignore`, `frontend/package.json`, `package-lock.json`, `eslint.config.js`, `vitest.config.ts`, `playwright.config.ts`, `vite.config.ts`, `backend/pyproject.toml`, `uv.lock`.
 - Backend: `app/metrics.py`, `app/api/sales.py`, `app/schemas.py`; kompatibilni import za postojeće provider testove u `app/api/ai.py`; testovi `tests/test_metrics.py`, `tests/tools/e2e_server.py`, uklonjen neiskorišćen test import u `test_user_management.py`.
-- Frontend: `src/lib/crmQuery.ts`, `crmQuery.test.ts`, `main.tsx`, `Workspace.tsx`, `features/crm/Dashboard.tsx`, `Reports.tsx`, `MetricsFilters.tsx`, `Pipeline.tsx`, `CompanyProfile.tsx`, `Contacts.tsx`, `types.ts`, mali CSS dodatak i uklonjeni neiskorišćeni importi iz `App.tsx`.
-- Browser dokaz: `frontend/e2e/crm.spec.ts`.
+- Frontend: `src/lib/crmQuery.ts`, `crmQuery.test.ts`, `crmQueryAuthorization.test.tsx`, `main.tsx`, `Workspace.tsx`, `features/crm/Dashboard.tsx`, `Reports.tsx`, `MetricsFilters.tsx`, `Pipeline.tsx`, `CompanyProfile.tsx`, `Contacts.tsx`, `types.ts`, mali CSS dodatak i uklonjeni neiskorišćeni importi iz `App.tsx`.
+- Browser dokaz: `frontend/e2e/crm.spec.ts`, `fixtures.ts`.
 - Plan i zapis: `docs/superpowers/plans/2026-10-14-crm-metrics-sync.md`, ovaj dokument.
 
 ## Kako praktično proveriti bez poslovnih podataka
@@ -105,3 +105,7 @@ Test server po gašenju briše isključivo svoju novu nasumičnu bazu. Ne korist
 Faze 3–5 nisu pokrenute: nisu dodate tabele aktivnosti/zadataka/podsetnika/ponuda. Postojeća istorija faza je dokaz promene prilike, ne potpuni opšti audit. Company/contact konkurentne izmene, najmanje privilegovana runtime DB uloga, RLS i backup/restore ostaju zabeleženi rizici iz revizije. Offline HTML demo nije izvoz nove povezane verzije; za ovu proveru treba pokrenut backend/frontend.
 
 Nakon pregleda PR-a korisnik odlučuje o nastavku sledećih faza; nema automatskog merge-a ili produkcionog deployment-a.
+
+## Završni pregled
+
+Nezavisni pregled koda nije našao kritične ili važne greške. Dva dodatna nalaza su tretirana kao potrebna za pouzdanost i ispravljena: prikazi sada skrivaju zadržane podatke posle neuspešne autorizovane provere; browser testovi imaju sopstvenu bazu i preduslove, pa ne zavise od redosleda. Regresioni test za prikaz opozvanih prava prvo je pao, zatim prošao. Samostalan browser scenario novih zapisa prvo je pokazao zavisnost od prethodnog testa; sada se proverava izdvojeno.

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
 async function login(page: Page, name: string, organization = "LUU") {
   await page.goto("/");
   await page
@@ -151,6 +152,12 @@ test("new records and amount edits refresh aggregates; stale edits keep the form
   page,
 }) => {
   await login(page, "sales");
+  const initial = await (await page.request.get('/api/units/1/opportunities')).json();
+  const original = initial.items.find((row: { id: number }) => row.id === 1);
+  expect((await page.request.patch('/api/units/1/opportunities/1/stage', {
+    headers: { Origin: 'http://localhost:5173' }, data: { stage: 'Dobijeno', version: original.version },
+  })).status()).toBe(200);
+
   await navigate(page, "Kompanije");
   await page
     .getByRole("button", { name: "Nova kompanija", exact: true })
@@ -253,6 +260,12 @@ test("another logged-in manager automatically receives persisted changes", async
   browser,
 }) => {
   await login(page, "sales");
+  const initial = await (await page.request.get('/api/units/1/opportunities')).json();
+  const original = initial.items.find((row: { id: number }) => row.id === 1);
+  expect((await page.request.patch('/api/units/1/opportunities/1/stage', {
+    headers: { Origin: 'http://localhost:5173' }, data: { stage: 'Dobijeno', version: original.version },
+  })).status()).toBe(200);
+
   const managerContext = await browser.newContext({
     baseURL: "http://localhost:5173",
     viewport: { width: 1920, height: 1080 },
@@ -261,7 +274,7 @@ test("another logged-in manager automatically receives persisted changes", async
   try {
     await login(manager, "manager");
     await expect(metric(manager, "Dobijeni poslovi")).toContainText(
-      "12.520,77",
+      "12.500,55",
     );
     await navigate(page, "Prodajni levak");
     await page
@@ -273,7 +286,7 @@ test("another logged-in manager automatically receives persisted changes", async
       .getByRole("button", { name: "Sačuvaj priliku", exact: true })
       .click();
     await expect(metric(manager, "Dobijeni poslovi")).toContainText(
-      "25.020,22",
+      "25.000",
       { timeout: 35_000 },
     );
   } finally {

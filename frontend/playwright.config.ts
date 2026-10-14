@@ -12,13 +12,6 @@ export default defineConfig({
   },
   webServer: [
     {
-      command:
-        "cd ../backend && PYTHONPATH=. .venv/bin/python tests/tools/e2e_server.py",
-      url: "http://127.0.0.1:18000/api/ready",
-      reuseExistingServer: false,
-      timeout: 90_000,
-    },
-    {
       command: "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
       url: "http://localhost:5173",
       env: { CRM_DEV_API_TARGET: "http://127.0.0.1:18000" },
