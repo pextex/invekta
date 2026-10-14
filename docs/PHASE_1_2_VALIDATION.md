@@ -109,3 +109,19 @@ Nakon pregleda PR-a korisnik odlučuje o nastavku sledećih faza; nema automatsk
 ## Završni pregled
 
 Nezavisni pregled koda nije našao kritične ili važne greške. Dva dodatna nalaza su tretirana kao potrebna za pouzdanost i ispravljena: prikazi sada skrivaju zadržane podatke posle neuspešne autorizovane provere; browser testovi imaju sopstvenu bazu i preduslove, pa ne zavise od redosleda. Regresioni test za prikaz opozvanih prava prvo je pao, zatim prošao. Samostalan browser scenario novih zapisa prvo je pokazao zavisnost od prethodnog testa; sada se proverava izdvojeno.
+
+## Predaja na GitHub
+
+Grana je push-ovana i proverena na remote-u. Automatsko kreiranje PR-a nije uspelo: `gh pr create` (GraphQL), a zatim direktni REST POST `/repos/pextex/invekta/pulls` odbijeni su sa `Forbidden`. `gh auth status` takođe prijavljuje nevažeći dostupni GH_TOKEN. Nije moguće potvrditi da je PR otvoren; nema izmišljenog broja ili linka do postojećeg PR-a. Main nije menjan.
+
+[Otvori pripremljenu granu za kreiranje PR-a](https://github.com/pextex/invekta/pull/new/feat/crm-metrics-sync)
+
+Predložen naslov: **Povezani CRM pokazatelji, izveštaji i razvojne provere — faze 1–2**.
+
+Opis za PR:
+
+> Postojeći prodajni ekrani nezavisno su učitavali podatke, a Izveštaji su ponavljali Dashboard. Ova promena uvodi zajedničke autorizovane metrike, filtere perioda/jedinice/komercijaliste i izveštaje po fazama, kompanijama, komercijalistima i evidentiranim promenama. Centralizovani server state osvežava povezane ekrane nakon čuvanja, uz postojeće verzije, 409 i istoriju autora/vremena.
+>
+> Implementirane su samo odobrene faze 1–2. Nema poslovne migracije, seed-a poslovne baze, plaćenog servisa, merge-a ili deployment-a. Dobijeni poslovi nisu fakturisani prihod; nedostajuća istorija nije rekonstruisana.
+>
+> Provere: 53 backend, 9 frontend unit i 3 browser scenarija; ESLint/Ruff/build prolaze, Alembic nema drift. Svaki browser scenario/retry koristi zasebnu test bazu. Nezavisni pregled je završen i pronađene dodatne korekcije pokrivene su regresijama. Uputstvo i ograničenja: docs/PHASE_1_2_VALIDATION.md.

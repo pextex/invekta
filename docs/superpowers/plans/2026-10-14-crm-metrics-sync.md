@@ -31,33 +31,43 @@ Date filters select an opportunity creation cohort, inclusive local dates in Eur
 
 **Files:** `.github/workflows/ci.yml`, `frontend/eslint.config.js`, frontend package lock, backend pyproject/uv lock, isolation tests.
 **Interfaces:** Existing `app.test_runner`, `npm test/build`; produce `npm run lint`, `uv run ruff check .`.
-- [ ] Add regression checks for ownership and session persistence on isolated test DB, run current baseline.
-- [ ] Configure ESLint and Ruff without broad formatting or unrelated source refactors.
-- [ ] CI starts fresh PG16, installs locked dependencies, runs lint/build/all tests.
-- [ ] Verify commands and commit phase 1.
+- [x] Add regression checks for ownership and session persistence on isolated test DB, run current baseline.
+- [x] Configure ESLint and Ruff without broad formatting or unrelated source refactors.
+- [x] CI starts fresh PG16, installs locked dependencies, runs lint/build/all tests.
+- [x] Verify commands and commit phase 1.
 
 ### Task 2: Shared backend metrics
 
 **Files:** `backend/app/metrics.py`, `api/sales.py`, `schemas.py`, `tests/test_metrics.py`.
 **Interfaces:** `GET /units/{unit}/summary` extended, same filters on opportunities: start_date/end_date/owner_id; summary keeps legacy fields and adds lost_count, stage_values, owners, sales_results, company_results, transitions, timeline.
-- [ ] Write failing tests: won/lost/value updates, filter boundaries, invalid ranges, inaccessible owners/units, exact Decimal totals, legacy missing history, stale mutation, persistence through logout/relogin.
-- [ ] Observe failures; implement central scope/filter/SQL aggregate functions and route integration.
-- [ ] Run all backend tests, schema drift check; commit.
+- [x] Write failing tests: won/lost/value updates, filter boundaries, invalid ranges, inaccessible owners/units, exact Decimal totals, legacy missing history, stale mutation, persistence through logout/relogin.
+- [x] Observe failures; implement central scope/filter/SQL aggregate functions and route integration.
+- [x] Run all backend tests, schema drift check; commit.
 
 ### Task 3: Shared frontend state and analytics
 
 **Files:** `frontend/src/lib/crmQuery.tsx`, `features/crm/{Dashboard,Reports,MetricsFilters,Pipeline,CompanyProfile,Contacts,types}`, `Workspace.tsx`, `main.tsx`.
 **Interfaces:** query keys `[crm,unit,path]`, shared request/mutation API invalidates all related unit queries after success or 409; cache cleared on auth boundary; shared metrics filter model.
-- [ ] Write failing cache tests for mutation propagation and session clear.
-- [ ] Adopt shared query client in existing components; refetch on mount/focus and 30-second active polling for other-user changes.
-- [ ] Render dashboard KPIs and real reports using same summary payload; filter by allowed unit/date/owner. Pipeline uses same date/owner filters; profile remains complete company context.
-- [ ] Preserve errors/409, existing drag/drop and form UX; invalidate after companies/contacts/opportunities writes.
-- [ ] Run lint/build/frontend suite; commit.
+- [x] Write failing cache tests for mutation propagation and session clear.
+- [x] Adopt shared query client in existing components; refetch on mount/focus and 30-second active polling for other-user changes.
+- [x] Render dashboard KPIs and real reports using same summary payload; filter by allowed unit/date/owner. Pipeline uses same date/owner filters; profile remains complete company context.
+- [x] Preserve errors/409, existing drag/drop and form UX; invalidate after companies/contacts/opportunities writes.
+- [x] Run lint/build/frontend suite; commit.
 
 ### Task 4: End-to-end proof and handoff
 
 **Files:** `frontend/e2e/crm.spec.ts`, Playwright config, isolated backend test-server utility, `docs/PHASE_1_2_VALIDATION.md`, CI E2E step.
 **Interfaces:** Dedicated disposable `_test` database, dedicated ports, seeded synthetic three-unit users only; never business DB.
-- [ ] Exercise sales login, drag/drop and select to same endpoint, KPI/reports/profile, browser reload/logout/relogin, manager results, foreign-unit denial, amount edit and 409.
-- [ ] Run full checks; fresh final review and address significant issues.
-- [ ] Document exact files/results/metric rules and manual scenario; push branch and create PR with body file.
+- [x] Exercise sales login, drag/drop and select to same endpoint, KPI/reports/profile, browser reload/logout/relogin, manager results, foreign-unit denial, amount edit and 409.
+- [x] Run full checks; fresh final review and address significant issues.
+- [x] Document exact files/results/metric rules and manual scenario; push branch. PR creation attempted with body file and REST payload, blocked by GitHub API Forbidden; prepared creation link and body are in validation document.
+
+## Execution record
+
+- Phase 1: existing baseline 45 backend/5 frontend passed; ESLint and Ruff found unused imports. Existing provider-test override compatibility was retained with an explicit import annotation; no behavior change to templates.
+- Backend RED: seven metric/filter tests failed on absent fields, ignored filters and missing history aggregates. GREEN: shared service passed all tests. Added full-dataset regression beyond 100 cards; final backend 53 passed.
+- Frontend RED: shared mutation helper absent; GREEN: invalidation/409/denial checks passed. Browser checks proved actual PostgreSQL persistence and UI flows.
+- Review: fresh read-only reviewer found no Critical/Important defect, raised two details subsequently treated as necessary reliability fixes. Cached revoked owner names reproduced RED→GREEN (SSR actual components); separately running new-record browser scenario reproduced order dependence and passed after per-test server/database isolation.
+- Final checks: 9 Vitest, 3 Playwright, 53 pytest; ESLint/Ruff/build passed, Alembic check no drift. Known large bundle and Starlette deprecation remain as prior audit limitations.
+- Ruling: honor the explicit instruction to begin approved phases immediately and execute inline on requested feature branch; no second permission round or new app/worktree was needed. If the chosen current-state date cohort is not the business period desired, only metric filtering semantics need a reviewed follow-up; historical amounts cannot be invented from stage-only history.
+- Remote branch pushed. GraphQL and REST PR creation both blocked by API Forbidden; no merge/deployment. Phase 3+ awaits user review as requested.
