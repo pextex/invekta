@@ -1,5 +1,15 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { crmKey, useCrmQuery, useCrmRequest } from "../../lib/crmQuery";
+import MetricsFilters from "./MetricsFilters";
+import {
+  metricQuery,
+  emptyMetricFilters,
+  type MetricFilters,
+  type Unit,
+  type Summary,
+} from "./types";
 import { useStageDragDrop } from "./useStageDragDrop";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Plus, Save, History, RefreshCw, GripVertical } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import {
@@ -25,49 +35,56 @@ export default function Pipeline({
   unit,
   companies,
   companyId,
+  filters = emptyMetricFilters,
+  onFilters,
+  units = [],
+  onUnit,
 }: {
   unit: number;
   companies: Company[];
   companyId?: number;
+  filters?: MetricFilters;
+  onFilters?: (filters: MetricFilters) => void;
+  units?: Unit[];
+  onUnit?: (unit: number) => void;
 }) {
-  const [items, setItems] = useState<Opportunity[]>([]),
-    [total, setTotal] = useState(0),
-    [loading, setLoading] = useState(true),
-    [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<Fields | null>(null),
     [editing, setEditing] = useState<Opportunity | null>(null),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
-  const [offset, setOffset] = useState(0),
-    [reload, setReload] = useState(0),
-    [history, setHistory] = useState<{
-      title: string;
-      rows: StageChange[];
-    } | null>(null);
-  const base = `/units/${unit}/opportunities`;
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    if (offset === 0) setItems([]);
-    const query = new URLSearchParams({ limit: "100", offset: String(offset) });
-    if (companyId) query.set("company_id", String(companyId));
-    api<OpportunityPage>(base + "?" + query, { signal: controller.signal })
-      .then((data) => {
-        setItems((old) => (offset ? [...old, ...data.items] : data.items));
-        setTotal(data.total);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [base, companyId, offset, reload]);
+  const [history, setHistory] = useState<{
+    title: string;
+    rows: StageChange[];
+  } | null>(null);
+  const base = `/opportunities`;
+  const suffix = metricQuery(filters);
+  const path = `${base}?${suffix}${companyId ? `&company_id=${companyId}` : ""}`;
+  const query = useInfiniteQuery({
+    queryKey: crmKey(unit, path),
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) =>
+      api<OpportunityPage>(
+        `/units/${unit}${path}&limit=100&offset=${pageParam}`,
+        { signal },
+      ),
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce(
+        (count, page) => count + page.items.length,
+        0,
+      );
+      return loaded < last.total ? loaded : undefined;
+    },
+  });
+  const items = query.error
+    ? []
+    : (query.data?.pages.flatMap((page) => page.items) ?? []);
+  const total = query.data?.pages[0].total ?? 0,
+    loading = query.isFetching;
+  const summary = useCrmQuery<Summary>(unit, `/summary?${suffix}`, !!onFilters);
+  const request = useCrmRequest(unit);
   function refresh() {
-    setOffset(0);
-    setReload((v) => v + 1);
+    void query.refetch();
     setHistory(null);
   }
   async function save(e: FormEvent) {
@@ -83,7 +100,7 @@ export default function Pipeline({
       ...(editing ? { version: editing.version } : { company_id }),
     };
     try {
-      await api(base + (editing ? "/" + editing.id : ""), {
+      await request(base + (editing ? "/" + editing.id : ""), {
         method: editing ? "PATCH" : "POST",
         body: JSON.stringify(body),
       });
@@ -101,13 +118,10 @@ export default function Pipeline({
     setBusy(true);
     setError("");
     try {
-      const updated = await api<Opportunity>(base + "/" + item.id + "/stage", {
+      await request<Opportunity>(base + "/" + item.id + "/stage", {
         method: "PATCH",
         body: JSON.stringify({ stage, version: item.version }),
       });
-      setItems((old) =>
-        old.map((row) => (row.id === updated.id ? updated : row)),
-      );
       setMessage("Faza je sačuvana u bazi.");
       setHistory(null);
     } catch (e) {
@@ -122,7 +136,9 @@ export default function Pipeline({
     try {
       setHistory({
         title: item.title,
-        rows: await api<StageChange[]>(base + "/" + item.id + "/stage-history"),
+        rows: await api<StageChange[]>(
+          `/units/${unit}` + base + "/" + item.id + "/stage-history",
+        ),
       });
     } catch (e) {
       setError(errorText(e));
@@ -145,6 +161,16 @@ export default function Pipeline({
   const drag = useStageDragDrop(items, busy || loading || !!form, changeStage);
   return (
     <>
+      {onFilters && onUnit && (
+        <MetricsFilters
+          filters={filters}
+          onChange={onFilters}
+          units={units}
+          unit={unit}
+          onUnit={onUnit}
+          owners={summary.data?.owners ?? []}
+        />
+      )}
       <div className="section-heading">
         <div>
           <h2>{companyId ? "Prilike kompanije" : "Prodajni levak"}</h2>
@@ -182,9 +208,9 @@ export default function Pipeline({
           </button>
         </div>
       </div>
-      {error && (
+      {(error || query.error) && (
         <p className="error-message" role="alert">
-          {error}
+          {error || errorText(query.error)}
         </p>
       )}
       {message && (
@@ -434,7 +460,7 @@ export default function Pipeline({
           <button
             className="secondary-button"
             disabled={loading || busy}
-            onClick={() => setOffset(items.length)}
+            onClick={() => query.fetchNextPage()}
           >
             Učitaj još prilika
           </button>

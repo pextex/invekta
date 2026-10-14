@@ -1,3 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useCrmQuery, useCrmRequest } from "./lib/crmQuery";
+import { emptyMetricFilters, type MetricFilters } from "./features/crm/types";
 import AiAssistant from "./features/crm/AiAssistant";
 import UserManagement from "./features/crm/UserManagement";
 import OrganizationPortal from "./components/OrganizationPortal";
@@ -32,15 +35,30 @@ export default function Workspace({
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [unit, setUnit] = useState(0);
-  const [rows, setRows] = useState<Company[]>([]),
-    [search, setSearch] = useState(""),
+  const [search, setSearch] = useState(""),
     [error, setError] = useState("");
-  const [busy, setBusy] = useState(false),
-    [loading, setLoading] = useState(false),
-    [reload, setReload] = useState(0);
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<CompanyForm | null>(null),
     [editing, setEditing] = useState<number | null>(null),
     [message, setMessage] = useState("");
+  const queryClient = useQueryClient();
+  const request = useCrmRequest(unit);
+  const [filters, setFilters] = useState<MetricFilters>(emptyMetricFilters);
+  const companies = useCrmQuery<Company[]>(
+    unit,
+    `/companies?search=${encodeURIComponent(search)}`,
+    !!user,
+  );
+  const rows = companies.error ? [] : companies.data ?? [],
+    loading = companies.isPending;
+  function selectAnalyticsUnit(next: number) {
+    if (!user?.units.some((u) => u.id === next)) return;
+    setUnit(next);
+    setFilters(emptyMetricFilters);
+    setSearch("");
+    setSelectedCompany(undefined);
+    writeRoute(page, next, undefined, true);
+  }
   function acceptUser(next: User, choice?: OrganizationCode) {
     const desired = readRoute().unit;
     const selectedCode = choice ?? readRoute().organization;
@@ -56,6 +74,8 @@ export default function Workspace({
       next.units.find((u) => u.id === desired)?.id ??
       next.units[0]?.id ??
       0;
+    queryClient.clear();
+    setFilters(emptyMetricFilters);
     setUser(next);
     setUnit(nextUnit);
     writeRoute(page, nextUnit, selectedCompany, true);
@@ -100,25 +120,6 @@ export default function Workspace({
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [user, unit]);
-  useEffect(() => {
-    if (!user || !unit) return;
-    const controller = new AbortController();
-    setLoading(true);
-    setRows([]);
-    setError("");
-    api<Company[]>(
-      `/units/${unit}/companies?search=${encodeURIComponent(search)}`,
-      { signal: controller.signal },
-    )
-      .then(setRows)
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [user, unit, search, reload]);
   async function login(e: FormEvent) {
     e.preventDefault();
     if (!loginChoice) return;
@@ -149,8 +150,9 @@ export default function Workspace({
       const currentCode = user?.units.find((u) => u.id === unit)?.code;
       if (isOrganizationCode(currentCode)) setLoginChoice(currentCode);
       setPassword("");
+      queryClient.clear();
       setUser(null);
-      setRows([]);
+      setFilters(emptyMetricFilters);
       setForm(null);
       setMessage("");
       setSelectedCompany(undefined);
@@ -166,13 +168,12 @@ export default function Workspace({
     setBusy(true);
     setError("");
     try {
-      await api(`/units/${unit}/companies${editing ? "/" + editing : ""}`, {
+      await request(`/companies${editing ? "/" + editing : ""}`, {
         method: editing ? "PATCH" : "POST",
         body: JSON.stringify(form),
       });
       setForm(null);
       setMessage("Kompanija je sačuvana u PostgreSQL bazi.");
-      setReload((v) => v + 1);
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -268,8 +269,7 @@ export default function Workspace({
     <Shell
       organization={
         user?.units.find((u) => u.id === unit)?.code as
-          | OrganizationCode
-          | undefined
+          OrganizationCode | undefined
       }
       page={user ? page : "Prijava"}
       onPage={(next) => {
@@ -303,6 +303,11 @@ export default function Workspace({
           {error}
         </p>
       )}
+      {companies.error && user && (
+        <p className="error-message" role="alert">
+          {errorText(companies.error)}
+        </p>
+      )}
       {message && (
         <p className="success-message" role="status">
           {message}
@@ -327,7 +332,15 @@ export default function Workspace({
               <p>Pregled procesa od prvog kontakta do odluke klijenta.</p>
             </div>
           </div>
-          <Pipeline key={unit} unit={unit} companies={rows} />
+          <Pipeline
+            key={unit}
+            unit={unit}
+            companies={rows}
+            filters={filters}
+            onFilters={setFilters}
+            units={user.units}
+            onUnit={selectAnalyticsUnit}
+          />
           <p className="section-hint">
             Izbor kompanije nudi najviše 200 kompanija iz odabrane jedinice. Za
             ostale otvorite profil kompanije preko pretrage.
@@ -335,6 +348,11 @@ export default function Workspace({
         </>
       ) : page === "Početna tabla" || page === "Izveštaji" ? (
         <Dashboard
+          filters={filters}
+          onFilters={setFilters}
+          units={user.units}
+          onUnit={selectAnalyticsUnit}
+          reports={page === "Izveštaji"}
           userName={user.name}
           onNavigate={navigate}
           key={unit}

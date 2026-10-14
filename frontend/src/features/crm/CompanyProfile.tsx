@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Building2 } from "lucide-react";
-import { api, errorText } from "../../lib/api";
+import { errorText } from "../../lib/api";
+import { useCrmQuery } from "../../lib/crmQuery";
 import Contacts from "./Contacts";
 import Pipeline from "./Pipeline";
 import type { Company } from "./types";
@@ -13,22 +14,10 @@ export default function CompanyProfile({
   id: number;
   onBack: () => void;
 }) {
-  const [company, setCompany] = useState<Company | null>(null),
-    [error, setError] = useState(""),
-    [tab, setTab] = useState("contacts");
-  useEffect(() => {
-    const controller = new AbortController();
-    setCompany(null);
-    setError("");
-    api<Company>(`/units/${unit}/companies/${id}`, {
-      signal: controller.signal,
-    })
-      .then(setCompany)
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      });
-    return () => controller.abort();
-  }, [unit, id]);
+  const [tab, setTab] = useState("contacts");
+  const query = useCrmQuery<Company>(unit, `/companies/${id}`);
+  const company = query.data,
+    error = query.error ? errorText(query.error) : "";
   return (
     <>
       <button className="secondary-button profile-back" onClick={onBack}>

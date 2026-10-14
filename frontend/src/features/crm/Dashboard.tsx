@@ -1,64 +1,78 @@
 import DailyWelcome, {
   dailyRecommendations,
 } from "../../components/DailyWelcome";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
-import { api, errorText } from "../../lib/api";
-import { formatAmount, opportunityStages, type Summary } from "./types";
+import { RefreshCw } from "lucide-react";
+import { errorText } from "../../lib/api";
+import {
+  formatAmount,
+  opportunityStages,
+  metricQuery,
+  type Summary,
+  type MetricFilters,
+  type Unit,
+} from "./types";
+import { useCrmQuery } from "../../lib/crmQuery";
+import MetricsFilters from "./MetricsFilters";
+import Reports, { Results } from "./Reports";
 export default function Dashboard({
   unit,
   onPipeline,
   userName,
   onNavigate,
+  filters,
+  onFilters,
+  units,
+  onUnit,
+  reports = false,
 }: {
   unit: number;
+  filters: MetricFilters;
+  onFilters: (filters: MetricFilters) => void;
+  units: Unit[];
+  onUnit: (unit: number) => void;
+  reports?: boolean;
   onPipeline: () => void;
   userName: string;
   onNavigate: (page: string) => void;
 }) {
-  const [data, setData] = useState<Summary | null>(null),
-    [error, setError] = useState(""),
-    [reload, setReload] = useState(0),
-    [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    setData(null);
-    api<Summary>(`/units/${unit}/summary`, { signal: controller.signal })
-      .then(setData)
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [unit, reload]);
+  const query = useCrmQuery<Summary>(unit, `/summary?${metricQuery(filters)}`);
+  const data = query.data,
+    loading = query.isPending;
+  const error = query.error ? errorText(query.error) : "";
   return (
     <>
       <div className="page-heading">
         <div>
-          <h1>Vaš prodajni pregled</h1>
+          <h1>{reports ? "Izveštaji prodaje" : "Vaš prodajni pregled"}</h1>
           <p>Pokazatelji iz baze, ograničeni vašim pravima pristupa.</p>
         </div>
         <button
           className="secondary-button"
-          disabled={loading}
-          onClick={() => setReload((v) => v + 1)}
+          disabled={query.isFetching}
+          onClick={() => query.refetch()}
         >
           <RefreshCw size={15} />
           Osveži
         </button>
       </div>
-      <DailyWelcome
-        name={userName}
-        recommendations={
-          data ? dailyRecommendations(data.stages, data.company_count) : []
-        }
-        onNavigate={onNavigate}
-        loading={loading}
+      <MetricsFilters
+        filters={filters}
+        onChange={onFilters}
+        units={units}
+        unit={unit}
+        onUnit={onUnit}
+        owners={data?.owners ?? []}
       />
+      {!reports && (
+        <DailyWelcome
+          name={userName}
+          recommendations={
+            data ? dailyRecommendations(data.stages, data.company_count) : []
+          }
+          onNavigate={onNavigate}
+          loading={loading}
+        />
+      )}
       {error && (
         <p className="error-message" role="alert">
           {error}
@@ -67,6 +81,7 @@ export default function Dashboard({
       {loading ? (
         <p className="empty">Učitavanje pokazatelja…</p>
       ) : (
+        !error &&
         data && (
           <>
             <div className="metrics">
@@ -87,9 +102,19 @@ export default function Dashboard({
                   note: "Potencijalna vrednost, nije prihod",
                 },
                 {
+                  label: "Izgubljene prilike",
+                  value: String(data.lost_count),
+                  note: formatAmount(data.lost_value),
+                },
+                {
+                  label: "Kontakt osobe",
+                  value: String(data.contact_count),
+                  note: "Ukupan dostupan broj",
+                },
+                {
                   label: "Dobijeni poslovi",
                   value: formatAmount(data.won_value),
-                  note: `${data.won_count} dobijenih prilika`,
+                  note: `${data.won_count} dobijenih prilika · nije fakturisani prihod`,
                 },
               ].map((item) => (
                 <article className="metric" key={item.label}>
@@ -99,38 +124,50 @@ export default function Dashboard({
                 </article>
               ))}
             </div>
-            <section className="panel">
-              <div className="panel-heading">
-                <h2>Prodajni levak</h2>
-                <span className="tag">{data.opportunity_count} prilika</span>
-              </div>
-              <div className="bars">
-                {opportunityStages.map((stage) => (
-                  <div className="bar-row" key={stage}>
-                    <div>
-                      <span>{stage}</span>
-                      <strong>{data.stages[stage]}</strong>
+            {reports ? (
+              <Reports data={data} />
+            ) : (
+              <section className="panel">
+                <div className="panel-heading">
+                  <h2>Prodajni levak</h2>
+                  <span className="tag">{data.opportunity_count} prilika</span>
+                </div>
+                <div className="bars">
+                  {opportunityStages.map((stage) => (
+                    <div className="bar-row" key={stage}>
+                      <div>
+                        <span>{stage}</span>
+                        <strong>{data.stages[stage]}</strong>
+                      </div>
+                      <div className="bar-track">
+                        <div
+                          style={{
+                            width: `${data.opportunity_count ? (data.stages[stage] / data.opportunity_count) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="bar-track">
-                      <div
-                        style={{
-                          width: `${data.opportunity_count ? (data.stages[stage] / data.opportunity_count) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="panel-actions">
-                <button className="secondary-button" onClick={onPipeline}>
-                  Otvori prodajni levak →
-                </button>
-              </div>
-              <p className="panel-note">
-                Ovo su podaci iz razvojne baze. Demo zapisi ulaze u pokazatelje
-                i nisu stvarni poslovni rezultati.
-              </p>
-            </section>
+                  ))}
+                </div>
+                <div className="panel-actions">
+                  <button className="secondary-button" onClick={onPipeline}>
+                    Otvori prodajni levak →
+                  </button>
+                </div>
+                <p className="panel-note">
+                  Ovo su podaci iz razvojne baze. Demo zapisi ulaze u
+                  pokazatelje i nisu stvarni poslovni rezultati. Svi agregati
+                  koriste kompletnu dostupnu listu prilika, ne samo učitane
+                  kartice.
+                </p>
+              </section>
+            )}
+            {!reports && (
+              <Results
+                title="Rezultati komercijalista"
+                items={data.sales_results}
+              />
+            )}
           </>
         )
       )}

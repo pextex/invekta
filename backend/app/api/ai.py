@@ -1,3 +1,4 @@
+from ..config import get_settings  # noqa: F401 -- compatibility for provider test overrides
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -6,7 +7,6 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
 from ..message_templates import generate
-from ..config import get_settings
 from ..db import get_db
 from ..models import (
     AiDraft,
