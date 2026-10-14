@@ -16,12 +16,9 @@ import { type OpportunityStage } from "./features/crm/types";
 import { isCrmRoute } from "./lib/routes";
 import { useEffect, useState } from "react";
 import {
-  ArrowUpRight,
   GripVertical,
-  ListTodo,
   Plus,
   Search,
-  Sparkles,
   FileText,
   ChartNoAxesCombined,
   UsersRound,

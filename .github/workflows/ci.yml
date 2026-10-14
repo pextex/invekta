@@ -1,0 +1,46 @@
+name: CRM checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: ci-isolated-only
+          POSTGRES_DB: crm_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U crm -d crm_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://crm:ci-isolated-only@127.0.0.1:5432/crm_ci
+      CRM_TEST_DATABASE_URL: postgresql+psycopg://crm:ci-isolated-only@127.0.0.1:5432/crm_ci_test
+      CRM_COOKIE_SECURE: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          python-version: '3.12'
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run ruff check .
+        working-directory: backend
+      - run: uv run python -m app.test_runner
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint && npm test && npm run build
+        working-directory: frontend

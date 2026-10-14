@@ -2,7 +2,7 @@ import DailyWelcome, {
   dailyRecommendations,
 } from "../../components/DailyWelcome";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import { formatAmount, opportunityStages, type Summary } from "./types";
 export default function Dashboard({

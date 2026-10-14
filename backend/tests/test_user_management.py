@@ -1,5 +1,5 @@
 from sqlalchemy import select, func
-from app.models import User, Membership, LoginSession, Company, BusinessUnit
+from app.models import User, Membership, LoginSession, Company
 from app.security import COOKIE_NAME, verify_password
 
 ORIGIN = {"Origin": "http://localhost:5173"}
