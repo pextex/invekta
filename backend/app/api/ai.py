@@ -1,3 +1,4 @@
+from ..config import get_settings  # noqa: F401 -- compatibility for provider test overrides
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request

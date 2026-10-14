@@ -1,9 +1,8 @@
-from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
-from ..constants import CLOSED_STAGES, OPPORTUNITY_STAGES
+from ..metrics import MetricFilters, scoped_opportunities, unit_metrics
 from ..db import get_db
 from ..models import Company, Contact, Opportunity, OpportunityStageChange, User
 from ..schemas import (
@@ -28,10 +27,7 @@ def company_ids(db, user, unit_id):
 
 
 def opportunities_query(db, user, unit_id):
-    return select(Opportunity).where(
-        Opportunity.business_unit_id == unit_id,
-        Opportunity.company_id.in_(company_ids(db, user, unit_id)),
-    )
+    return scoped_opportunities(db, user, unit_id, MetricFilters(None, None, None))
 
 
 def visible_opportunity(db, user, unit_id, opportunity_id, lock=False):
@@ -139,12 +135,13 @@ def update_contact(
 def list_opportunities(
     unit_id: int,
     company_id: int | None = Query(None, gt=0),
+    filters: MetricFilters = Depends(),
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    query = opportunities_query(db, user, unit_id)
+    query = scoped_opportunities(db, user, unit_id, filters)
     if company_id is not None:
         visible_company(db, user, unit_id, company_id)
         query = query.where(Opportunity.company_id == company_id)
@@ -303,38 +300,7 @@ def stage_history(
 
 @router.get("/summary", response_model=UnitSummary)
 def summary(
-    unit_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)
+    unit_id: int, filters: MetricFilters = Depends(),
+    user: User = Depends(current_user), db: Session = Depends(get_db)
 ):
-    ids = company_ids(db, user, unit_id)
-    query = opportunities_query(db, user, unit_id)
-    rows = db.execute(
-        select(Opportunity.stage, func.count(), func.sum(Opportunity.amount))
-        .where(Opportunity.id.in_(query.with_only_columns(Opportunity.id)))
-        .group_by(Opportunity.stage)
-    ).all()
-    counts = {stage: 0 for stage in OPPORTUNITY_STAGES}
-    values = {stage: Decimal("0") for stage in OPPORTUNITY_STAGES}
-    for stage, count, value in rows:
-        counts[stage] = count
-        values[stage] = value
-    return {
-        "company_count": db.scalar(
-            select(func.count()).select_from(Company).where(Company.id.in_(ids))
-        ),
-        "contact_count": db.scalar(
-            select(func.count())
-            .select_from(Contact)
-            .where(Contact.company_id.in_(ids), Contact.business_unit_id == unit_id)
-        ),
-        "opportunity_count": sum(counts.values()),
-        "open_count": sum(
-            counts[s] for s in OPPORTUNITY_STAGES if s not in CLOSED_STAGES
-        ),
-        "open_value": sum(
-            (values[s] for s in OPPORTUNITY_STAGES if s not in CLOSED_STAGES),
-            Decimal("0"),
-        ),
-        "won_count": counts["Dobijeno"],
-        "won_value": values["Dobijeno"],
-        "stages": counts,
-    }
+    return unit_metrics(db, user, unit_id, filters)

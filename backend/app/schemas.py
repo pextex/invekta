@@ -145,3 +145,12 @@ class UnitSummary(BaseModel):
     won_count: int
     won_value: Decimal
     stages: dict[str, int]
+
+    lost_count: int
+    lost_value: Decimal
+    stage_values: dict[str, Decimal]
+    owners: list[dict]
+    sales_results: list[dict]
+    company_results: list[dict]
+    transitions: list[dict]
+    timeline: list[dict]
