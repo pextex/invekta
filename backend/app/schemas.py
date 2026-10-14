@@ -98,6 +98,7 @@ OpportunityStage = Literal[
 
 class OpportunityFields(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    business_type: Literal["sale", "contracted", "leasing", "rental"] | None = None
     title: str = Field(min_length=2, max_length=200)
     amount: Decimal = Field(default=Decimal("0"), ge=0, max_digits=14, decimal_places=2)
     stage: OpportunityStage = "Novi lead"
@@ -220,3 +221,44 @@ class TaskOutput(TaskFields):
 class TaskPage(BaseModel):
     items: list[TaskOutput]
     total: int
+
+
+class TargetEntry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    category: Literal["sale", "contracted", "leasing", "rental"]
+    target_amount: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
+    version: int | None = Field(default=None, ge=1)
+
+
+class TargetsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    user_id: int = Field(gt=0)
+    month: str = Field(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])$")
+    targets: list[TargetEntry] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def unique_categories(self):
+        if len({entry.category for entry in self.targets}) != len(self.targets):
+            raise ValueError("Vrsta targeta može biti navedena samo jednom.")
+        return self
+
+
+class TargetProgress(BaseModel):
+    category: str
+    target_amount: Decimal | None
+    achieved_amount: Decimal
+    achieved_count: int
+    version: int | None
+
+
+class TargetSalesperson(BaseModel):
+    user_id: int
+    user_name: str
+    targets: list[TargetProgress]
+
+
+class TargetsOutput(BaseModel):
+    month: str
+    categories: list[str]
+    can_manage: bool
+    salespeople: list[TargetSalesperson]

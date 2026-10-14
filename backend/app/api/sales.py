@@ -4,6 +4,7 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from ..business_types import resolve_business_type
 from ..access import visible_company, visible_query
 from ..constants import CLOSED_STAGES, OPPORTUNITY_STAGES
 from ..db import get_db
@@ -194,7 +195,11 @@ def create_opportunity(
     db: Session = Depends(get_db),
 ):
     visible_company(db, user, unit_id, data.company_id)
-    record = Opportunity(**data.model_dump(), business_unit_id=unit_id, is_demo=False)
+    values = data.model_dump()
+    values["business_type"] = resolve_business_type(db, unit_id, data.business_type)
+    record = Opportunity(**values, business_unit_id=unit_id, is_demo=False)
+    if record.stage == "Dobijeno" and record.business_type is None:
+        raise HTTPException(422, "Izaberite vrstu posla pre realizacije.")
     db.add(record)
     db.flush()
     db.add(
@@ -205,8 +210,9 @@ def create_opportunity(
             from_stage=None,
             to_stage=record.stage,
             amount=record.amount,
+            business_type=record.business_type,
             changes={key: {"before": None, "after": str(value) if value is not None else None}
-                     for key, value in data.model_dump(exclude={"company_id"}).items()},
+                     for key, value in values.items() if key != "company_id"},
         )
     )
     db.commit()
@@ -221,6 +227,11 @@ def apply_opportunity_change(db, user, record, values, version):
             "Priliku je u međuvremenu izmenio drugi korisnik. Osvežite prikaz i pokušajte ponovo.",
         )
     previous = record.stage
+    if values.get("stage", record.stage) == "Dobijeno" and (previous != "Dobijeno" or "business_type" in values):
+        kind = resolve_business_type(db, record.business_unit_id, values.get("business_type", record.business_type))
+        if kind is None:
+            raise HTTPException(422, "Izaberite vrstu posla pre realizacije.")
+        values["business_type"] = kind
     changes = {key: {"before": str(getattr(record, key)) if getattr(record, key) is not None else None,
                      "after": str(value) if value is not None else None}
                for key, value in values.items() if getattr(record, key) != value}
@@ -236,6 +247,7 @@ def apply_opportunity_change(db, user, record, values, version):
                 from_stage=previous,
                 to_stage=record.stage,
                 amount=record.amount,
+                business_type=record.business_type,
                 changes=changes,
             )
         )
@@ -257,9 +269,12 @@ def update_opportunity(
     db: Session = Depends(get_db),
 ):
     record = visible_opportunity(db, user, unit_id, opportunity_id, lock=True)
-    return apply_opportunity_change(
-        db, user, record, data.model_dump(exclude={"version"}), data.version
-    )
+    values = data.model_dump(exclude={"version"})
+    if "business_type" not in data.model_fields_set:
+        values.pop("business_type", None)
+    else:
+        values["business_type"] = resolve_business_type(db, unit_id, data.business_type)
+    return apply_opportunity_change(db, user, record, values, data.version)
 
 
 @router.patch(

@@ -1485,3 +1485,22 @@ form label {
 .task-editor textarea { resize: vertical; }
 @media(max-width:1100px) { .task-calendar-layout { grid-template-columns: 1fr; } }
 @media(max-width:600px) { .task-calendar-panel { padding: 12px; } .task-calendar-toolbar { flex-wrap: wrap; gap: 12px; } .task-calendar-toolbar h2 { font-size: 16px; } .task-calendar-day { height: 66px; } .task-calendar-grid { border-spacing: 2px; } }
+
+.target-person { margin-bottom: 20px; }
+.target-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 14px; padding: 0 20px 20px; }
+.target-card { border: 1px solid var(--border); border-radius: 12px; padding: 18px; background: linear-gradient(135deg,#fff,#f8fafc); }
+.target-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; }
+.target-card-heading strong { color: var(--blue); }
+.target-achieved { display: block; font-size: 25px; margin-top: 18px; }
+.target-card p { color: #64748b; font-size: 11px; }
+.target-progress { height: 9px; background: #e8edf3; border-radius: 6px; overflow: hidden; margin: 18px 0 12px; }
+.target-progress > div { height: 100%; background: linear-gradient(90deg,#2563eb,#14b8a6); border-radius: inherit; }
+.target-card-footer { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; font-size: 11px; color: #64748b; }
+.target-month { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.target-month input { padding: 7px 10px; font: inherit; border: 1px solid var(--border); border-radius: 7px; }
+.target-form { padding-bottom: 20px; }
+.target-form .form-actions { padding: 0 20px; }
+.target-form label { display: grid; gap: 8px; font-size: 13px; }
+.target-form input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+.target-explanation { margin-top: 12px; }
+@media(max-width:600px) { .target-cards { grid-template-columns: 1fr; padding: 0 14px 14px; } .target-achieved { font-size: 22px; } }

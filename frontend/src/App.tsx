@@ -1,3 +1,5 @@
+import Targets from "./features/crm/Targets";
+import { businessTypeLabel, businessTypesFor, type BusinessType } from "./features/crm/businessTypes";
 import TasksCalendar from "./features/crm/TasksCalendar";
 import { loadDemoTasks } from "./features/crm/taskCalendar";
 import Reports from "./features/crm/Reports";
@@ -46,6 +48,11 @@ export default function App() {
   });
   const [page, setPage] = useState(readDemoPage);
   const [activity, setActivity] = useState(loadDemoActivity);
+  const [demoTypes, setDemoTypes] = useState<Record<number, BusinessType>>(() => {
+    try { const raw = JSON.parse(localStorage.getItem("crm-demo-business-types-v1") ?? "{}");
+      return Object.fromEntries(Object.entries(raw).filter(([_, value]) => ["sale", "contracted", "leasing", "rental"].includes(String(value)))) as Record<number, BusinessType>;
+    } catch { return {}; }
+  });
   const [stageOverrides, setStageOverrides] = useState(loadDemoStages);
   const [stageMessage, setStageMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -66,10 +73,12 @@ export default function App() {
   }, []);
   const rows = selectCompanies(unit, search).map((c) => ({
     ...c,
+    business_type: demoTypes[c.id] ?? (businessTypesFor(c.unit).length === 1 ? businessTypesFor(c.unit)[0] : null),
     stage: stageOverrides[c.id] ?? c.stage,
   }));
   const all = selectCompanies(unit).map((c) => ({
     ...c,
+    business_type: demoTypes[c.id] ?? (businessTypesFor(c.unit).length === 1 ? businessTypesFor(c.unit)[0] : null),
     stage: stageOverrides[c.id] ?? c.stage,
   }));
   const open = all.filter(
@@ -78,9 +87,10 @@ export default function App() {
   const total = open.reduce((sum, c) => sum + c.value, 0);
   function moveDemo(item: (typeof all)[number], stage: OpportunityStage) {
     if (item.stage === stage) return;
+    if (stage === "Dobijeno" && !item.business_type) { setStageMessage("Izaberite vrstu posla pre realizacije: prodaja, lizing ili najam."); return; }
     const next = { ...stageOverrides, [item.id]: stage };
     setStageOverrides(next);
-    const events = [...activity, { id: (activity.at(-1)?.id ?? 0) + 1, changed_at: new Date().toISOString(), company_name: item.name, opportunity_id: item.id, title: item.name, amount: String(item.value), from_stage: item.stage, to_stage: stage, actor_name: "Demo korisnik", changes: null }];
+    const events = [...activity, { id: (activity.at(-1)?.id ?? 0) + 1, changed_at: new Date().toISOString(), company_name: item.name, opportunity_id: item.id, title: item.name, business_type: item.business_type, amount: String(item.value), from_stage: item.stage, to_stage: stage, actor_name: "Demo korisnik", changes: null }];
     setActivity(events);
     const savedHistory = saveDemoActivity(events);
     setStageMessage(
@@ -282,7 +292,7 @@ export default function App() {
       role="Razvojni pregled"
       onConnect={connect}
     >
-      {!["AI asistent", "Zadaci", "Izveštaji"].includes(page) && (
+      {!["AI asistent", "Zadaci", "Izveštaji", "Targeti"].includes(page) && (
         <div className="page-heading">
           <div>
             <h1>
@@ -387,6 +397,13 @@ export default function App() {
                         {c.unit} · {c.city}
                       </small>
                       <strong>{money(c.value)}</strong>
+                      {c.unit === "CENOBOTS" && <label className="stage-control">Vrsta posla
+                        <select value={c.business_type ?? ""} onChange={e => {
+                          const next = { ...demoTypes, [c.id]: e.target.value as BusinessType }; setDemoTypes(next);
+                          try { localStorage.setItem("crm-demo-business-types-v1", JSON.stringify(next)); }
+                          catch { setStageMessage("Vrsta posla važi samo tokom ovog prikaza; browser ne dozvoljava čuvanje."); }
+                        }}><option value="" disabled>Izaberite vrstu posla</option>{businessTypesFor(c.unit).map(type => <option key={type} value={type}>{businessTypeLabel(type)}</option>)}</select>
+                      </label>}
                       <label className="stage-control">
                         Status
                         <select
@@ -409,6 +426,7 @@ export default function App() {
           </div>
         </>
       )}
+      {page === "Targeti" && <Targets key={unit} unit={0} demo={{ organization: unit, events: activity, opportunities: all.map(c => ({ id: c.id, stage: c.stage, business_type: c.business_type })) }} />}
       {page === "Zadaci" && <TasksCalendar key={unit} unit={0} organization={unit} companies={all} />}
       {page === "Izveštaji" && <Reports key={unit} unit={0} demoItems={activity.filter(row => all.some(c => c.id === row.opportunity_id))} />}
       {page === "AI asistent" && (

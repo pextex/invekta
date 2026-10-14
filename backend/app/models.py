@@ -157,6 +157,7 @@ class Opportunity(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(Integer)
     business_unit_id: Mapped[int] = mapped_column(Integer)
+    business_type: Mapped[str | None] = mapped_column(String(30))
     title: Mapped[str] = mapped_column(String(200))
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=Decimal("0"))
     stage: Mapped[str] = mapped_column(String(30), default="Novi lead")
@@ -202,6 +203,7 @@ class OpportunityStageChange(Base):
     actor_id: Mapped[int] = mapped_column(Integer)
     from_stage: Mapped[str | None] = mapped_column(String(30))
     to_stage: Mapped[str] = mapped_column(String(30))
+    business_type: Mapped[str | None] = mapped_column(String(30))
     changes: Mapped[dict | None] = mapped_column(JSON)
     amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     changed_at: Mapped[datetime] = mapped_column(
@@ -273,3 +275,20 @@ class Task(Base):
     status: Mapped[str] = mapped_column(String(20), default="planned", server_default="planned")
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now())
+
+
+class MonthlyTarget(Base):
+    __tablename__ = "monthly_targets"
+    __table_args__ = (
+        ForeignKeyConstraint(["user_id", "business_unit_id"], ["memberships.user_id", "memberships.business_unit_id"], name="target_user_unit_fk"),
+        UniqueConstraint("business_unit_id", "user_id", "period", "category", name="unique_monthly_target"),
+        CheckConstraint("target_amount >= 0", name="nonnegative_target"),
+        CheckConstraint("version >= 1", name="positive_target_version"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
+    period: Mapped[date] = mapped_column(Date)
+    category: Mapped[str] = mapped_column(String(30))
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")

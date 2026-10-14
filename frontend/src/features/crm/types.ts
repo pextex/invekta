@@ -1,3 +1,4 @@
+import type { BusinessType } from "./businessTypes";
 export type Unit = { id: number; code: string; role: string };
 export type User = { name: string; units: Unit[]; is_platform_admin: boolean };
 export type Company = {
@@ -34,6 +35,7 @@ export const opportunityStages = [
 ] as const;
 export type OpportunityStage = (typeof opportunityStages)[number];
 export type Opportunity = {
+  business_type: BusinessType | null;
   id: number;
   company_id: number;
   company_name: string;

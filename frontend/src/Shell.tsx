@@ -1,6 +1,7 @@
 import { organizations, type OrganizationCode } from "./organizations";
 import { type CSSProperties, type ReactNode } from "react";
 import {
+  Target,
   LayoutDashboard,
   Building2,
   Columns3,
@@ -19,6 +20,7 @@ export const navigation = [
   { title: "Početna tabla", icon: LayoutDashboard },
   { title: "Kompanije", icon: Building2 },
   { title: "Prodajni levak", icon: Columns3 },
+  { title: "Targeti", icon: Target },
   { title: "Ponude", icon: FileText },
   { title: "Zadaci", icon: ListTodo },
   { title: "Izveštaji", icon: ChartNoAxesCombined },

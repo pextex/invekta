@@ -1,3 +1,4 @@
+import { businessTypeLabel, businessTypesFor, type BusinessType } from "./businessTypes";
 import { stageLabel } from "./types";
 import { useStageDragDrop } from "./useStageDragDrop";
 import { useEffect, useState, type FormEvent } from "react";
@@ -15,6 +16,7 @@ import {
   type StageChange,
 } from "./types";
 type Fields = {
+  business_type: BusinessType | "";
   company_id: number;
   title: string;
   amount: string;
@@ -26,10 +28,12 @@ export default function Pipeline({
   unit,
   companies,
   companyId,
+  organization = "LUU",
 }: {
   unit: number;
   companies: Company[];
   companyId?: number;
+  organization?: string;
 }) {
   const [items, setItems] = useState<Opportunity[]>([]),
     [total, setTotal] = useState(0),
@@ -79,6 +83,7 @@ export default function Pipeline({
     const { company_id, ...fields } = form;
     const body = {
       ...fields,
+      business_type: fields.business_type || null,
       expected_close_date: form.expected_close_date || null,
       notes: form.notes || null,
       ...(editing ? { version: editing.version } : { company_id }),
@@ -134,6 +139,7 @@ export default function Pipeline({
   function edit(item: Opportunity) {
     setEditing(item);
     setForm({
+      business_type: item.business_type ?? (businessTypesFor(organization).length === 1 ? businessTypesFor(organization)[0] : ""),
       company_id: item.company_id,
       title: item.title,
       amount: item.amount,
@@ -168,6 +174,7 @@ export default function Pipeline({
             onClick={() => {
               setEditing(null);
               setForm({
+                business_type: businessTypesFor(organization)[0],
                 company_id: companyId ?? companies[0].id,
                 title: "",
                 amount: "0",
@@ -227,6 +234,11 @@ export default function Pipeline({
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
               </label>
+              <label>Vrsta posla<select required disabled={busy} value={form.business_type}
+                onChange={e => setForm({ ...form, business_type: e.target.value as BusinessType })}>
+                <option value="" disabled>Izaberite vrstu posla</option>
+                {businessTypesFor(organization).map(type => <option value={type} key={type}>{businessTypeLabel(type)}</option>)}
+              </select></label>
               <label>
                 Vrednost (RSD)
                 <input
@@ -376,6 +388,7 @@ export default function Pipeline({
                     />
                     {item.title}
                   </h3>
+                  <small>{businessTypeLabel(item.business_type)}</small>
                   <small>
                     {item.company_name}
                     {item.is_demo ? " · DEMO" : ""}

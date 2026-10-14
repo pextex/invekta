@@ -46,6 +46,7 @@ const demoPages: Record<string, string> = {
   quotes: "Ponude",
   tasks: "Zadaci",
   reports: "Izveštaji",
+  targets: "Targeti",
   ai: "AI asistent",
 };
 export const readDemoPage = () =>

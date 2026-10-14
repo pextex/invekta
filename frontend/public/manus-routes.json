@@ -55,6 +55,14 @@
     {
       "path": "/#demo/tasks?organization=:organization",
       "title": "Demo kalendar zadataka"
+    },
+    {
+      "path": "/#crm/targets?unit=:unit",
+      "title": "Mesečni targeti"
+    },
+    {
+      "path": "/#demo/targets?organization=:organization",
+      "title": "Demo mesečni targeti"
     }
   ]
 }

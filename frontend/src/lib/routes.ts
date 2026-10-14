@@ -7,6 +7,7 @@ const pages: Record<string, string> = {
   quotes: "Ponude",
   tasks: "Zadaci",
   reports: "Izveštaji",
+  targets: "Targeti",
   ai: "AI asistent",
   settings: "Podešavanja",
 };

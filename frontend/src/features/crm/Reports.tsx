@@ -1,9 +1,11 @@
+import { businessTypeLabel } from "./businessTypes";
 import { useEffect, useState } from "react";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import { formatAmount, formatTimestamp, opportunityStages, stageLabel } from "./types";
 
 export type Change = {
+  business_type?: string | null;
   id: number; changed_at: string; company_name: string; opportunity_id: number;
   title: string; amount: string | null; from_stage: string | null; to_stage: string;
   actor_name: string; changes: Record<string, { before: string | null; after: string | null }> | null;
@@ -27,9 +29,10 @@ function dateInBelgrade(date: Date) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 const today = () => dateInBelgrade(new Date());
-const fieldNames: Record<string, string> = { title: "Naslov", amount: "Vrednost", expected_close_date: "Očekivano zatvaranje", notes: "Beleška" };
+const fieldNames: Record<string, string> = { business_type: "Vrsta posla", title: "Naslov", amount: "Vrednost", expected_close_date: "Očekivano zatvaranje", notes: "Beleška" };
 function changeValue(field: string, value: string | null) {
   if (!value) return "Prazno";
+  if (field === "business_type") return businessTypeLabel(value);
   return field === "amount" ? formatAmount(value) : value;
 }
 

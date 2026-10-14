@@ -1,3 +1,4 @@
+import Targets from "./features/crm/Targets";
 import TasksCalendar from "./features/crm/TasksCalendar";
 import Reports from "./features/crm/Reports";
 import AiAssistant from "./features/crm/AiAssistant";
@@ -316,6 +317,7 @@ export default function Workspace({
         <CompanyProfile
           key={`${unit}-${selectedCompany}`}
           unit={unit}
+          organization={user.units.find(u => u.id === unit)?.code}
           id={selectedCompany}
           onBack={() => navigate("Kompanije")}
         />
@@ -327,12 +329,14 @@ export default function Workspace({
               <p>Pregled procesa od prvog kontakta do odluke klijenta.</p>
             </div>
           </div>
-          <Pipeline key={unit} unit={unit} companies={rows} />
+          <Pipeline organization={user.units.find(u => u.id === unit)?.code} key={unit} unit={unit} companies={rows} />
           <p className="section-hint">
             Izbor kompanije nudi najviše 200 kompanija iz odabrane jedinice. Za
             ostale otvorite profil kompanije preko pretrage.
           </p>
         </>
+      ) : page === "Targeti" ? (
+        <Targets key={unit} unit={unit} />
       ) : page === "Zadaci" ? (
         <TasksCalendar key={unit} unit={unit} companies={rows} />
       ) : page === "Izveštaji" ? (

@@ -8,7 +8,9 @@ export default function CompanyProfile({
   unit,
   id,
   onBack,
+  organization,
 }: {
+  organization?: string;
   unit: number;
   id: number;
   onBack: () => void;
@@ -97,7 +99,7 @@ export default function CompanyProfile({
               id="profile-opportunities"
               aria-labelledby="opportunities-tab"
             >
-              <Pipeline unit={unit} companyId={id} companies={[company]} />
+              <Pipeline organization={organization} unit={unit} companyId={id} companies={[company]} />
             </div>
           )}
         </>
