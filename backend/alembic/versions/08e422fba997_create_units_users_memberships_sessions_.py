@@ -17,7 +17,7 @@ def upgrade():
     op.create_table('login_attempts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=100), nullable=False),
-    sa.Column('attempted_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('attempted_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_attempt_username_time', 'login_attempts', ['username', 'attempted_at'], unique=False)
@@ -58,7 +58,7 @@ def upgrade():
     sa.Column('stage', sa.String(length=30), nullable=False),
     sa.Column('potential_value', sa.Numeric(precision=14, scale=2), nullable=False),
     sa.Column('is_demo', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.CheckConstraint("stage IN ('Kontakt', 'Ponuda', 'Pregovori')", name='valid_company_stage'),
     sa.CheckConstraint('potential_value >= 0', name='nonnegative_company_value'),
     sa.ForeignKeyConstraint(['business_unit_id'], ['business_units.id'], ),

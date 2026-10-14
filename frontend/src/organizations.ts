@@ -1,6 +1,6 @@
-import luuLogo from "./assets/luu-logo.png?inline";
-import invektaLogo from "./assets/invekta-logo.png?inline";
-import cenobotsLogo from "./assets/cenobots-logo.png?inline";
+import luuLogo from "./assets/luu-logo-web.png";
+import invektaLogo from "./assets/invekta-logo-web.png";
+import cenobotsLogo from "./assets/cenobots-logo-web.png";
 export const organizations = [
   {
     code: "LUU",

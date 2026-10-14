@@ -1,6 +1,7 @@
 node_modules/
 dist/
-.venv/
+backend/app/static/
+.venv
 __pycache__/
 .env
 .env.*

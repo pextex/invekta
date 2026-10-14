@@ -508,7 +508,7 @@ export default function App() {
         </section>
       )}
       <footer>
-        LUU × INVEKTA × CENOBOTS <span>Razvojna verzija 0.4 · Demo podaci</span>
+        LUU × INVEKTA × CENOBOTS <span>Demo podaci · Nema pristupa stvarnom CRM-u</span>
       </footer>
     </Shell>
   );

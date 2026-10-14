@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import secrets
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from .config import get_settings
@@ -38,10 +39,46 @@ def token_hash(token: str) -> str:
 DUMMY_HASH = hash_password(secrets.token_urlsafe(32))
 
 
+def _valid_origin(value: str) -> bool:
+    if value != value.strip() or any(character.isspace() for character in value):
+        return False
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return False
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+    ):
+        return False
+    if parsed.scheme == "http" and parsed.hostname.lower() not in {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+    }:
+        return False
+    return port is None or 1 <= port <= 65535
+
+
 def require_origin(request: Request):
-    # Writes require JSON plus an explicit configured browser origin.
-    if request.headers.get("origin") not in get_settings().allowed_origins:
+    origin = request.headers.get("origin")
+    if not origin or origin == "null" or not _valid_origin(origin):
         raise HTTPException(403, "Nedozvoljeno poreklo zahteva.")
+    if origin in get_settings().allowed_origins:
+        return
+    # WebDev Preview rebases Host to the internal listener, so do not derive
+    # the public origin from request.url/Host. Browser Fetch Metadata is
+    # forbidden to page JavaScript: accept only a syntactically valid explicit
+    # origin paired with same-origin, never the weaker same-site value.
+    if request.headers.get("sec-fetch-site") == "same-origin":
+        return
+    raise HTTPException(403, "Nedozvoljeno poreklo zahteva.")
 
 
 def current_user(request: Request, db: Session = Depends(get_db)) -> User:

@@ -164,10 +164,13 @@ def create_draft(
             raise HTTPException(
                 404, "Prodajna prilika nije pronađena u ovoj kompaniji."
             )
+    business_unit = db.get(BusinessUnit, unit_id)
+    if business_unit is None:
+        raise HTTPException(404, "Poslovna jedinica nije pronađena.")
     context = {
         "sender": {
             "name": user.name,
-            "organization": db.get(BusinessUnit, unit_id).name,
+            "organization": business_unit.name,
         },
         "company": {
             "name": company.name,
@@ -204,7 +207,7 @@ def create_draft(
             AiAttempt.actor_id == actor_id,
             AiAttempt.created_at > now - timedelta(minutes=15),
         )
-    )
+    ) or 0
     if count >= 20:
         raise HTTPException(
             429, "Najviše 20 generisanja za 15 minuta. Pokušajte kasnije."

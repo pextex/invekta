@@ -4,7 +4,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Date,
-    DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Index,
@@ -14,10 +13,12 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
+from .types import UTCDateTime
 
 
 class BusinessUnit(Base):
@@ -36,6 +37,9 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(300))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_platform_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    bootstrap_pending: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     version: Mapped[int] = mapped_column(Integer, default=1)
 
 
@@ -60,7 +64,7 @@ class LoginSession(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
 
 
 class LoginAttempt(Base):
@@ -68,7 +72,7 @@ class LoginAttempt(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(254))
     attempted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
     __table_args__ = (Index("ix_attempt_username_time", "username", "attempted_at"),)
 
@@ -104,7 +108,7 @@ class Company(Base):
     )
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
 
 
@@ -127,7 +131,7 @@ class Contact(Base):
     phone: Mapped[str | None] = mapped_column(String(40))
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
 
 
@@ -160,10 +164,10 @@ class Opportunity(Base):
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        UTCDateTime(), server_default=func.now(), onupdate=func.now()
     )
 
 
@@ -200,7 +204,7 @@ class OpportunityStageChange(Base):
     changes: Mapped[dict | None] = mapped_column(JSON)
     amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     changed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
 
 
@@ -229,10 +233,10 @@ class AiDraft(Base):
     model: Mapped[str] = mapped_column(String(100))
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        UTCDateTime(), server_default=func.now(), onupdate=func.now()
     )
 
 
@@ -241,6 +245,6 @@ class AiAttempt(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UTCDateTime(), server_default=func.now()
     )
     __table_args__ = (Index("ix_ai_attempt_actor_time", "actor_id", "created_at"),)

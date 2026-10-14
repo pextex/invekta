@@ -22,7 +22,7 @@ def main():
         "--role", choices=["sales", "manager", "admin"], default="sales"
     )
     args = parser.parse_args()
-    email = str(TypeAdapter(EmailStr).validate_python(args.email.strip())).lower()
+    email = str(TypeAdapter(EmailStr).validate_python(args.email.strip())).lower()  # pyright: ignore[reportArgumentType]
     if len(email) > 254 or not args.name.strip() or len(args.name.strip()) > 150:
         raise SystemExit("Proverite email i ime (najviše 150 znakova).")
     password = os.environ.get("CRM_ACCOUNT_PASSWORD")
