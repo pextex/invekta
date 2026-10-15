@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
-from ..ai_provider import generate
+from ..ai_provider import GeneratedDraft, generate
 from ..message_templates import generate as generate_template
 from ..config import get_settings
 from ..brand_knowledge import content_for
@@ -22,7 +22,7 @@ from ..models import (
 )
 from ..security import current_user, require_origin, membership
 
-router = APIRouter(prefix="/api/units/{unit_id}/ai", tags=["AI drafts"])
+router = APIRouter(prefix="/api/units/{unit_id}/ai", tags=["Invekta AI"])
 
 
 class Personalization(BaseModel):
@@ -59,18 +59,9 @@ class GenerateInput(BaseModel):
         return self
 
 
-class EditInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    subject: str = Field(min_length=1, max_length=200)
-    body: str = Field(min_length=1, max_length=20000)
-    recipient: EmailStr | None = Field(default=None, max_length=254)
-    version: int = Field(ge=1)
-
-    @model_validator(mode="after")
-    def not_blank(self):
-        if not self.subject.strip() or not self.body.strip():
-            raise ValueError("Nacrt ne može biti prazan.")
-        return self
+class GeneratedMessage(GeneratedDraft):
+    recipient: str | None
+    model: str
 
 
 def output(draft):
@@ -136,8 +127,8 @@ def list_drafts(
     }
 
 
-@router.post("/drafts", status_code=201, dependencies=[Depends(require_origin)])
-def create_draft(
+@router.post("/generate", response_model=GeneratedMessage, dependencies=[Depends(require_origin)])
+def generate_message(
     unit_id: int,
     data: GenerateInput,
     request: Request,
@@ -229,47 +220,29 @@ def create_draft(
     db.add(AiAttempt(actor_id=actor_id))
     db.commit()
     result = generate(context) if settings.crm_ai_enabled else generate_template(context)
-    # Recheck after the external call: a revoked session must not save a draft.
+    # Recheck after the external call: revoked access must not receive the content.
     db.expire_all()
     verified = current_user(request, db)
     visible_company(db, verified, unit_id, data.company_id)
-    draft = AiDraft(
-        actor_id=actor_id,
-        business_unit_id=unit_id,
-        company_id=data.company_id,
-        mode=data.mode,
-        subject=result.subject,
-        body=result.body,
-        recipient=recipient,
-        model=settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
-    )
-    db.add(draft)
-    db.commit()
-    db.refresh(draft)
-    return output(draft)
+    return {
+        "subject": result.subject,
+        "body": result.body,
+        "recipient": recipient,
+        "model": settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
+    }
 
 
-@router.patch("/drafts/{draft_id}", dependencies=[Depends(require_origin)])
-def update_draft(
-    unit_id: int,
-    draft_id: int,
-    data: EditInput,
-    user: User = Depends(current_user),
-    db: Session = Depends(get_db),
-):
-    draft = db.scalar(
-        query(db, user, unit_id).where(AiDraft.id == draft_id).with_for_update()
-    )
+@router.post("/drafts", deprecated=True, dependencies=[Depends(require_origin)])
+def retired_create_draft(unit_id: int, data: GenerateInput,
+                         user: User = Depends(current_user), db: Session = Depends(get_db)):
+    visible_company(db, user, unit_id, data.company_id)
+    raise HTTPException(410, "Čuvanje nacrta je uklonjeno. Koristite Invekta AI za pripremu i kopiranje mejla.")
+
+
+@router.patch("/drafts/{draft_id}", deprecated=True, dependencies=[Depends(require_origin)])
+def retired_update_draft(unit_id: int, draft_id: int,
+                         user: User = Depends(current_user), db: Session = Depends(get_db)):
+    draft = db.scalar(query(db, user, unit_id).where(AiDraft.id == draft_id))
     if draft is None:
         raise HTTPException(404, "Nacrt nije pronađen.")
-    if draft.version != data.version:
-        raise HTTPException(
-            409, "Nacrt je promenjen u drugom prozoru. Ponovo ga otvorite iz spiska."
-        )
-    draft.subject = data.subject
-    draft.body = data.body
-    draft.recipient = str(data.recipient) if data.recipient else None
-    draft.version += 1
-    db.commit()
-    db.refresh(draft)
-    return output(draft)
+    raise HTTPException(410, "Čuvanje izmena nacrta je uklonjeno. Mejl uredite i kopirajte u Invekta AI odeljku.")

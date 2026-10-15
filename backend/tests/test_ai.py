@@ -63,7 +63,7 @@ def payload(**extra):
     return {"company_id": 101, "instructions": "Predloži kratak sastanak", **extra}
 
 
-def test_context_and_persistent_editable_private_draft(client, db, provider):
+def test_selected_context_and_message_response_are_not_persisted(client, db, provider):
     contact = Contact(
         company_id=101,
         business_unit_id=101,
@@ -83,7 +83,7 @@ def test_context_and_persistent_editable_private_draft(client, db, provider):
     db.commit()
     login(client)
     result = client.post(
-        BASE + "/drafts",
+        BASE + "/generate",
         json=payload(
             contact_id=contact.id,
             opportunity_id=opportunity.id,
@@ -94,7 +94,7 @@ def test_context_and_persistent_editable_private_draft(client, db, provider):
         ),
         headers=ORIGIN,
     )
-    assert result.status_code == 201
+    assert result.status_code == 200
     draft = result.json()
     assert draft["recipient"] == "recipient@example.com"
     assert provider[0]["company"]["name"] == "Test firma A"
@@ -102,34 +102,29 @@ def test_context_and_persistent_editable_private_draft(client, db, provider):
     assert provider[0]["language"] == "en"
     assert "recipient@example.com" not in json.dumps(provider[0])
     assert "Test firma B" not in json.dumps(provider[0])
+    assert set(draft) == {"subject", "body", "recipient", "model"}
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+    assert db.scalar(select(func.count()).select_from(AiAttempt)) == 1
+    assert client.get(BASE + "/drafts").json()["total"] == 0
+
+
+def test_retired_writes_cannot_save_content_and_legacy_records_remain_private(client, db, provider):
+    old = AiDraft(actor_id=102, business_unit_id=101, company_id=101, mode="email",
+                  subject="Historical", body="Existing body", model="local-templates")
+    db.add(old)
+    db.commit()
+    login(client)
+    assert client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 410
+    assert client.patch(BASE + f"/drafts/{old.id}", json={"subject": "overwrite", "body": "new", "recipient": None, "version": 1}, headers=ORIGIN).status_code == 410
+    assert not provider
+    assert db.scalar(select(func.count()).select_from(AiAttempt)) == 0
+    db.refresh(old)
+    assert old.body == "Existing body" and old.version == 1
     assert client.get(BASE + "/drafts").json()["total"] == 1
-    body = {
-        "subject": "Revised",
-        "body": "Edited draft",
-        "recipient": None,
-        "version": draft["version"],
-    }
-    assert (
-        client.patch(
-            BASE + f"/drafts/{draft['id']}", json=body, headers=ORIGIN
-        ).status_code
-        == 200
-    )
-    assert (
-        client.patch(
-            BASE + f"/drafts/{draft['id']}", json=body, headers=ORIGIN
-        ).status_code
-        == 409
-    )
-    assert client.get(BASE + "/drafts").json()["items"][0]["body"] == "Edited draft"
     login(client, "manager")
     assert client.get(BASE + "/drafts").json()["total"] == 0
-    assert (
-        client.patch(
-            BASE + f"/drafts/{draft['id']}", json={**body, "version": 2}, headers=ORIGIN
-        ).status_code
-        == 404
-    )
+    assert client.patch(BASE + f"/drafts/{old.id}", json={}, headers=ORIGIN).status_code == 404
+    assert client.post(BASE + "/drafts", json=payload(), headers={"Origin": "https://evil.example"}).status_code == 403
 
 
 def test_access_context_validation_and_disabled_generation(
@@ -138,13 +133,13 @@ def test_access_context_validation_and_disabled_generation(
     login(client)
     assert (
         client.post(
-            BASE + "/drafts", json=payload(company_id=102), headers=ORIGIN
+            BASE + "/generate", json=payload(company_id=102), headers=ORIGIN
         ).status_code
         == 404
     )
     assert (
         client.post(
-            "/api/units/102/ai/drafts", json=payload(company_id=103), headers=ORIGIN
+            "/api/units/102/ai/generate", json=payload(company_id=103), headers=ORIGIN
         ).status_code
         == 403
     )
@@ -154,13 +149,13 @@ def test_access_context_validation_and_disabled_generation(
     db.commit()
     assert (
         client.post(
-            BASE + "/drafts", json=payload(contact_id=foreign.id), headers=ORIGIN
+            BASE + "/generate", json=payload(contact_id=foreign.id), headers=ORIGIN
         ).status_code
         == 404
     )
     assert (
         client.post(
-            BASE + "/drafts",
+            BASE + "/generate",
             json=payload(opportunity_id=foreign_opp.id),
             headers=ORIGIN,
         ).status_code
@@ -168,19 +163,19 @@ def test_access_context_validation_and_disabled_generation(
     )
     assert (
         client.post(
-            BASE + "/drafts", json=payload(mode="reply"), headers=ORIGIN
+            BASE + "/generate", json=payload(mode="reply"), headers=ORIGIN
         ).status_code
         == 422
     )
     assert (
         client.post(
-            BASE + "/drafts", json=payload(send=True), headers=ORIGIN
+            BASE + "/generate", json=payload(send=True), headers=ORIGIN
         ).status_code
         == 422
     )
     assert (
         client.post(
-            BASE + "/drafts", json=payload(), headers={"Origin": "https://evil.example"}
+            BASE + "/generate", json=payload(), headers={"Origin": "https://evil.example"}
         ).status_code
         == 403
     )
@@ -192,7 +187,7 @@ def test_access_context_validation_and_disabled_generation(
     )
     assert client.get(BASE + "/status").json()["configured"] is False
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 503
+        client.post(BASE + "/generate", json=payload(), headers=ORIGIN).status_code == 503
     )
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
     assert db.scalar(select(func.count()).select_from(AiAttempt)) == 0
@@ -208,7 +203,7 @@ def test_generation_budget_failure_and_session_revocation(
 
     monkeypatch.setattr(ai, "generate", fail)
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 502
+        client.post(BASE + "/generate", json=payload(), headers=ORIGIN).status_code == 502
     )
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
     db.add_all(
@@ -219,7 +214,7 @@ def test_generation_budget_failure_and_session_revocation(
     )
     db.commit()
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 429
+        client.post(BASE + "/generate", json=payload(), headers=ORIGIN).status_code == 429
     )
     db.execute(delete(AiAttempt))
     db.commit()
@@ -231,7 +226,7 @@ def test_generation_budget_failure_and_session_revocation(
 
     monkeypatch.setattr(ai, "generate", revoked)
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 401
+        client.post(BASE + "/generate", json=payload(), headers=ORIGIN).status_code == 401
     )
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
 
@@ -303,9 +298,9 @@ def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
     login(client)
     assert client.get(BASE + "/status").json()["engine"] == "templates"
     response = client.post(
-        BASE + "/drafts", json=payload(goal="introduction", personalization={"offering":"održavanje poslovnih prostora", "sender_name":"Test Sender"}), headers=ORIGIN
+        BASE + "/generate", json=payload(goal="introduction", personalization={"offering":"održavanje poslovnih prostora", "sender_name":"Test Sender"}), headers=ORIGIN
     )
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.json()["model"] == "local-templates"
     assert "Test LUU" in response.json()["body"]
     assert "održavanje poslovnih prostora" in response.json()["body"]
@@ -334,8 +329,8 @@ def test_only_current_brand_knowledge_and_selected_client_reach_provider(client,
     ])
     db.commit()
     login(client)
-    response = client.post(BASE + "/drafts", json=payload(), headers=ORIGIN)
-    assert response.status_code == 201
+    response = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
+    assert response.status_code == 200
     assert response.json()["model"] == "test-model"
     assert provider[0]["brand_knowledge"] == {"brand": "Test LUU", "content": "Approved LUU offering"}
     assert "Other brand knowledge" not in json.dumps(provider[0])

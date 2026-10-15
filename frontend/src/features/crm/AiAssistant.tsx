@@ -3,21 +3,15 @@ import CompanyPicker from "./CompanyPicker";
 import "./aiAssistant.css";
 import { stageLabel } from "./types";
 import {
-  loadAssistant,
-  saveAssistant,
-  type AssistantState,
-  type MessageDraft,
-} from "../../lib/assistantStorage";
-import {
   prepareLocalMessage,
   blankPersonalization,
 } from "../../lib/messageTemplates";
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { Sparkles, Copy, Save } from "lucide-react";
+import { Sparkles, Copy } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import type { Company, Contact, Opportunity, OpportunityPage } from "./types";
 
-type Draft = MessageDraft;
+type Draft = { subject: string; body: string; recipient: string | null; model: string };
 const modes = [
   { value: "email", label: "Novi email" },
   { value: "reply", label: "Odgovor na poruku" },
@@ -34,33 +28,21 @@ export default function AiAssistant({
   demo?: boolean;
   organization?: string;
 }) {
-  const [initial] = useState(() =>
-    demo
-      ? loadAssistant(
-          organization,
-          companies.map((c) => c.id),
-        )
-      : null,
-  );
-  const [localSaveFailed, setLocalSaveFailed] = useState(false);
-  const [draftSearch, setDraftSearch] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const [company, setCompany] = useState(initial?.compose.company ?? 0),
+  const [company, setCompany] = useState(0),
     [contact, setContact] = useState(0),
     [opportunity, setOpportunity] = useState(0);
   const [contacts, setContacts] = useState<Contact[]>([]),
     [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [mode, setMode] = useState(initial?.compose.mode ?? "email"),
-    [tone, setTone] = useState(initial?.compose.tone ?? "professional"),
-    [language, setLanguage] = useState(initial?.compose.language ?? "sr"),
-    [instructions, setInstructions] = useState(
-      initial?.compose.instructions ?? "",
-    ),
-    [incoming, setIncoming] = useState(initial?.compose.incoming ?? "");
+  const [mode, setMode] = useState("email"),
+    [tone, setTone] = useState("professional"),
+    [language, setLanguage] = useState("sr"),
+    [instructions, setInstructions] = useState(""),
+    [incoming, setIncoming] = useState("");
   const [personalization, setPersonalization] = useState(
-    initial?.compose.personalization ?? blankPersonalization(),
+    blankPersonalization(),
   );
-  const [goal, setGoal] = useState(initial?.compose.goal ?? "meeting");
+  const [goal, setGoal] = useState("meeting");
   const [engine, setEngine] = useState<"groq" | "templates">("templates");
   const [canManageKnowledge, setCanManageKnowledge] = useState(false);
   const [configured, setConfigured] = useState(false),
@@ -70,80 +52,7 @@ export default function AiAssistant({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
-  const [draft, setDraft] = useState<Draft | null>(initial?.draft ?? null),
-    [savedDraft, setSavedDraft] = useState<Draft | null>(
-      initial?.savedDraft ?? null,
-    ),
-    [dirty, setDirty] = useState(initial?.dirty ?? false),
-    [items, setItems] = useState<Draft[]>(initial?.items ?? []),
-    [total, setTotal] = useState(initial?.items.length ?? 0),
-    [offset, setOffset] = useState(0),
-    [reload, setReload] = useState(0),
-    [listLoading, setListLoading] = useState(!demo);
-  const snapshot: AssistantState = {
-    compose: {
-      company,
-      mode,
-      tone,
-      language,
-      instructions,
-      incoming,
-      goal,
-      personalization,
-    },
-    draft,
-    savedDraft,
-    dirty,
-    items,
-  };
-  const snapshotRef = useRef(snapshot);
-  snapshotRef.current = snapshot;
-  useEffect(() => {
-    if (!demo) return;
-    const timer = window.setTimeout(
-      () =>
-        setLocalSaveFailed(!saveAssistant(organization, snapshotRef.current)),
-      300,
-    );
-    return () => window.clearTimeout(timer);
-  }, [
-    demo,
-    organization,
-    company,
-    mode,
-    tone,
-    language,
-    instructions,
-    incoming,
-    goal,
-    personalization,
-    draft,
-    savedDraft,
-    dirty,
-    items,
-  ]);
-  useEffect(() => {
-    if (!demo) return;
-    const persist = () => {
-      saveAssistant(organization, snapshotRef.current);
-    };
-    window.addEventListener("beforeunload", persist);
-    return () => {
-      window.removeEventListener("beforeunload", persist);
-      persist();
-    };
-  }, [demo, organization]);
-  const visibleItems = items.filter((item) =>
-    (
-      item.subject +
-      " " +
-      item.body +
-      " " +
-      (companies.find((c) => c.id === item.company_id)?.name ?? "")
-    )
-      .toLocaleLowerCase("sr-RS")
-      .includes(draftSearch.toLocaleLowerCase("sr-RS")),
-  );
+  const [draft, setDraft] = useState<Draft | null>(null);
   useEffect(() => {
     if (demo) return;
     const controller = new AbortController();
@@ -167,7 +76,7 @@ export default function AiAssistant({
         if (!controller.signal.aborted) setChecking(false);
       });
     return () => controller.abort();
-  }, [unit, demo, reload]);
+  }, [unit, demo]);
   useEffect(() => {
     setContacts([]);
     setOpportunities([]);
@@ -201,26 +110,6 @@ export default function AiAssistant({
       });
     return () => controller.abort();
   }, [unit, company, demo]);
-  useEffect(() => {
-    if (demo) return;
-    const controller = new AbortController();
-    setListLoading(true);
-    api<{ items: Draft[]; total: number }>(
-      `/units/${unit}/ai/drafts?offset=${offset}&limit=20`,
-      { signal: controller.signal },
-    )
-      .then((data) => {
-        setItems(data.items);
-        setTotal(data.total);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(errorText(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setListLoading(false);
-      });
-    return () => controller.abort();
-  }, [unit, offset, reload, demo]);
   async function generate(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -240,29 +129,18 @@ export default function AiAssistant({
           tone,
           language,
         });
-        const now = new Date().toISOString();
         const next: Draft = {
           ...text,
-          id: Date.now(),
-          company_id: company,
-          mode,
           recipient: null,
           model: "local-templates-demo",
-          version: 1,
-          created_at: now,
-          updated_at: now,
         };
         setDraft(next);
-        setSavedDraft(next);
-        setDirty(false);
-        setItems((previous) => [next, ...previous].slice(0, 30));
-        setTotal((previous) => Math.min(30, previous + 1));
         setMessage(
           "Nacrt je pripremljen. Pregledajte tekst, izmenite ga i kopirajte.",
         );
         return;
       }
-      const next = await api<Draft>(`/units/${unit}/ai/drafts`, {
+      const next = await api<Draft>(`/units/${unit}/ai/generate`, {
         method: "POST",
         body: JSON.stringify({
           company_id: company,
@@ -278,57 +156,11 @@ export default function AiAssistant({
         }),
       });
       setDraft(next);
-      setSavedDraft(next);
-      setDirty(false);
-      setOffset(0);
-      setReload((v) => v + 1);
       setMessage(
         next.model === "local-templates"
-          ? "Nacrt iz šablona je sačuvan. Pregledajte ga pre upotrebe."
-          : "Invekta AI je pripremio i sačuvao nacrt. Pregledajte ga pre upotrebe.",
+          ? "Poruka iz šablona je pripremljena. Pregledajte je i kopirajte."
+          : "Invekta AI je pripremio mejl. Pregledajte ga i kopirajte.",
       );
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    if (!draft) return;
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      if (demo) {
-        const next = {
-          ...draft,
-          version: draft.version + 1,
-          updated_at: new Date().toISOString(),
-        };
-        setDraft(next);
-        setSavedDraft(next);
-        setItems((previous) =>
-          previous.map((item) => (item.id === next.id ? next : item)),
-        );
-        setDirty(false);
-        setMessage("Izmene su sačuvane za ovaj browser.");
-        return;
-      }
-      const next = await api<Draft>(`/units/${unit}/ai/drafts/${draft.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          subject: draft.subject,
-          body: draft.body,
-          recipient: draft.recipient || null,
-          version: draft.version,
-        }),
-      });
-      setDraft(next);
-      setSavedDraft(next);
-      setDirty(false);
-      setReload((v) => v + 1);
-      setMessage("Izmene nacrta su sačuvane.");
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -341,7 +173,7 @@ export default function AiAssistant({
       await navigator.clipboard.writeText(
         `Predmet: ${draft.subject}\n\n${draft.body}`,
       );
-      setMessage("Nacrt je kopiran. Nalepite ga u svoj email program.");
+      setMessage("Mejl je kopiran. Nalepite ga u svoj email program.");
     } catch {
       bodyRef.current?.focus();
       bodyRef.current?.select();
@@ -349,17 +181,6 @@ export default function AiAssistant({
         "Browser nije dozvolio kopiranje. Označite tekst poruke i kopirajte ga ručno.",
       );
     }
-  }
-  function open(item: Draft) {
-    if (dirty) {
-      setError("Sačuvajte ili odbacite izmene pre otvaranja drugog nacrta.");
-      return;
-    }
-    setDraft(item);
-    setSavedDraft(item);
-    setDirty(false);
-    setMessage("");
-    setError("");
   }
   return (
     <>
@@ -382,16 +203,14 @@ export default function AiAssistant({
       )}
       {demo ? (
         <p className="demo-notice">
-          Demo koristi lokalne šablone, bez Groq-a i tumačenja slobodnih uputstava. Nacrti i potpis pamte se u ovom
-          browseru zasebno za svaku firmu (poslednjih 30 nacrta). Nisu u CRM
-          bazi.
+          Demo koristi lokalne šablone, bez Groq-a i tumačenja slobodnih uputstava.
+          Poruka je dostupna samo na ovom ekranu dok ga ne zatvorite ili osvežite.
         </p>
       ) : (
         !checking &&
         !configured && (
           <p className="demo-notice">
             Invekta AI još nije povezan. Administrator treba da podesi Groq ključ na serveru.
-            Sačuvani nacrti ostaju dostupni za pregled i izmene.
           </p>
         )
       )}
@@ -403,12 +222,6 @@ export default function AiAssistant({
         odabrane podatke klijenta i znanje ovog brenda Groq servisu. Proverite nacrt pre slanja.
       </p>}
       {!demo && <AiKnowledge key={unit} unit={unit} brand={organization} canManage={canManageKnowledge} />}
-      {demo && localSaveFailed && (
-        <p className="error-message" role="alert">
-          Browser ne dozvoljava lokalno čuvanje ili nema dovoljno prostora.
-          Kopirajte tekst pre zatvaranja.
-        </p>
-      )}
       <div className="ai-grid">
         <section className="panel">
           <h2>Priprema poruke</h2>
@@ -605,26 +418,19 @@ export default function AiAssistant({
                   (!demo && !configured) ||
                   !company ||
                   contextLoading ||
-                  !!contextError ||
-                  dirty
+                  !!contextError
                 }
               >
                 {busy ? "Pripremanje nacrta…" : demo || engine === "templates" ? "Pripremi nacrt iz šablona" : "Napiši mejl · Invekta AI"}
                 <Sparkles size={16} />
               </button>
-              {dirty && (
-                <p className="panel-note">
-                  Sačuvajte ili odbacite izmene trenutnog nacrta pre novog
-                  generisanja.
-                </p>
-              )}
             </fieldset>
           </form>
         </section>
         <section className="panel">
-          <h2>Nacrt poruke</h2>
+          <h2>Vaš mejl</h2>
           {draft ? (
-            <form onSubmit={save}>
+            <div>
               <fieldset className="ai-fields" disabled={busy}>
                 <label>
                   Primalac
@@ -634,7 +440,6 @@ export default function AiAssistant({
                     value={draft.recipient ?? ""}
                     onChange={(e) => {
                       setDraft({ ...draft, recipient: e.target.value });
-                      setDirty(true);
                     }}
                   />
                 </label>
@@ -646,7 +451,6 @@ export default function AiAssistant({
                     value={draft.subject}
                     onChange={(e) => {
                       setDraft({ ...draft, subject: e.target.value });
-                      setDirty(true);
                     }}
                   />
                 </label>
@@ -661,138 +465,31 @@ export default function AiAssistant({
                     value={draft.body}
                     onChange={(e) => {
                       setDraft({ ...draft, body: e.target.value });
-                      setDirty(true);
                     }}
                   />
                 </label>
                 <div className="form-actions">
-                  <button className="primary-button" disabled={!dirty}>
-                    <Save size={16} />
-                    Sačuvaj izmene
-                  </button>
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={copy}
                   >
                     <Copy size={16} />
-                    Kopiraj nacrt
+                    Kopiraj mejl
                   </button>
-                  {dirty && (
-                    <button
-                      type="button"
-                      className="text-button"
-                      onClick={() => {
-                        if (savedDraft) {
-                          setDraft(savedDraft);
-                          setDirty(false);
-                          setError("");
-                        }
-                      }}
-                    >
-                      Odbaci izmene
-                    </button>
-                  )}
                 </div>
                 <p className="panel-note">
-                  {dirty
-                    ? "Imate nesačuvane izmene."
-                    : demo
-                      ? "Nacrt se pamti u ovom browseru."
-                      : "Nacrt je sačuvan."}{" "}
-                  Email nije poslat.
+                  Poruka se ne čuva. Kopirajte je pre napuštanja ili osvežavanja ekrana. Email nije poslat.
                 </p>
               </fieldset>
-            </form>
+            </div>
           ) : (
             <p className="empty">
-              Pripremite novi nacrt ili otvorite ranije sačuvanu poruku.
+              Opišite kakav mejl želite i izaberite kompaniju. Ovde će se pojaviti tekst za pregled i kopiranje.
             </p>
           )}
         </section>
       </div>
-      <section className="panel">
-        <div className="panel-heading">
-          <h2>Moji sačuvani nacrti ({total})</h2>
-          <button
-            className="secondary-button"
-            disabled={busy || listLoading || demo}
-            onClick={() => setReload((v) => v + 1)}
-          >
-            Osveži
-          </button>
-        </div>
-        <label className="search">
-          Pretraži prikazane nacrte
-          <input
-            aria-label="Pretraži sačuvane nacrte"
-            value={draftSearch}
-            onChange={(e) => setDraftSearch(e.target.value)}
-            placeholder="Predmet, kompanija ili tekst poruke"
-          />
-        </label>
-        {listLoading ? (
-          <p>Učitavanje…</p>
-        ) : visibleItems.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Predmet</th>
-                  <th>Kompanija</th>
-                  <th>Vrsta</th>
-                  <th>Sačuvano</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.subject}</td>
-                    <td>
-                      {companies.find((c) => c.id === item.company_id)?.name ??
-                        "Kompanija #" + item.company_id}
-                    </td>
-                    <td>{modes.find((m) => m.value === item.mode)?.label}</td>
-                    <td>{new Date(item.updated_at).toLocaleString("sr-RS")}</td>
-                    <td>
-                      <button
-                        className="text-button"
-                        disabled={busy}
-                        onClick={() => open(item)}
-                      >
-                        Otvori
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="empty">
-            {draftSearch
-              ? "Nema nacrta za ovu pretragu."
-              : "Još nema sačuvanih nacrta."}
-          </p>
-        )}
-        <div className="panel-actions">
-          <button
-            className="secondary-button"
-            disabled={demo || busy || listLoading || offset === 0}
-            onClick={() => setOffset((v) => Math.max(0, v - 20))}
-          >
-            Prethodna
-          </button>
-          <button
-            className="secondary-button"
-            disabled={demo || busy || listLoading || offset + 20 >= total}
-            onClick={() => setOffset((v) => v + 20)}
-          >
-            Sledeća
-          </button>
-        </div>
-      </section>
     </>
   );
 }

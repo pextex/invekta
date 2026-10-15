@@ -42,7 +42,7 @@
     },
     {
       "path": "/#crm/ai?unit=:unit",
-      "title": "Invekta AI"
+      "title": "Invekta AI — priprema mejlova"
     },
     {
       "path": "/#crm/settings?unit=:unit",
