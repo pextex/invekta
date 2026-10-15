@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, aliased
 from ..business_types import resolve_business_type
 from ..access import visible_company, visible_query
@@ -397,6 +397,7 @@ def sales_report(
     history = OpportunityStageChange
     criteria = (
         history.business_unit_id == unit_id,
+        or_(history.from_stage.is_(None), history.from_stage != history.to_stage),
         history.opportunity_id.in_(visible.with_only_columns(Opportunity.id)),
         history.changed_at >= datetime.combine(date_from, time.min, zone),
         history.changed_at < datetime.combine(date_to + timedelta(days=1), time.min, zone),

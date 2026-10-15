@@ -161,9 +161,9 @@ Posle preuzimanja ove izmene pokrenite iz `backend` direktorijuma `uv run python
 
 ## Dnevni i mesečni izveštaji promena
 
-Odeljak **Izveštaji** prikazuje sve zabeležene događaje u prodajnom levku tokom izabranog dana ili meseca, prema vremenskoj zoni Europe/Belgrade. Podrazumevano se otvara današnji dnevni pregled. Period se odnosi na vreme promene, ne na datum kreiranja prilike.
+Odeljak **Izveštaji** prikazuje kreiranje prilika i promene statusa u prodajnom levku tokom izabranog dana ili meseca, prema vremenskoj zoni Europe/Belgrade. Podrazumevano se otvara današnji dnevni pregled. Period se odnosi na vreme promene, ne na datum kreiranja prilike.
 
-Hronologija prikazuje kompaniju, priliku, prethodni i novi status, korisnika i vreme promene. Beleže se i kreiranje prilike i izmene naslova, vrednosti, očekivanog datuma zatvaranja i beleške. Vrednost pri promeni čuva se kao istorijski podatak; ponovljeno čuvanje bez stvarne izmene ne pravi događaj. Stariji zapisi sadrže samo istoriju statusa, bez naknadnog izmišljanja ranijih izmena ili vrednosti.
+Hronologija prikazuje kompaniju, priliku, prethodni i novi status, korisnika i vreme promene. Izveštaj ima četiri pokazatelja: Nove prilike, Promene statusa, Realizovano i Nije realizovano. Kartice „Sve promene“ i „Izmene podataka“ su uklonjene, kao i detalji izmena polja iz prikaza. Izmene naslova, vrednosti, očekivanog datuma, vrste posla i beleške bez promene statusa ne ulaze u zbirne brojeve, grafikone, pregled po komercijalisti ili paginaciju izveštaja. Istorija tih izmena ostaje sačuvana u bazi i postojeća evidencija se ne briše. Vrednost pri promeni statusa ostaje istorijski podatak. Demo računa izveštaj istim pravilima.
 
 Pokazatelji broje događaje (jedna prilika može imati više promena) i različite prilike u periodu. Menadžer vidi dostupne događaje cele firme, komercijalista događaje na prilikama svojih kompanija. Demo događaji iz baze podrazumevano su isključeni i mogu se uključiti filterom. Sve promene dostupne su kroz stranice od 50 zapisa; zbirni brojevi obuhvataju ceo period.
 

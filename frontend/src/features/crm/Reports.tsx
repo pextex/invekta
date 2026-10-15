@@ -1,4 +1,3 @@
-import { businessTypeLabel } from "./businessTypes";
 import { useEffect, useState } from "react";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { api, errorText } from "../../lib/api";
@@ -32,14 +31,8 @@ function dateInBelgrade(date: Date) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 const today = () => dateInBelgrade(new Date());
-const fieldNames: Record<string, string> = { business_type: "Vrsta posla", title: "Naslov", amount: "Vrednost", expected_close_date: "Očekivano zatvaranje", notes: "Beleška" };
-function changeValue(field: string, value: string | null) {
-  if (!value) return "Prazno";
-  if (field === "business_type") return businessTypeLabel(value);
-  return field === "amount" ? formatAmount(value) : value;
-}
-
 export function summarizeChanges(items: Change[], offset = 0): SalesReport {
+  items = items.filter(row => row.from_stage === null || row.from_stage !== row.to_stage);
   const owners = new Map<number, ReportOwner>();
   for (const row of items) {
     const id = row.owner_id ?? 0;
@@ -100,7 +93,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
   return <>
     <div className="page-heading">
       <div><div className="eyebrow">AKTIVNOSTI U PRODAJNOM LEVKU</div><h1>Izveštaji</h1>
-        <p>{role === "sales" ? "Sve promene na prilikama vaših kompanija." : "Sve promene u prodajnom levku vaše firme."}</p></div>
+        <p>{role === "sales" ? "Nove prilike i promene statusa za vaše kompanije." : "Nove prilike i promene statusa u prodajnom levku vaše firme."}</p></div>
       <button className="secondary-button" disabled={loading || !value} onClick={() => { setOffset(0); setReload(v => v + 1); }}><RefreshCw size={15} />Osveži</button>
     </div>
     <div className="report-toolbar">
@@ -119,10 +112,8 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
     {!value ? <p className="empty">Izaberite {mode === "day" ? "datum" : "mesec"} za pregled.</p> : loading ? <p className="empty" role="status">Učitavanje izveštaja…</p> : data && <>
       <div className="metrics report-metrics">
         {[
-          { label: "Sve promene", value: data.total, note: `${data.opportunity_count} različitih prilika` },
           { label: "Nove prilike", value: data.created_count, note: "Kreirane u periodu" },
           { label: "Promene statusa", value: data.stage_change_count, note: "Prelazak iz jedne faze u drugu" },
-          { label: "Izmene podataka", value: data.edit_count, note: "Izmene bez promene statusa" },
           { label: "Realizovano", value: data.realized_count, note: "Prelasci u status Realizovano" },
           { label: "Nije realizovano", value: data.unrealized_count, note: "Prelasci u status Nije realizovano" },
         ].map(item => <article className="metric" key={item.label}><div className="metric-label">{item.label}</div><strong>{item.value}</strong><small>{item.note}</small></article>)}
@@ -140,20 +131,20 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
           {!data.created_count && !data.stage_change_count && <p className="report-chart-note">Nema ulazaka u statuse u ovom periodu.</p>}
         </section>
         <section className="panel report-chart">
-          <div className="report-chart-heading"><div><h2>Vrste aktivnosti</h2><p>Sve zabeležene promene u periodu</p></div></div>
+          <div className="report-chart-heading"><div><h2>Vrste aktivnosti</h2><p>Nove prilike i promene statusa u periodu</p></div></div>
           <div className="report-activity-chart">
-            <div className="report-donut" role="img" aria-label={`Nove prilike: ${data.created_count}, promene statusa: ${data.stage_change_count}, izmene podataka: ${data.edit_count}`}
-              style={{ background: data.total ? `conic-gradient(#2563eb 0 ${data.created_count / data.total * 100}%, #14b8a6 ${data.created_count / data.total * 100}% ${(data.created_count + data.stage_change_count) / data.total * 100}%, #a78bfa ${(data.created_count + data.stage_change_count) / data.total * 100}% 100%)` : "#e8edf3" }}>
+            <div className="report-donut" role="img" aria-label={`Nove prilike: ${data.created_count}, promene statusa: ${data.stage_change_count}`}
+              style={{ background: data.total ? `conic-gradient(#2563eb 0 ${data.created_count / data.total * 100}%, #14b8a6 ${data.created_count / data.total * 100}% 100%)` : "#e8edf3" }}>
               <div><strong>{data.total}</strong><span>promena</span></div>
             </div>
             <div className="report-chart-legend">
-              {[{ label: "Nove prilike", count: data.created_count, color: "#2563eb" }, { label: "Promene statusa", count: data.stage_change_count, color: "#14b8a6" }, { label: "Izmene podataka", count: data.edit_count, color: "#a78bfa" }].map(item =>
+              {[{ label: "Nove prilike", count: data.created_count, color: "#2563eb" }, { label: "Promene statusa", count: data.stage_change_count, color: "#14b8a6" }].map(item =>
                 <div key={item.label}><span className="report-legend-dot" style={{ background: item.color }} /><span>{item.label}</span><strong>{item.count}</strong><small>{data.total ? Math.round(item.count / data.total * 100) : 0}%</small></div>)}
             </div>
           </div>
         </section>
       </div>
-      {role !== "sales" && <section className="panel report-salespeople"><div className="panel-heading"><h2>Izveštaj po komercijalisti</h2></div><div className="table-scroll"><table><thead><tr><th>Komercijalista</th><th>Sve promene</th><th>Nove prilike</th><th>Promene statusa</th><th>Realizovano</th><th>Nije realizovano</th></tr></thead><tbody>{data.owners.map(person => <tr key={person.user_id}><td><strong>{person.user_name}</strong></td><td>{person.total}</td><td>{person.created_count}</td><td>{person.stage_change_count}</td><td>{person.realized_count}</td><td>{person.unrealized_count}</td></tr>)}</tbody></table>{!data.owners.length && <p className="empty">Nema promena za izabrani period.</p>}</div><p className="panel-note">Pregled se pripisuje komercijalisti koji vodi kompaniju. U istoriji se posebno vidi korisnik koji je izvršio promenu.</p></section>}
+      {role !== "sales" && <section className="panel report-salespeople"><div className="panel-heading"><h2>Izveštaj po komercijalisti</h2></div><div className="table-scroll"><table><thead><tr><th>Komercijalista</th><th>Nove prilike</th><th>Promene statusa</th><th>Realizovano</th><th>Nije realizovano</th></tr></thead><tbody>{data.owners.map(person => <tr key={person.user_id}><td><strong>{person.user_name}</strong></td><td>{person.created_count}</td><td>{person.stage_change_count}</td><td>{person.realized_count}</td><td>{person.unrealized_count}</td></tr>)}</tbody></table>{!data.owners.length && <p className="empty">Nema promena za izabrani period.</p>}</div><p className="panel-note">Pregled se pripisuje komercijalisti koji vodi kompaniju. U istoriji se posebno vidi korisnik koji je izvršio promenu.</p></section>}
       <section className="panel">
         <div className="panel-heading"><h2>Hronologija promena</h2><span className="tag">Najnovije prvo</span></div>
         {!data.total ? <p className="empty">Nema zabeleženih promena u izabranom periodu. Izaberite drugi period{!demoItems && !includeDemo ? " ili uključite demo podatke" : ""}.</p> : <>
@@ -162,10 +153,8 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
               <td>{formatTimestamp(row.changed_at)}</td>
               <td><strong>{row.company_name}</strong><small>{row.title}</small></td>
               <td>{row.owner_name ?? row.actor_name}</td>
-              <td><strong>{row.from_stage === null ? "Nova prilika" : row.from_stage === row.to_stage ? "Izmena podataka" : "Promena statusa"}</strong>
+              <td><strong>{row.from_stage === null ? "Nova prilika" : "Promena statusa"}</strong>
                 <small>{row.from_stage ? stageLabel(row.from_stage) : "Kreiranje"} → {stageLabel(row.to_stage)}</small>
-                {row.changes && Object.entries(row.changes).filter(([key]) => key !== "stage").map(([key, change]) =>
-                  <small className="report-change-detail" key={key}>{fieldNames[key] ?? key}: {changeValue(key, change.before)} → {changeValue(key, change.after)}</small>)}
               </td>
               <td>{row.amount === null ? "Nije zabeležena" : formatAmount(row.amount)}</td>
               <td>{row.actor_name}</td>
@@ -177,7 +166,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
             <button className="secondary-button" disabled={offset + 50 >= data.total} onClick={() => setOffset(v => v + 50)}>Sledeća</button>
           </div>
         </>}
-        <p className="panel-note">Brojevi predstavljaju događaje: jedna prilika može imati više promena u istom periodu. Za ranije zapise dostupna je samo istorija statusa; detalji izmena i vrednost pri promeni beleže se od ove verzije.</p>
+        <p className="panel-note">Prikazuju se kreiranje prilika i promene statusa u izabranom periodu. Jedna prilika može imati više promena statusa tokom istog perioda.</p>
       </section>
     </>}
   </>;

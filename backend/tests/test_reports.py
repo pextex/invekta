@@ -100,3 +100,29 @@ def test_admin_report_groups_by_owner_and_filters_without_leaking_other_salespeo
     assert [p["id"] for p in own["people"]] == [102]
     assert [p["user_id"] for p in own["owners"]] == [102]
     assert client.get("/api/units/101/reports", params={**params, "owner_id": 103}).status_code == 403
+
+
+def test_report_excludes_data_edits_before_aggregation_and_pagination_but_preserves_history(client, db, sales_records):
+    from sqlalchemy import func, select
+    for index in range(55):
+        add_event(db, 10000 + index, 2001, 102, "Ponuda", "Ponuda", "2026-10-15T14:00:00+00:00")
+    add_event(db, 10100, 2002, 103, "Pregovori", "Pregovori", "2026-10-15T15:00:00+00:00")
+    add_event(db, 10101, 2001, 102, None, "Novi lead", "2026-10-15T10:00:00+00:00")
+    add_event(db, 10102, 2001, 102, "Ponuda", "Dobijeno", "2026-10-15T12:00:00+00:00")
+    db.commit()
+    login(client)
+    params = {"date_from": "2026-10-15", "date_to": "2026-10-15", "limit": 1}
+    first = client.get("/api/units/101/reports", params=params).json()
+    second = client.get("/api/units/101/reports", params={**params, "offset": 1}).json()
+    assert first["total"] == second["total"] == 2
+    assert first["opportunity_count"] == 1 and first["edit_count"] == 0
+    assert first["created_count"] == first["stage_change_count"] == first["realized_count"] == 1
+    assert [first["items"][0]["id"], second["items"][0]["id"]] == [10102, 10101]
+    assert len(first["owners"]) == 1 and first["owners"][0]["user_id"] == 102
+    assert first["owners"][0]["total"] == 2 and first["owners"][0]["edit_count"] == 0
+    assert sum(first["stage_counts"].values()) == 2
+    # The report is a read-only view; edit history is retained for the opportunity.
+    assert db.scalar(select(func.count()).select_from(OpportunityStageChange).where(OpportunityStageChange.id.between(10000, 10102))) == 58
+    assert len(client.get("/api/units/101/opportunities/2001/stage-history").json()) == 57
+    only_edits = client.get("/api/units/101/reports", params={**params, "owner_id": 103}).json()
+    assert only_edits["total"] == 0 and only_edits["items"] == [] and only_edits["owners"] == []

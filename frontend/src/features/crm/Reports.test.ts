@@ -9,7 +9,7 @@ it("keeps daily selection and includes the last day of every selected month", ()
 });
 
 import { summarizeChanges, type Change } from "./Reports";
-it("counts every event while counting each affected opportunity once", () => {
+it("counts creations and stage changes while excluding data edits", () => {
   const base: Change = { id: 1, changed_at: "2026-10-14T12:00:00Z", company_name: "Test", opportunity_id: 7, title: "Prilika", amount: "123.45", actor_name: "Ana", from_stage: null, to_stage: "Novi lead", changes: null };
   const result = summarizeChanges([
     base,
@@ -17,13 +17,14 @@ it("counts every event while counting each affected opportunity once", () => {
     { ...base, id: 3, from_stage: "Ponuda", to_stage: "Dobijeno" },
     { ...base, id: 4, from_stage: "Dobijeno", to_stage: "Dobijeno" },
   ]);
-  expect(result.total).toBe(4);
+  expect(result.total).toBe(3);
   expect(result.opportunity_count).toBe(1);
   expect(result.created_count).toBe(1);
   expect(result.stage_change_count).toBe(2);
-  expect(result.edit_count).toBe(1);
+  expect(result.edit_count).toBe(0);
   expect(result.realized_count).toBe(1);
   expect(result.stage_counts["Novi lead"]).toBe(1);
   expect(result.stage_counts["Ponuda"]).toBe(1);
   expect(result.stage_counts["Dobijeno"]).toBe(1);
+  expect(result.items.map(row => row.id)).toEqual([1, 2, 3]);
 });
