@@ -60,7 +60,7 @@ python scripts/dev.py
 
 Otvorite **Ports → 5173 → Open in Browser**, uz **Private** vidljivost. Komanda pokreće PostgreSQL, FastAPI sa reload-om i Vite sa HMR-om/proxy-jem. Čuva postojeći `.env`, korisnike, sesije i podatke u lokalnom volume-u. Ako šema baze zaostaje, prijavljuje potrebne migracije i staje; **ne izvršava migracije, seed ili reset**. Novi Codespace ne preuzima Manus bazu preko Git-a.
 
-[Uputstvo za Codespaces, prvu praznu bazu i postojeće migracije](docs/codespaces.md). Lokalno su potrebni Node 22/24, Python 3.12+, uv i Docker Compose; ista komanda otvara CRM na `http://localhost:5173`. Produkcioni Manus deployment ostaje odvojen.
+[Uputstvo za Codespaces, recovery režim, prvu praznu bazu i postojeće migracije](docs/codespaces.md). Lokalno su potrebni Node 22/24, Python 3.12+ i Docker Compose; uv se po potrebi instalira u privatni `.dev-tools` folder. Ista komanda otvara CRM na `http://localhost:5173`. Produkcioni Manus deployment ostaje odvojen.
 
 ## Provere
 

@@ -3,15 +3,55 @@
 import os
 from contextlib import redirect_stdout
 from io import StringIO
+from pathlib import Path
+import subprocess
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import MagicMock, patch
 
 from dev import preview_origin
+from dev_tools import ensure_uv, check_runtime
 from dev_database import check_schema, local_url
 from app.config import get_settings
 
 
 class DevelopmentSafetyTests(unittest.TestCase):
+    def test_missing_uv_is_installed_privately_and_reused_without_path_change(self):
+        with TemporaryDirectory() as directory, \
+                patch("dev_tools.TOOLS", Path(directory)), \
+                patch("dev_tools.shutil.which", return_value=None), \
+                patch("dev_tools.subprocess.run") as run:
+            binary = Path(directory) / "bin/uv"
+            self.assertEqual(ensure_uv(), str(binary))
+            self.assertEqual(run.call_args_list[0].args[0][-2:], ["venv", directory])
+            self.assertEqual(run.call_args_list[1].args[0][-1], "uv==0.12.23")
+            self.assertNotIn("--user", run.call_args_list[1].args[0])
+            binary.parent.mkdir()
+            binary.touch()
+            run.reset_mock()
+            self.assertEqual(ensure_uv(), str(binary))
+            run.assert_not_called()
+
+    def test_recovery_without_docker_stops_before_installing_or_starting_services(self):
+        with patch("dev_tools.shutil.which", return_value=None), \
+                patch("dev_tools.subprocess.run") as run:
+            with self.assertRaisesRegex(RuntimeError, "View Creation Log"):
+                check_runtime()
+            run.assert_not_called()
+        with patch("dev_tools.shutil.which", return_value="available"), \
+                patch("dev_tools.subprocess.run") as run:
+            run.return_value.returncode = 1
+            with self.assertRaisesRegex(RuntimeError, "Docker daemon"):
+                check_runtime()
+
+    def test_failed_uv_install_reports_error_without_starting_crm(self):
+        with TemporaryDirectory() as directory, \
+                patch("dev_tools.TOOLS", Path(directory)), \
+                patch("dev_tools.shutil.which", return_value=None), \
+                patch("dev_tools.subprocess.run", side_effect=subprocess.CalledProcessError(1, ["venv"])):
+            with self.assertRaisesRegex(RuntimeError, "baza nisu menjane"):
+                ensure_uv()
+
     def test_exact_codespaces_https_origin(self):
         self.assertEqual(preview_origin({"CODESPACE_NAME": "test-space-123"}),
                          "https://test-space-123-5173.app.github.dev")

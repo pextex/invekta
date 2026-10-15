@@ -1,6 +1,6 @@
 # CRM u GitHub Codespaces-u
 
-Otvorite granu sa izmenama (`codex/task-calendar`) na GitHub-u → **Code → Codespaces → Create codespace**. Konfiguracija `.devcontainer` priprema Python 3.12, Node 22, Docker/Compose i uv. U postojećem Codespace-u koji nema ove alate upotrebite **Codespaces: Rebuild Container**. Nemojte brisati Codespace u kome čuvate jedinu kopiju razvojne baze.
+Otvorite granu sa izmenama (`codex/task-calendar`) na GitHub-u → **Code → Codespaces → Create codespace**. Konfiguracija `.devcontainer` priprema Python 3.12, Node 22, Docker/Compose i uv. Ako uv nedostaje ili nije u PATH-u, razvojna komanda ga sama instalira u privatni `.dev-tools` folder; ne instalira pakete u sistemski Python. U postojećem Codespace-u koji nema Node ili Docker upotrebite **Codespaces: Rebuild Container**. Nemojte brisati Codespace u kome čuvate jedinu kopiju razvojne baze.
 
 ## Jedna komanda
 
@@ -26,7 +26,7 @@ Za postojeću bazu prvo pregledajte navedene fajlove u `backend/alembic/versions
 
 ```bash
 cd backend
-uv run --frozen python -m alembic upgrade head
+.venv/bin/python -m alembic upgrade head
 cd ..
 python scripts/dev.py
 ```
@@ -35,7 +35,7 @@ Navedeni upgrade nije deo automatskog pokretanja. Ista eksplicitna inicijalizaci
 
 ```bash
 cd backend
-uv run --frozen python -m app.create_user --email vas-email@example.com --name 'Ime Prezime' --unit LUU --unit INVEKTA --unit CENOBOTS --role admin
+.venv/bin/python -m app.create_user --email vas-email@example.com --name 'Ime Prezime' --unit LUU --unit INVEKTA --unit CENOBOTS --role admin
 cd ..
 ```
 
@@ -48,3 +48,24 @@ Git čuva kod, **ne bazu**. Postojeći PostgreSQL volume u istom Codespace-u ost
 Na istom Live Preview linku otvorite **`/api/ready`**: očekivano je `{"status":"ready"}`. Posle prijave sačuvajte kompaniju ili zadatak, osvežite stranicu i proverite zapis. U browser Network panelu zahtevi `/api/...` moraju ići na isti port 5173; nisu demo podaci. Zatvaranje i ponovno pokretanje komande čuva te zapise i neistekle sesije.
 
 Ne koristite `docker compose down -v` i ne brišite Codespace/volume bez backupa. Portove 8000 i 5432 ne prosleđujte. Ako je 5173 ili 8000 zauzet, zaustavite prethodni razvojni proces; skripta neće gasiti tuđe procese niti birati drugi port. Promene zavisnosti učitavaju se ponovnim pokretanjem iste komande. Manus Dockerfile, managed baza i javni sajt nisu deo ovog postupka.
+
+## Recovery režim / nedostaje uv
+
+Creation log od 15.10.2026. pokazao je konkretan uzrok: nasleđeni Yarn APT repozitorijum vraća `NO_PUBKEY 62D54FD4003F6525`, pa instalacija Docker feature-a pada pre pripreme uv. Razvojni `.devcontainer/Dockerfile` uklanja samo taj nepotrebni Yarn source **pre** instaliranja Features; Node koristi npm/Corepack, bez Yarn APT-a. Provera potpisa ostalih paketa ostaje uključena. Korenski produkcioni Dockerfile nije izmenjen.
+
+U postojećem terminalu preuzmite samo normalne, usklađene izmene:
+
+```bash
+git pull --ff-only origin codex/task-calendar
+python scripts/dev.py
+```
+
+Ako Git prijavi lokalne izmene ili razilaženje grana, stanite i sačuvajte ih; ne koristite reset ili force. Komanda proverava Node, Docker daemon i Compose pre menjanja lokalne konfiguracije ili pokretanja baze. Kada su dostupni, nedostajući uv priprema automatski i ne zahteva uspešan `postCreateCommand`.
+
+Ako Codespaces i dalje prijavljuje **recovery mode**, otvorite **Cmd/Ctrl+Shift+P → Codespaces: View Creation Log**. Potrebna je konkretna `ERROR`/`failed` poruka, ne početno obaveštenje o recovery režimu. Proverite poslednje redove i lokalno u terminalu:
+
+```bash
+tail -n 80 /workspaces/.codespaces/.persistedshare/creation.log
+```
+
+Ako taj fajl nije dostupan, koristite View Creation Log. Ne delite lozinke, tokene ili DATABASE_URL iz loga. Nakon preuzimanja ispravke upotrebite **Codespaces: Rebuild Container**. Sama instalacija uv ne popravlja Docker ili neuspešno kreiranje razvojnog kontejnera; bez creation log-a uzrok takvog pada nije potvrđen. Nijedan od ovih koraka ne radi seed, reset ili automatsku migraciju CRM baze.

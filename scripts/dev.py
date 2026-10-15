@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 import re
-import shutil
 import signal
 import socket
 import subprocess
@@ -11,6 +10,7 @@ import sys
 import time
 from urllib.error import URLError
 from urllib.request import urlopen
+from dev_tools import check_runtime, ensure_uv
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -70,9 +70,8 @@ def stop(process):
 def main():
     if os.name != "posix":
         raise RuntimeError("Ova komanda koristi Linux/macOS; na Windows-u koristite Codespaces ili WSL.")
-    for tool in ("uv", "npm", "docker"):
-        if not shutil.which(tool):
-            raise RuntimeError(f"Nedostaje {tool}. Otvorite projekat pomoću .devcontainer konfiguracije.")
+    check_runtime()
+    uv = ensure_uv()
     check_ports()
     env = dict(os.environ)
     origin = preview_origin(env)
@@ -82,7 +81,7 @@ def main():
         CRM_AI_ENABLED="false",
     )
     run([sys.executable, "scripts/setup_dev.py"], env=env)
-    run(["uv", "sync", "--frozen"], cwd=ROOT / "backend", env=env)
+    run([uv, "sync", "--frozen", "--python", "3.12"], cwd=ROOT / "backend", env=env)
     python = str(ROOT / "backend/.venv/bin/python")
     checker = str(ROOT / "scripts/dev_database.py")
     # Validate before Docker or any database connection, including inherited env vars.
