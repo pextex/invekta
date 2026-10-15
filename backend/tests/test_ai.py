@@ -15,6 +15,15 @@ ORIGIN = {"Origin": "http://localhost:5173"}
 BASE = "/api/units/101/ai"
 
 
+@pytest.fixture(autouse=True)
+def local_ai_settings(monkeypatch):
+    # Tests never inherit enabled AI/key bindings from a developer environment.
+    settings = get_settings().model_copy(update={"crm_ai_enabled": False, "crm_groq_api_key": ""})
+    monkeypatch.setattr(ai, "get_settings", lambda: settings)
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
+
+
+
 def login(client, username="sales"):
     assert (
         client.post(
@@ -32,11 +41,12 @@ def provider(monkeypatch):
     settings = get_settings().model_copy(
         update={
             "crm_ai_enabled": True,
-            "crm_ai_api_key": "test-placeholder",
-            "crm_ai_model": "test-model",
+            "crm_groq_api_key": "test-placeholder",
+            "crm_groq_model": "test-model",
         }
     )
     monkeypatch.setattr(ai, "get_settings", lambda: settings)
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
 
     def generate(context):
         calls.append(context)
@@ -178,13 +188,14 @@ def test_access_context_validation_and_disabled_generation(
     monkeypatch.setattr(
         ai,
         "get_settings",
-        lambda: get_settings().model_copy(update={"crm_ai_api_key": ""}),
+        lambda: get_settings().model_copy(update={"crm_ai_enabled": True, "crm_groq_api_key": ""}),
     )
-    assert client.get(BASE + "/status").json()["configured"] is True
+    assert client.get(BASE + "/status").json()["configured"] is False
     assert (
-        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 201
+        client.post(BASE + "/drafts", json=payload(), headers=ORIGIN).status_code == 503
     )
-    assert db.scalar(select(func.count()).select_from(AiDraft)) == 1
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+    assert db.scalar(select(func.count()).select_from(AiAttempt)) == 0
 
 
 def test_generation_budget_failure_and_session_revocation(
@@ -225,68 +236,57 @@ def test_generation_budget_failure_and_session_revocation(
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
 
 
-def test_responses_protocol_and_invalid_outputs(monkeypatch):
-    monkeypatch.setattr(
-        ai_provider,
-        "get_settings",
-        lambda: get_settings().model_copy(
-            update={"crm_ai_enabled": True, "crm_ai_api_key": "test-placeholder"}
-        ),
-    )
+def test_groq_protocol_and_invalid_outputs(monkeypatch):
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: get_settings().model_copy(
+        update={"crm_ai_enabled": True, "crm_groq_api_key": "test-groq-placeholder", "crm_groq_model": "test-model"}))
     captured = []
-    response = {
-        "status": "completed",
-        "output": [
-            {
-                "type": "message",
-                "content": [
-                    {
-                        "type": "output_text",
-                        "text": json.dumps({"subject": "Subject", "body": "Body"}),
-                    }
-                ],
-            }
-        ],
-    }
+    response = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({"subject": "Subject", "body": "Body"})}}]}
 
     def transport(request, timeout):
         captured.append(json.loads(request.data))
-        assert request.full_url == "https://api.openai.com/v1/responses"
+        assert request.full_url == "https://api.groq.com/openai/v1/chat/completions"
+        assert request.get_header("Authorization") == "Bearer test-groq-placeholder"
         assert timeout == 45
         return io.BytesIO(json.dumps(response).encode())
 
     monkeypatch.setattr(ai_provider, "urlopen", transport)
-    result = ai_provider.generate({"instructions": "Write an email"})
-    assert result.subject == "Subject"
-    assert captured[0]["store"] is False
-    assert captured[0]["text"]["format"]["strict"] is True
+    assert ai_provider.generate({"instructions": "Write an email"}).subject == "Subject"
+    assert captured[0]["response_format"] == {"type": "json_object"}
+    assert captured[0]["model"] == "test-model"
+    assert captured[0]["messages"][0]["role"] == "system"
+    assert "Invekta AI" in captured[0]["messages"][0]["content"]
     assert "tools" not in captured[0]
-    response["status"] = "incomplete"
-    with pytest.raises(HTTPException) as error:
-        ai_provider.generate({})
-    assert error.value.status_code == 502
-    response["status"] = "completed"
-    response["output"][0]["content"][0]["text"] = (
-        '{"subject":"x","body":"y","send":true}'
-    )
+    assert json.loads(captured[0]["messages"][1]["content"])["instructions"] == "Write an email"
+    for finish in ("length", "content_filter", None):
+        response["choices"][0]["finish_reason"] = finish
+        with pytest.raises(HTTPException) as error:
+            ai_provider.generate({})
+        assert error.value.status_code == 502
+    response["choices"][0]["finish_reason"] = "stop"
+    for content in ('{"subject":"x","body":"y","send":true}', '{"subject":" ","body":"y"}', 'not JSON', None):
+        response["choices"][0]["message"]["content"] = content
+        with pytest.raises(HTTPException):
+            ai_provider.generate({})
+    response["choices"] = []
     with pytest.raises(HTTPException):
         ai_provider.generate({})
 
-    def limited(request, timeout):
-        raise HTTPError(request.full_url, 429, "limited", {}, None)
-
-    monkeypatch.setattr(ai_provider, "urlopen", limited)
-    with pytest.raises(HTTPException) as error:
-        ai_provider.generate({})
-    assert error.value.status_code == 503
+    for code, status in ((429, 503), (401, 503), (403, 503), (500, 502)):
+        def limited(request, timeout):
+            raise HTTPError(request.full_url, code, "private upstream details", {}, None)
+        monkeypatch.setattr(ai_provider, "urlopen", limited)
+        with pytest.raises(HTTPException) as error:
+            ai_provider.generate({})
+        assert error.value.status_code == status
+        assert "private upstream details" not in error.value.detail
 
     def timeout(request, timeout):
         raise TimeoutError()
-
     monkeypatch.setattr(ai_provider, "urlopen", timeout)
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 504
+
 
 
 def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
@@ -294,6 +294,7 @@ def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
         update={"crm_ai_enabled": False, "crm_ai_api_key": "test-placeholder"}
     )
     monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
+    monkeypatch.setattr(ai, "get_settings", lambda: settings)
 
     def forbidden(*args, **kwargs):
         raise AssertionError("Free assistant must never call a paid provider")
@@ -312,3 +313,32 @@ def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 503
+
+
+def test_legacy_openai_key_is_never_sent_to_groq(monkeypatch):
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: get_settings().model_copy(
+        update={"crm_ai_enabled": True, "crm_ai_api_key": "legacy-test-placeholder", "crm_groq_api_key": ""}))
+    def forbidden(*args, **kwargs):
+        raise AssertionError("A legacy key must not be sent to another provider")
+    monkeypatch.setattr(ai_provider, "urlopen", forbidden)
+    with pytest.raises(HTTPException) as error:
+        ai_provider.generate({})
+    assert error.value.status_code == 503
+
+
+def test_only_current_brand_knowledge_and_selected_client_reach_provider(client, db, provider):
+    from app.models import AiBrandKnowledge
+    db.add_all([
+        AiBrandKnowledge(business_unit_id=101, content="Approved LUU offering", updated_by_id=101),
+        AiBrandKnowledge(business_unit_id=102, content="Other brand knowledge", updated_by_id=101),
+    ])
+    db.commit()
+    login(client)
+    response = client.post(BASE + "/drafts", json=payload(), headers=ORIGIN)
+    assert response.status_code == 201
+    assert response.json()["model"] == "test-model"
+    assert provider[0]["brand_knowledge"] == {"brand": "Test LUU", "content": "Approved LUU offering"}
+    assert "Other brand knowledge" not in json.dumps(provider[0])
+    status = client.get(BASE + "/status").json()
+    assert status["engine"] == "groq" and status["configured"] is True
+    assert "test-placeholder" not in json.dumps(status)

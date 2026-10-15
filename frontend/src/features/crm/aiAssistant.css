@@ -1,0 +1,13 @@
+.ai-compose-intro { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface, #fff); }
+.ai-compose-intro label { font-size: 17px; }
+.ai-example-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.ai-example-actions button { font-size: 12px; padding: 7px 10px; }
+.ai-options summary, .ai-knowledge summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.ai-options summary:focus-visible, .ai-knowledge summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 4px; }
+.ai-options[open] summary { margin-bottom: 16px; }
+.ai-knowledge { margin-bottom: 20px; }
+.ai-knowledge summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ai-knowledge summary span { font-size: 12px; font-weight: 500; margin-left: auto; }
+.ai-knowledge label { display: grid; gap: 8px; font-weight: 600; }
+.ai-knowledge textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 9px; font: inherit; resize: vertical; }
+.ai-knowledge-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 350px; overflow-y: auto; margin-top: 12px; }

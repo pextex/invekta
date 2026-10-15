@@ -16,6 +16,7 @@ from .api.sales import router as sales_router
 from .api.sales_documents import router as sales_documents_router
 from .api.users import router as users_router
 from .api.ai import router as ai_router
+from .api.ai_knowledge import router as ai_knowledge_router
 from .config import get_settings
 from .db import get_db
 from .models import Contact, BusinessUnit, Company, LoginAttempt, LoginSession, Membership, User
@@ -39,6 +40,7 @@ app.include_router(sales_router)
 app.include_router(sales_documents_router)
 app.include_router(users_router)
 app.include_router(ai_router)
+app.include_router(ai_knowledge_router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -79,6 +81,7 @@ def ready(db: Session = Depends(get_db)):
         db.execute(text("SELECT id, period FROM monthly_targets LIMIT 1"))
         db.execute(text("SELECT id, period FROM team_bonuses LIMIT 1"))
         db.execute(text("SELECT id, filename, size_bytes FROM sales_documents LIMIT 1"))
+        db.execute(text("SELECT business_unit_id, version FROM ai_brand_knowledge LIMIT 1"))
         db.execute(text("SELECT business_type FROM opportunities LIMIT 1"))
         db.execute(text("SELECT business_type FROM opportunity_stage_changes LIMIT 1"))
         db.execute(

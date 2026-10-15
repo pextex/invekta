@@ -24,7 +24,7 @@ export function dailyRecommendations(
   if (stages["Kontaktiran"] || stages["Sastanak"])
     items.push({
       label: "Pripremite sledeći sastanak i poruku klijentu.",
-      page: "AI asistent",
+      page: "Invekta AI",
     });
   if (items.length < 3)
     items.push({
@@ -36,7 +36,7 @@ export function dailyRecommendations(
   if (items.length < 3)
     items.push({
       label: "Pripremite profesionalnu poruku za sledeći kontakt.",
-      page: "AI asistent",
+      page: "Invekta AI",
     });
   return items.slice(0, 3);
 }

@@ -47,7 +47,7 @@ const demoPages: Record<string, string> = {
   tasks: "Zadaci",
   reports: "Izveštaji",
   targets: "Targeti",
-  ai: "AI asistent",
+  ai: "Invekta AI",
 };
 export const readDemoPage = () =>
   demoPages[window.location.hash.split("?")[0].split("/")[1]] ?? "Početna tabla";

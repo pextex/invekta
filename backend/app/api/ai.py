@@ -5,10 +5,13 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
-from ..message_templates import generate
+from ..ai_provider import generate
+from ..message_templates import generate as generate_template
 from ..config import get_settings
+from ..brand_knowledge import content_for
 from ..db import get_db
 from ..models import (
+    AiBrandKnowledge,
     AiDraft,
     AiAttempt,
     BusinessUnit,
@@ -101,12 +104,14 @@ def query(db, user, unit_id):
 def status(
     unit_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)
 ):
-    membership(db, user, unit_id)
+    member = membership(db, user, unit_id)
+    settings = get_settings()
     return {
-        "configured": True,
-        "disabled": False,
-        "model": "local-templates",
-        "engine": "templates",
+        "configured": bool(settings.crm_groq_api_key) if settings.crm_ai_enabled else True,
+        "disabled": not settings.crm_ai_enabled,
+        "model": settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
+        "engine": "groq" if settings.crm_ai_enabled else "templates",
+        "can_manage_knowledge": member.role == "admin" or user.is_platform_admin,
     }
 
 
@@ -196,6 +201,14 @@ def create_draft(
         "instructions": data.instructions,
         "incoming_message": data.incoming_message,
     }
+    settings = get_settings()
+    if settings.crm_ai_enabled and not settings.crm_groq_api_key:
+        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Groq ključ na serveru.")
+    knowledge = db.get(AiBrandKnowledge, unit_id)
+    context["brand_knowledge"] = {
+        "brand": business_unit.name,
+        "content": content_for(business_unit, knowledge),
+    }
     recipient = contact.email if contact else None
     actor_id = user.id
     db.scalar(select(User).where(User.id == actor_id).with_for_update())
@@ -215,7 +228,7 @@ def create_draft(
     db.execute(delete(AiAttempt).where(AiAttempt.created_at < now - timedelta(days=1)))
     db.add(AiAttempt(actor_id=actor_id))
     db.commit()
-    result = generate(context)
+    result = generate(context) if settings.crm_ai_enabled else generate_template(context)
     # Recheck after the external call: a revoked session must not save a draft.
     db.expire_all()
     verified = current_user(request, db)
@@ -228,7 +241,7 @@ def create_draft(
         subject=result.subject,
         body=result.body,
         recipient=recipient,
-        model="local-templates",
+        model=settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
     )
     db.add(draft)
     db.commit()

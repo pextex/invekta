@@ -24,7 +24,7 @@ export const navigation = [
   { title: "Ponude", icon: FileText },
   { title: "Zadaci", icon: ListTodo },
   { title: "Izveštaji", icon: ChartNoAxesCombined },
-  { title: "AI asistent", icon: Sparkles },
+  { title: "Invekta AI", icon: Sparkles },
 ];
 type Props = {
   organization?: OrganizationCode;

@@ -44,6 +44,15 @@ class SalesDocument(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now())
 
 
+class AiBrandKnowledge(Base):
+    __tablename__ = "ai_brand_knowledge"
+    business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"), primary_key=True)
+    content: Mapped[str] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    updated_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now(), onupdate=func.now())
+
+
 class BusinessUnit(Base):
     __tablename__ = "business_units"
     id: Mapped[int] = mapped_column(primary_key=True)

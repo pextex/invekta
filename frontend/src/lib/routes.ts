@@ -8,7 +8,7 @@ const pages: Record<string, string> = {
   tasks: "Zadaci",
   reports: "Izveštaji",
   targets: "Targeti",
-  ai: "AI asistent",
+  ai: "Invekta AI",
   settings: "Podešavanja",
 };
 export const isCrmRoute = () => /^#crm(?:[/?]|$)/.test(window.location.hash);

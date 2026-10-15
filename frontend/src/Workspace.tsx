@@ -352,8 +352,8 @@ export default function Workspace({
           unit={unit}
           onPipeline={() => navigate("Prodajni levak")}
         />
-      ) : page === "AI asistent" ? (
-        <AiAssistant key={unit} unit={unit} companies={rows} />
+      ) : page === "Invekta AI" ? (
+        <AiAssistant key={unit} unit={unit} companies={rows} organization={user.units.find(item => item.id === unit)?.code ?? "CRM"} />
       ) : page === "Podešavanja" && user.is_platform_admin ? (
         <UserManagement />
       ) : !supported ? (

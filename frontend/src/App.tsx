@@ -285,7 +285,7 @@ export default function App() {
       role="Razvojni pregled"
       onConnect={connect}
     >
-      {!["AI asistent", "Zadaci", "Izveštaji", "Targeti", "Ponude"].includes(page) && (
+      {!["Invekta AI", "Zadaci", "Izveštaji", "Targeti", "Ponude"].includes(page) && (
         <div className="page-heading">
           <div>
             <h1>
@@ -423,7 +423,7 @@ export default function App() {
       {page === "Targeti" && <Targets key={unit} unit={0} demo={{ organization: unit, events: activity, opportunities: all.map(c => ({ id: c.id, stage: c.stage, business_type: c.business_type })) }} />}
       {page === "Zadaci" && <TasksCalendar key={unit} unit={0} organization={unit} companies={all} />}
       {page === "Izveštaji" && <Reports key={unit} unit={0} demoItems={activity.filter(row => all.some(c => c.id === row.opportunity_id))} />}
-      {page === "AI asistent" && (
+      {page === "Invekta AI" && (
         <AiAssistant
           key={unit}
           unit={0}

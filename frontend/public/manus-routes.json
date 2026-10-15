@@ -42,7 +42,7 @@
     },
     {
       "path": "/#crm/ai?unit=:unit",
-      "title": "AI asistent"
+      "title": "Invekta AI"
     },
     {
       "path": "/#crm/settings?unit=:unit",

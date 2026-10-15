@@ -1,3 +1,6 @@
+import AiKnowledge from "./AiKnowledge";
+import CompanyPicker from "./CompanyPicker";
+import "./aiAssistant.css";
 import { stageLabel } from "./types";
 import {
   loadAssistant,
@@ -58,7 +61,8 @@ export default function AiAssistant({
     initial?.compose.personalization ?? blankPersonalization(),
   );
   const [goal, setGoal] = useState(initial?.compose.goal ?? "meeting");
-  const [disabled, setDisabled] = useState(false);
+  const [engine, setEngine] = useState<"groq" | "templates">("templates");
+  const [canManageKnowledge, setCanManageKnowledge] = useState(false);
   const [configured, setConfigured] = useState(false),
     [checking, setChecking] = useState(!demo),
     [contextLoading, setContextLoading] = useState(false),
@@ -144,15 +148,17 @@ export default function AiAssistant({
     if (demo) return;
     const controller = new AbortController();
     setChecking(true);
-    api<{ configured: boolean; disabled?: boolean }>(
+    api<{ configured: boolean; engine: "groq" | "templates"; can_manage_knowledge: boolean }>(
       `/units/${unit}/ai/status`,
       {
         signal: controller.signal,
       },
     )
       .then((data) => {
+        if (controller.signal.aborted) return;
         setConfigured(data.configured);
-        setDisabled(Boolean(data.disabled));
+        setEngine(data.engine);
+        setCanManageKnowledge(data.can_manage_knowledge);
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(errorText(e));
@@ -277,7 +283,9 @@ export default function AiAssistant({
       setOffset(0);
       setReload((v) => v + 1);
       setMessage(
-        "Nacrt iz šablona je pripremljen i sačuvan. Pregledajte ga pre upotrebe.",
+        next.model === "local-templates"
+          ? "Nacrt iz šablona je sačuvan. Pregledajte ga pre upotrebe."
+          : "Invekta AI je pripremio i sačuvao nacrt. Pregledajte ga pre upotrebe.",
       );
     } catch (e) {
       setError(errorText(e));
@@ -357,8 +365,8 @@ export default function AiAssistant({
     <>
       <div className="page-heading">
         <div>
-          <h1>AI asistent</h1>
-          <p>Besplatni šabloni za emailove, odgovore i follow-up poruke.</p>
+          <h1>Invekta AI</h1>
+          <p>Vaš prodajni asistent za mejlove, odgovore klijentima i follow-up poruke.</p>
         </div>
         <Sparkles size={30} />
       </div>
@@ -374,7 +382,7 @@ export default function AiAssistant({
       )}
       {demo ? (
         <p className="demo-notice">
-          Demo šabloni rade bez interneta. Nacrti i potpis pamte se u ovom
+          Demo koristi lokalne šablone, bez Groq-a i tumačenja slobodnih uputstava. Nacrti i potpis pamte se u ovom
           browseru zasebno za svaku firmu (poslednjih 30 nacrta). Nisu u CRM
           bazi.
         </p>
@@ -382,18 +390,19 @@ export default function AiAssistant({
         !checking &&
         !configured && (
           <p className="demo-notice">
-            {disabled
-              ? "AI generisanje je isključeno. Nema poziva AI servisu."
-              : "AI servis još nije povezan. Administrator treba da podesi AI ključ."}
+            Invekta AI još nije povezan. Administrator treba da podesi Groq ključ na serveru.
             Sačuvani nacrti ostaju dostupni za pregled i izmene.
           </p>
         )
       )}
-      <p className="demo-notice">
-        Besplatni asistent radi sa šablonima u CRM-u, bez API ključa i naplate
-        po poruci. Ne tumači automatski poruku klijenta: odgovore i dodatne
-        instrukcije dopunite u nacrtu.
-      </p>
+      {!demo && !checking && engine === "templates" && <p className="demo-notice">
+        Groq AI je isključen. Dostupni su lokalni šabloni koji ne tumače slobodna uputstva ni pitanja klijenta.
+      </p>}
+      {!demo && !checking && engine === "groq" && configured && <p className="demo-notice">
+        GroqCloud · Besplatan paket ima ograničenja korišćenja. Klikom na pripremu šaljete uputstvo,
+        odabrane podatke klijenta i znanje ovog brenda Groq servisu. Proverite nacrt pre slanja.
+      </p>}
+      {!demo && <AiKnowledge key={unit} unit={unit} brand={organization} canManage={canManageKnowledge} />}
       {demo && localSaveFailed && (
         <p className="error-message" role="alert">
           Browser ne dozvoljava lokalno čuvanje ili nema dovoljno prostora.
@@ -405,192 +414,190 @@ export default function AiAssistant({
           <h2>Priprema poruke</h2>
           <form onSubmit={generate}>
             <fieldset className="ai-fields" disabled={busy || checking}>
-              <label>
-                Kompanija
-                <select
-                  aria-label="Kompanija"
-                  required
-                  value={company || ""}
-                  onChange={(e) => setCompany(Number(e.target.value))}
-                >
-                  <option value="">Izaberite klijenta</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="ai-compose-intro">
+                <label>
+                  Za šta treba da napišem mejl?
+                  <textarea aria-label="Uputstvo za mejl" maxLength={4000} rows={5} value={instructions}
+                    onChange={event => setInstructions(event.target.value)}
+                    placeholder="Npr. Napiši kratak uvodni mejl direktoru hotela. Predstavi našu ponudu i predloži sastanak sledeće nedelje." />
+                </label>
+                <div className="ai-example-actions">
+                  {[
+                    ["Prvi kontakt", "Napiši kratak uvodni mejl klijentu. Predstavi našu ponudu na osnovu odobrenog znanja brenda i predloži razgovor."],
+                    ["Podsetnik na ponudu", "Napiši ljubazan follow-up u vezi sa ponudom. Pitaj da li su potrebna pojašnjenja i predloži sledeći korak."],
+                    ["Dogovor za sastanak", "Napiši profesionalan mejl kojim predlažemo kratak sastanak o potrebama klijenta i mogućoj saradnji."],
+                  ].map(([label, text]) => <button type="button" className="secondary-button" key={label} onClick={() => setInstructions(text)}>{label}</button>)}
+                </div>
+              </div>
+              <CompanyPicker unit={unit} value={company} options={companies} local={demo} disabled={busy || checking}
+                label="Kompanija klijenta" ariaLabel="Kompanija za mejl" onChange={setCompany} />
               {contextError && (
                 <p className="error-message" role="alert">
                   {contextError}
                 </p>
               )}
-              <div className="form-grid">
-                <label>
-                  Kontakt
-                  <select
-                    aria-label="Kontakt"
-                    value={contact}
-                    disabled={contextLoading}
-                    onChange={(e) => setContact(Number(e.target.value))}
-                  >
-                    <option value={0}>Bez izabranog kontakta</option>
-                    {contacts.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                        {c.email ? " · " + c.email : ""}
+              <details className="ai-options" open={mode === "reply" || undefined}>
+                <summary>Kontakt, ton, jezik i dodatni podaci</summary>
+                <div className="ai-fields">
+                  <div className="form-grid">
+                    <label>
+                      Kontakt
+                      <select
+                        aria-label="Kontakt"
+                        value={contact}
+                        disabled={contextLoading}
+                        onChange={(e) => setContact(Number(e.target.value))}
+                      >
+                        <option value={0}>Bez izabranog kontakta</option>
+                        {contacts.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                            {c.email ? " · " + c.email : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Prodajna prilika
+                      <select
+                        aria-label="Prodajna prilika"
+                        value={opportunity}
+                        disabled={contextLoading}
+                        onChange={(e) => setOpportunity(Number(e.target.value))}
+                      >
+                        <option value={0}>Bez izabrane prilike</option>
+                        {opportunities.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.title} · {stageLabel(o.stage)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="form-grid">
+                    <label>
+                      Vrsta poruke
+                      <select
+                        aria-label="Vrsta poruke"
+                        value={mode}
+                        onChange={(e) => setMode(e.target.value)}
+                      >
+                        {modes.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Ton
+                      <select
+                        aria-label="Ton"
+                        value={tone}
+                        onChange={(e) => setTone(e.target.value)}
+                      >
+                        <option value="professional">Profesionalan</option>
+                        <option value="friendly">Prijateljski</option>
+                        <option value="concise">Kratak i direktan</option>
+                      </select>
+                    </label>
+                    <label>
+                      Jezik
+                      <select
+                        aria-label="Jezik"
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                      >
+                        <option value="sr">Srpski</option>
+                        <option value="en">Engleski</option>
+                      </select>
+                    </label>
+                  </div>
+                  {mode === "reply" && (
+                    <label>
+                      Primljena poruka
+                      <textarea
+                        required
+                        maxLength={10000}
+                        rows={6}
+                        value={incoming}
+                        onChange={(e) => setIncoming(e.target.value)}
+                        placeholder="Nalepite poruku na koju želite da odgovorite…"
+                      />
+                    </label>
+                  )}
+                  <label>
+                    Cilj poruke
+                    <select
+                      aria-label="Cilj poruke"
+                      value={goal}
+                      onChange={(e) => setGoal(e.target.value)}
+                    >
+                      <option value="meeting">Zakazivanje sastanka</option>
+                      <option value="introduction">
+                        Prvi kontakt i predstavljanje
                       </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Prodajna prilika
-                  <select
-                    aria-label="Prodajna prilika"
-                    value={opportunity}
-                    disabled={contextLoading}
-                    onChange={(e) => setOpportunity(Number(e.target.value))}
-                  >
-                    <option value={0}>Bez izabrane prilike</option>
-                    {opportunities.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.title} · {stageLabel(o.stage)}
+                      <option value="proposal">
+                        Predstavljanje predloga saradnje
                       </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div className="form-grid">
-                <label>
-                  Vrsta poruke
-                  <select
-                    aria-label="Vrsta poruke"
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value)}
-                  >
-                    {modes.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
+                      <option value="information">
+                        Traženje dodatnih informacija
                       </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Ton
-                  <select
-                    aria-label="Ton"
-                    value={tone}
-                    onChange={(e) => setTone(e.target.value)}
-                  >
-                    <option value="professional">Profesionalan</option>
-                    <option value="friendly">Prijateljski</option>
-                    <option value="concise">Kratak i direktan</option>
-                  </select>
-                </label>
-                <label>
-                  Jezik
-                  <select
-                    aria-label="Jezik"
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                  >
-                    <option value="sr">Srpski</option>
-                    <option value="en">Engleski</option>
-                  </select>
-                </label>
-              </div>
-              {mode === "reply" && (
-                <label>
-                  Primljena poruka
-                  <textarea
-                    required
-                    maxLength={10000}
-                    rows={6}
-                    value={incoming}
-                    onChange={(e) => setIncoming(e.target.value)}
-                    placeholder="Nalepite poruku na koju želite da odgovorite…"
-                  />
-                </label>
-              )}
-              <label>
-                Cilj poruke
-                <select
-                  aria-label="Cilj poruke"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                >
-                  <option value="meeting">Zakazivanje sastanka</option>
-                  <option value="introduction">
-                    Prvi kontakt i predstavljanje
-                  </option>
-                  <option value="proposal">
-                    Predstavljanje predloga saradnje
-                  </option>
-                  <option value="information">
-                    Traženje dodatnih informacija
-                  </option>
-                </select>
-              </label>
-              <div className="form-grid">
-                {(
-                  [
-                    ["topic", "Tema razgovora / predmet saradnje", 120],
-                    ["offering", "Šta nudimo klijentu", 600],
-                    ["need", "Potrebe klijenta / fokus razgovora", 600],
-                    ["meeting_time", "Predlog termina (opciono)", 120],
-                    ["greeting", "Oslovljavanje (opciono)", 150],
-                    ["sender_name", "Vaše ime i prezime", 150],
-                    ["sender_title", "Vaša pozicija", 150],
-                    ["sender_phone", "Telefon za potpis", 80],
-                    ["sender_email", "Email za potpis", 254],
-                  ] as const
-                ).map(([key, label, limit]) => (
-                  <label key={key}>
-                    {label}
-                    <input
-                      maxLength={limit}
-                      value={personalization[key]}
-                      onChange={(e) =>
-                        setPersonalization({
-                          ...personalization,
-                          [key]: e.target.value,
-                        })
-                      }
-                    />
+                    </select>
                   </label>
-                ))}
-              </div>
-              {mode === "reply" && (
-                <label>
-                  Konkretan odgovor klijentu
-                  <textarea
-                    maxLength={4000}
-                    rows={5}
-                    value={personalization.reply_text}
-                    onChange={(e) =>
-                      setPersonalization({
-                        ...personalization,
-                        reply_text: e.target.value,
-                      })
-                    }
-                    placeholder="Unesite informacije kojima odgovarate na pitanja klijenta."
-                  />
-                </label>
-              )}
-              <label>
-                Dodatne informacije za klijenta (ulaze u poruku)
-                <textarea
-                  maxLength={4000}
-                  rows={5}
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="Npr. Obilazak objekta možemo organizovati uz prethodnu najavu."
-                />
-              </label>
+                  <div className="form-grid">
+                    {(
+                      [
+                        ["topic", "Tema razgovora / predmet saradnje", 120],
+                        ["offering", "Šta nudimo klijentu", 600],
+                        ["need", "Potrebe klijenta / fokus razgovora", 600],
+                        ["meeting_time", "Predlog termina (opciono)", 120],
+                        ["greeting", "Oslovljavanje (opciono)", 150],
+                        ["sender_name", "Vaše ime i prezime", 150],
+                        ["sender_title", "Vaša pozicija", 150],
+                        ["sender_phone", "Telefon za potpis", 80],
+                        ["sender_email", "Email za potpis", 254],
+                      ] as const
+                    ).map(([key, label, limit]) => (
+                      <label key={key}>
+                        {label}
+                        <input
+                          maxLength={limit}
+                          value={personalization[key]}
+                          onChange={(e) =>
+                            setPersonalization({
+                              ...personalization,
+                              [key]: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  {mode === "reply" && (
+                    <label>
+                      Konkretan odgovor klijentu
+                      <textarea
+                        maxLength={4000}
+                        rows={5}
+                        value={personalization.reply_text}
+                        onChange={(e) =>
+                          setPersonalization({
+                            ...personalization,
+                            reply_text: e.target.value,
+                          })
+                        }
+                        placeholder="Unesite informacije kojima odgovarate na pitanja klijenta."
+                      />
+                    </label>
+                  )}
+                </div>
+              </details>
               <p className="panel-note">
-                Šablon koristi izabranu kompaniju, ime kontakta i naziv prilike.
-                Pregledajte činjenice i dopunite mesta označena sa [dopuniti].
+                {demo || engine === "templates"
+                  ? "Šablon koristi odabranu kompaniju i uneta polja; ne tumači uputstvo niti koristi znanje brenda."
+                  : "Nacrt koristi odabrani kontekst i znanje izabranog brenda."} Ako podatak nedostaje,
+                dopunite mesta označena sa [dopuniti]. Mejl šaljete sami nakon pregleda.
               </p>
               <button
                 className="primary-button"
@@ -602,7 +609,7 @@ export default function AiAssistant({
                   dirty
                 }
               >
-                {busy ? "Pripremanje nacrta…" : "Pripremi besplatan nacrt"}
+                {busy ? "Pripremanje nacrta…" : demo || engine === "templates" ? "Pripremi nacrt iz šablona" : "Napiši mejl · Invekta AI"}
                 <Sparkles size={16} />
               </button>
               {dirty && (

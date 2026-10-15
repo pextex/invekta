@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     crm_cookie_secure: bool = True
     crm_ai_enabled: bool = False
     crm_ai_api_key: str = ""
-    crm_ai_model: str = "gpt-4.1-mini"
+    crm_ai_model: str = "gpt-4.1-mini"  # Legacy configuration; never used for Groq.
+    crm_groq_api_key: str = ""
+    crm_groq_model: str = "openai/gpt-oss-120b"
 
     @property
     def allowed_origins(self) -> set[str]:
