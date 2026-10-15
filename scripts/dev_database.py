@@ -47,6 +47,9 @@ def check_schema(url):
                         print(f"  {revision.revision}: {revision.doc}", flush=True)
                 except Exception:
                     print("Revizija nije prepoznata; proverite poreklo baze i granu koda.", flush=True)
+                if not current:
+                    print("Za novu praznu bazu postoji odvojena ručna komanda iz korena: backend/.venv/bin/python scripts/init_dev_database.py", flush=True)
+                    print("Ta komanda odbija svaku bazu sa postojećim tabelama/pogledima/sekvencama.", flush=True)
                 raise RuntimeError(
                     "Pokretanje je zaustavljeno. Pregledajte migracije i napravite backup pre ručnog odobrenog upgrade-a. "
                     "Uputstvo: docs/codespaces.md."

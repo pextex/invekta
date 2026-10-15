@@ -12,10 +12,42 @@ from unittest.mock import MagicMock, patch
 from dev import preview_origin
 from dev_tools import ensure_uv, check_runtime
 from dev_database import check_schema, local_url
+from init_dev_database import initialize_empty_database
+from sqlalchemy.engine import make_url
 from app.config import get_settings
 
 
 class DevelopmentSafetyTests(unittest.TestCase):
+    def test_initialization_rejects_existing_objects_even_without_alembic_revision(self):
+        for schema, method in (("public", "get_table_names"), ("other", "get_view_names"),
+                               ("public", "get_materialized_view_names"), ("other", "get_sequence_names")):
+            with self.subTest(schema=schema, method=method), \
+                    patch("init_dev_database.local_url", return_value=make_url("postgresql+psycopg://localhost/crm_test")), \
+                    patch("init_dev_database.create_engine"), \
+                    patch("init_dev_database.inspect") as inspect, \
+                    patch("init_dev_database.subprocess.run") as run:
+                inspector = inspect.return_value
+                inspector.get_schema_names.return_value = [schema]
+                for name in ("get_table_names", "get_view_names", "get_materialized_view_names", "get_sequence_names"):
+                    getattr(inspector, name).return_value = []
+                getattr(inspector, method).return_value = ["existing_object"]
+                with self.assertRaisesRegex(RuntimeError, "Baza nije prazna"):
+                    initialize_empty_database()
+                run.assert_not_called()
+
+    def test_explicit_initialization_runs_upgrade_only_when_empty(self):
+        with patch("init_dev_database.local_url", return_value=make_url("postgresql+psycopg://localhost/crm_test")), \
+                patch("init_dev_database.create_engine"), \
+                patch("init_dev_database.inspect") as inspect, \
+                patch("init_dev_database.subprocess.run") as run:
+            inspector = inspect.return_value
+            inspector.get_schema_names.return_value = ["pg_catalog", "information_schema", "public"]
+            for name in ("get_table_names", "get_view_names", "get_materialized_view_names", "get_sequence_names"):
+                getattr(inspector, name).return_value = []
+            initialize_empty_database()
+            run.assert_called_once()
+            self.assertEqual(run.call_args.args[0][-3:], ["alembic", "upgrade", "head"])
+
     def test_missing_uv_is_installed_privately_and_reused_without_path_change(self):
         with TemporaryDirectory() as directory, \
                 patch("dev_tools.TOOLS", Path(directory)), \

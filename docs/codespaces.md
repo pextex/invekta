@@ -31,7 +31,15 @@ cd ..
 python scripts/dev.py
 ```
 
-Navedeni upgrade nije deo automatskog pokretanja. Ista eksplicitna inicijalizacija potrebna je pri prvom otvaranju potpuno prazne lokalne baze. Ne koristite reset, downgrade ili seed. Za prvi pravi nalog u novoj lokalnoj bazi, nakon odobrenih migracija:
+Navedeni upgrade nije deo automatskog pokretanja. Za **novu praznu bazu bez Alembic revizije**, iz korena repozitorijuma pokrenite odvojenu jednokratnu inicijalizaciju:
+
+```bash
+backend/.venv/bin/python scripts/init_dev_database.py
+```
+
+Pre toga bar jednom pokrenite `python scripts/dev.py` da pripremi pakete i PostgreSQL. Inicijalizacija prihvata samo lokalni PostgreSQL i pre migracija proverava da nijedna korisnička šema nema tabele, poglede, materijalizovane poglede ili sekvence. Ako postoji bilo koji takav objekat, komanda staje bez migracije, čak i kada Alembic revizija nedostaje. Za potvrđenu praznu bazu pravi CRM šemu i registruje tri poslovne jedinice kroz postojeće migracije; ne pokreće seed i ne dodaje naloge, klijente ili demo podatke. Ponovljeno pokretanje odbija već inicijalizovanu bazu. Ovo je izričita komanda koju vi pokrećete, a ne automatski korak redovnog startovanja.
+
+Ne koristite reset, downgrade ili seed. Za prvi pravi nalog u novoj lokalnoj bazi, nakon inicijalizacije:
 
 ```bash
 cd backend
