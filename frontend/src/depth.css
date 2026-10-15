@@ -1,0 +1,135 @@
+/* Optional visual layer. Remove this import in main.tsx to restore previous styling.
+   Brand colors, dimensions, layout and interaction rules remain in styles.css. */
+:root {
+  --crm-surface-depth: inset 0 1px 0 rgb(255 255 255 / 95%),
+    inset 0 -1px 0 rgb(15 23 42 / 3%),
+    0 3px 0 rgb(15 23 42 / 3%),
+    0 12px 24px -16px rgb(15 23 42 / 30%);
+  --crm-card-depth: inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 2px 0 rgb(15 23 42 / 4%),
+    0 8px 16px -12px rgb(15 23 42 / 28%);
+}
+
+.app :is(.panel, .metric),
+.organization-portal .portal-login {
+  box-shadow: var(--crm-surface-depth);
+}
+
+.app :is(.metric, .deal, .task-calendar-item, .sales-document-card, .target-card) {
+  background-image: linear-gradient(160deg, rgb(255 255 255 / 35%), transparent 55%, rgb(15 23 42 / 1.5%));
+}
+
+.app :is(.deal, .task-calendar-item, .sales-document-card, .target-card) {
+  box-shadow: var(--crm-card-depth);
+}
+
+.app .sidebar {
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 7%), 8px 0 20px -15px rgb(15 23 42 / 40%);
+}
+
+.app .topbar {
+  box-shadow: 0 5px 16px -13px rgb(15 23 42 / 35%);
+}
+
+.app .daily-welcome,
+.app .sales-banner {
+  background-image: linear-gradient(135deg, rgb(255 255 255 / 9%), transparent 45%, rgb(0 0 0 / 8%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%),
+    inset 0 -2px 0 rgb(0 0 0 / 10%),
+    0 4px 0 rgb(15 23 42 / 6%),
+    0 16px 26px -18px rgb(15 23 42 / 40%);
+}
+
+.app .brand-logo {
+  box-shadow: 0 2px 0 rgb(0 0 0 / 12%), 0 7px 14px -10px rgb(0 0 0 / 45%);
+}
+
+.app .primary-button,
+.organization-portal .primary-button {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 20%), transparent 48%, rgb(0 0 0 / 6%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%),
+    inset 0 -1px 0 rgb(0 0 0 / 10%),
+    0 3px 0 rgb(15 23 42 / 13%),
+    0 8px 14px -10px rgb(15 23 42 / 40%);
+}
+
+.app .secondary-button,
+.organization-portal .secondary-button {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 2px 0 rgb(15 23 42 / 5%),
+    0 6px 12px -10px rgb(15 23 42 / 30%);
+}
+
+.app :is(.primary-button, .secondary-button),
+.organization-portal :is(.primary-button, .secondary-button, .organization-card) {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.organization-portal .organization-card {
+  background-image: linear-gradient(155deg, rgb(255 255 255 / 50%), transparent 55%, rgb(15 23 42 / 2%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 4px 0 rgb(15 23 42 / 4%),
+    0 16px 28px -19px rgb(15 23 42 / 35%);
+}
+
+.organization-portal .organization-card.selected {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 4px 0 rgb(15 23 42 / 5%),
+    0 14px 28px -19px rgb(15 23 42 / 35%);
+}
+
+.app .sidebar nav button.active {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%),
+    inset 0 -2px 0 rgb(0 0 0 / 8%),
+    0 4px 8px -5px rgb(0 0 0 / 30%);
+}
+
+.app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea),
+.organization-portal .portal-login input {
+  box-shadow: inset 0 2px 4px rgb(15 23 42 / 4%);
+}
+
+.app :is(.global-search, .sales-document-search) {
+  box-shadow: inset 0 2px 4px rgb(15 23 42 / 4%);
+}
+
+.app :is(.global-search, .sales-document-search) input {
+  box-shadow: none;
+}
+
+.app :is(.bar-track, .report-stage-track, .target-progress) {
+  box-shadow: inset 0 2px 3px rgb(15 23 42 / 8%);
+}
+
+.app :is(.bar-track, .report-stage-track, .target-progress) > div {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), inset 0 -1px 0 rgb(15 23 42 / 12%);
+}
+
+.app .report-donut {
+  box-shadow: inset 0 2px 1px rgb(255 255 255 / 20%), 0 4px 8px -5px rgb(15 23 42 / 20%);
+}
+
+.app .report-donut > div {
+  box-shadow: inset 0 2px 5px rgb(15 23 42 / 8%), 0 -1px 0 rgb(255 255 255 / 60%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app :is(.primary-button, .secondary-button):hover:not(:disabled),
+  .organization-portal :is(.primary-button, .secondary-button, .organization-card):hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+}
+
+.app :is(.primary-button, .secondary-button):active:not(:disabled),
+.organization-portal :is(.primary-button, .secondary-button, .organization-card):active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 3px rgb(15 23 42 / 12%), 0 1px 2px rgb(15 23 42 / 10%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app :is(.primary-button, .secondary-button),
+  .organization-portal :is(.primary-button, .secondary-button, .organization-card) {
+    transition: none;
+    transform: none !important;
+  }
+}

@@ -8,6 +8,14 @@ Odeljak „Specijalizovani moduli“ i posebne stavke za proizvode/usluge uklonj
 
 Interfejs prati dostavljeni HTML prototip: tamnoplava navigacija, plava dugmad, svetla pozadina, plavo-tirkizni baner i kartice. Demo i povezani CRM dele isti raspored. Globalna pretraga je u zaglavlju. CRM je vezan za izabranu firmu; nema menija za prebacivanje. Za promenu firme odjavite se, izaberite drugu i ponovo se prijavite. Stavke koje još nisu povezane jasno prikazuju da su u pripremi.
 
+## Vizuelna dubina i vraćanje prethodnog izgleda
+
+Dodat je suptilan efekat dubine na kartice, banere, dugmad, polja i grafikone: višeslojne senke, osvetljene ivice i blagi pritisak/podizanje dugmeta. Postojeće LUU žuto-sive, Invekta plavo-narandžaste i Cenobots crno-bele boje, logotipi, raspored i funkcije ostaju isti. Podizanje pri hover-u važi samo za uređaje sa mišem; `prefers-reduced-motion` isključuje pokrete i prelaze.
+
+Prethodni izgled je sačuvan Git oznakom **`ui-before-3d-2026-10-15`**, na commitu **`4e56b80`**. Za poređenje preuzmite [prethodni HTML pregled](https://github.com/pextex/invekta/blob/ui-before-3d-2026-10-15/demo/LUU_Invekta_CRM_Demo.html). Izgled se primenjuje kroz odvojeni `frontend/src/depth.css`, jednim importom u `frontend/src/main.tsx`.
+
+Za vraćanje prethodnog izgleda uz očuvanje svih naknadnih funkcionalnih izmena, uklonite samo `import "./depth.css";`, ponovite frontend build i izvoz demo HTML-a, pa sačuvajte normalan commit. Alternativno, dok je vizuelni commit poslednji, može se koristiti običan `git revert` tog commita. Ne vraćati ceo projekat reset-om i ne menjati bazu. Ovo ne zahteva migraciju, promenu prava pristupa ili novo produkciono okruženje. Manus objava je zaseban korak.
+
 ## Šta sada radi
 - Unos, izmena i pretraga kompanija, uz odvojene poslovne jedinice.
 - Profil kompanije: više kontakt osoba, e-mail, telefon i pozicija; trajni unos i izmena.

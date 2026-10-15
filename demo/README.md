@@ -6,6 +6,8 @@ Fajl je samostalan pregled frontenda verzije 0.4, sa izmišljenim demo podacima.
 
 Demo je izvezen iz proverenog Vite build-a; pri promenama aplikacije potrebno je ponovo izvesti ovaj pregled.
 
+Aktuelni pregled ima suptilne 3D senke i ivice, uz iste brend boje i raspored. [Prethodni izgled za poređenje](https://github.com/pextex/invekta/blob/ui-before-3d-2026-10-15/demo/LUU_Invekta_CRM_Demo.html) trajno je sačuvan oznakom `ui-before-3d-2026-10-15`. Na obe stranice koristite **Download raw file**. Vizuelni sloj može se ukloniti bez promene funkcija ili baze; postupak je u glavnom README-u.
+
 U **Prodajni levak** prevucite karticu u drugu kolonu ili izaberite status na njoj. Na telefonu koristite izbor statusa. Promene ostaju u istom fajlu/browseru kada je lokalno čuvanje dostupno, i nisu prenete u CRM bazu. Demo dashboard odmah računa nove otvorene prilike.
 
 Po otvaranju izaberite LUU, Invekta ili Cenobots, pa kliknite **Pogledaj demo bez prijave**. Stvarna prijava ne radi iz samostalnog HTML fajla. Cenobots partneri su izmišljeni i jasno označeni, kao i podaci ostalih jedinica.
