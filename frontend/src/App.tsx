@@ -1,3 +1,4 @@
+import TodayTasks from "./features/crm/TodayTasks";
 import Targets from "./features/crm/Targets";
 import { businessTypeLabel, businessTypesFor, type BusinessType } from "./features/crm/businessTypes";
 import TasksCalendar from "./features/crm/TasksCalendar";
@@ -90,7 +91,7 @@ export default function App() {
     if (stage === "Dobijeno" && !item.business_type) { setStageMessage("Izaberite vrstu posla pre realizacije: prodaja, lizing ili najam."); return; }
     const next = { ...stageOverrides, [item.id]: stage };
     setStageOverrides(next);
-    const events = [...activity, { id: (activity.at(-1)?.id ?? 0) + 1, changed_at: new Date().toISOString(), company_name: item.name, opportunity_id: item.id, title: item.name, business_type: item.business_type, amount: String(item.value), from_stage: item.stage, to_stage: stage, actor_name: "Demo korisnik", changes: null }];
+    const events = [...activity, { id: (activity.at(-1)?.id ?? 0) + 1, changed_at: new Date().toISOString(), company_name: item.name, opportunity_id: item.id, title: item.name, owner_id: all.findIndex(c => c.owner === item.owner) + 1, owner_name: item.owner, business_type: item.business_type, amount: String(item.value), from_stage: item.stage, to_stage: stage, actor_name: "Demo korisnik", changes: null }];
     setActivity(events);
     const savedHistory = saveDemoActivity(events);
     setStageMessage(
@@ -331,7 +332,7 @@ export default function App() {
             all.length,
           )}
           onNavigate={navigate}
-        />
+        ><TodayTasks unit={0} organization={unit} onOpen={() => navigate("Zadaci")} /></DailyWelcome>
       )}
       <div className="demo-notice">
         Demo prikaz — svi klijenti i iznosi su izmišljeni. Za unos i trajno

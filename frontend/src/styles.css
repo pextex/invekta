@@ -1504,3 +1504,44 @@ form label {
 .target-form input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
 .target-explanation { margin-top: 12px; }
 @media(max-width:600px) { .target-cards { grid-template-columns: 1fr; padding: 0 14px 14px; } .target-achieved { font-size: 22px; } }
+
+.today-tasks { margin-top: 18px; }
+.today-tasks-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.today-tasks-heading h3 { margin: 0; font-size: 16px; }
+.today-tasks button { color: inherit; font: inherit; }
+.today-tasks-heading button { display: flex; align-items: center; gap: 8px; border: 1px solid #ffffff55; background: #ffffff15; border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+.today-task-list { display: grid; gap: 8px; margin-bottom: 12px; }
+.today-task { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px; border: 1px solid #ffffff30; background: #ffffff12; border-radius: 10px; }
+.today-task > span:nth-child(2) { flex: 1; min-width: 0; }
+.today-task strong, .today-task small { display: block; overflow-wrap: anywhere; }
+.today-task strong { font-size: 13px; }
+.today-task small { font-size: 11px; margin-top: 4px; }
+.today-task-status { font-size: 10px; }
+.today-task.done strong { text-decoration: line-through; }
+.today-task svg { flex-shrink: 0; }
+.today-tasks button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.company-picker { position: relative; display: grid; gap: 6px; min-width: 0; }
+.company-picker-menu { position: absolute; z-index: 20; left: 0; right: 0; top: 100%; max-height: 280px; overflow: auto; border: 1px solid var(--border); border-radius: 9px; background: white; box-shadow: 0 12px 24px #0f172a20; }
+.company-picker-menu button { display: block; width: 100%; padding: 10px 12px; text-align: left; border: 0; background: white; color: var(--ink); font: inherit; }
+.company-picker-menu button:hover, .company-picker-menu button.active, .company-picker-menu button:focus-visible { background: #edf4ff; outline: 2px solid #93c5fd; outline-offset: -2px; }
+.company-picker-menu strong, .company-picker-menu small { display: block; overflow-wrap: anywhere; }
+.company-picker-menu small, .company-picker-hint { font-size: 11px; color: #64748b; }
+.company-picker-menu p, .company-picker-menu > small { padding: 10px 12px; font-size: 12px; }
+.report-owner-filter { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.report-owner-filter select { max-width: 200px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; font: inherit; }
+.report-salespeople { margin-bottom: 22px; }
+@media(max-width:600px) { .report-owner-filter { flex-wrap: wrap; } }
+.team-bonus { margin-bottom: 22px; border-color: #c7d2fe; }
+.team-bonus .panel-heading h2 { display: flex; align-items: center; gap: 9px; }
+.team-bonus-body { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; padding: 0 22px 18px; }
+.team-bonus-progress > strong { display: block; font-size: 28px; margin-top: 18px; }
+.team-bonus-progress p, .team-bonus-progress small { font-size: 12px; color: #64748b; }
+.team-bonus-details > p { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.team-bonus-details > p > span { color: #64748b; }
+.team-reward { background: #f1f5ff; padding: 14px; border-radius: 10px; margin-top: 18px; }
+.team-reward > strong { font-size: 13px; }
+.team-reward p { font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.team-bonus-form { padding: 0 22px 20px; }
+.team-bonus-form label { display: grid; gap: 6px; font-size: 13px; }
+.team-bonus-form input, .team-bonus-form textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+@media(max-width:700px) { .team-bonus-body { grid-template-columns: 1fr; gap: 16px; padding: 0 14px 16px; } .team-bonus .panel-heading { flex-wrap: wrap; } .team-bonus .panel-heading h2 { font-size: 15px; } }

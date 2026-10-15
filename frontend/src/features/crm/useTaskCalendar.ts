@@ -20,7 +20,7 @@ export function useTaskCalendar(unit: number, month: string, organization?: stri
       do {
         const params = new URLSearchParams({ date_from: days[0], date_to: days[41], limit: "200", offset: String(items.length) });
         const page = await api<TaskPage>(`/units/${unit}/tasks?${params}`, { signal: controller.signal });
-        if (!page.items.length && items.length < page.total) throw new Error("Lista zadataka se promenio. Osvežite kalendar.");
+        if (!page.items.length && items.length < page.total) throw new Error("Lista zadataka je promenjena. Osvežite kalendar.");
         items.push(...page.items); total = page.total;
       } while (items.length < total);
       if (!controller.signal.aborted) setTasks(items);

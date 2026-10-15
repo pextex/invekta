@@ -5,12 +5,15 @@ import { api, errorText } from "../../lib/api";
 import { formatAmount, formatTimestamp, opportunityStages, stageLabel } from "./types";
 
 export type Change = {
+  owner_id?: number; owner_name?: string;
   business_type?: string | null;
   id: number; changed_at: string; company_name: string; opportunity_id: number;
   title: string; amount: string | null; from_stage: string | null; to_stage: string;
   actor_name: string; changes: Record<string, { before: string | null; after: string | null }> | null;
 };
+type ReportOwner = { user_id: number; user_name: string; total: number; created_count: number; stage_change_count: number; edit_count: number; realized_count: number; unrealized_count: number };
 type SalesReport = {
+  people: { id: number; name: string }[]; owners: ReportOwner[];
   total: number; opportunity_count: number; created_count: number;
   stage_change_count: number; edit_count: number; realized_count: number;
   unrealized_count: number; stage_counts: Record<string, number>; items: Change[];
@@ -37,7 +40,17 @@ function changeValue(field: string, value: string | null) {
 }
 
 export function summarizeChanges(items: Change[], offset = 0): SalesReport {
+  const owners = new Map<number, ReportOwner>();
+  for (const row of items) {
+    const id = row.owner_id ?? 0;
+    const person = owners.get(id) ?? { user_id: id, user_name: row.owner_name ?? row.actor_name, total: 0, created_count: 0, stage_change_count: 0, edit_count: 0, realized_count: 0, unrealized_count: 0 };
+    person.total++; person[row.from_stage === null ? "created_count" : row.from_stage === row.to_stage ? "edit_count" : "stage_change_count"]++;
+    if (row.from_stage !== row.to_stage && row.to_stage === "Dobijeno") person.realized_count++;
+    if (row.from_stage !== row.to_stage && row.to_stage === "Izgubljeno") person.unrealized_count++;
+    owners.set(id, person);
+  }
   return {
+    people: [...owners.values()].map(p => ({ id: p.user_id, name: p.user_name })), owners: [...owners.values()],
     total: items.length, opportunity_count: new Set(items.map(row => row.opportunity_id)).size,
     created_count: items.filter(row => row.from_stage === null).length,
     stage_change_count: items.filter(row => row.from_stage !== null && row.from_stage !== row.to_stage).length,
@@ -52,6 +65,8 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
   const [mode, setMode] = useState<"day" | "month">("day");
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => today().slice(0, 7));
+  const [ownerId, setOwnerId] = useState("");
+  const [people, setPeople] = useState<{id: number; name: string}[]>([]);
   const [includeDemo, setIncludeDemo] = useState(false);
   const [data, setData] = useState<SalesReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,19 +81,21 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
     setLoading(true);
     const period = reportPeriod(mode, value);
     if (demoItems) {
+      setPeople(summarizeChanges(demoItems).people);
       const selected = demoItems.filter(row => {
         const day = dateInBelgrade(new Date(row.changed_at));
-        return day >= period.from && day <= period.to;
+        return day >= period.from && day <= period.to && (!ownerId || String(row.owner_id ?? 0) === ownerId);
       }).sort((a, b) => b.changed_at.localeCompare(a.changed_at) || b.id - a.id);
       setData(summarizeChanges(selected, offset)); setLoading(false); return;
     }
     const params = new URLSearchParams({ date_from: period.from, date_to: period.to, include_demo: String(includeDemo), limit: "50", offset: String(offset) });
+    if (ownerId) params.set("owner_id", ownerId);
     api<SalesReport>(`/units/${unit}/reports?${params}`, { signal: controller.signal })
-      .then(setData)
+      .then(data => { setData(data); setPeople(data.people); })
       .catch(e => { if (!controller.signal.aborted) setError(errorText(e)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [unit, mode, value, includeDemo, reload, offset, demoItems]);
+  }, [unit, mode, value, includeDemo, reload, offset, demoItems, ownerId]);
 
   return <>
     <div className="page-heading">
@@ -93,6 +110,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
       </div>
       <label className="report-date"><CalendarDays size={16} /><span className="report-sr-only">{mode === "day" ? "Izaberite dan" : "Izaberite mesec"}</span>
         {mode === "day" ? <input type="date" required value={day} onChange={e => { setDay(e.target.value); setOffset(0); }} /> : <input type="month" required value={month} onChange={e => { setMonth(e.target.value); setOffset(0); }} />}</label>
+      {role !== "sales" && <label className="report-owner-filter">Komercijalista<select aria-label="Komercijalista" value={ownerId} disabled={loading} onChange={e => { setOwnerId(e.target.value); setOffset(0); }}><option value="">Svi komercijalisti</option>{people.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>}
       {!demoItems && <label className="report-checkbox"><input type="checkbox" checked={includeDemo} onChange={e => { setIncludeDemo(e.target.checked); setOffset(0); }} />Demo podaci</label>}
       <span className="report-timezone">Vreme u Beogradu</span>
     </div>
@@ -135,13 +153,15 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
           </div>
         </section>
       </div>
+      {role !== "sales" && <section className="panel report-salespeople"><div className="panel-heading"><h2>Izveštaj po komercijalisti</h2></div><div className="table-scroll"><table><thead><tr><th>Komercijalista</th><th>Sve promene</th><th>Nove prilike</th><th>Promene statusa</th><th>Realizovano</th><th>Nije realizovano</th></tr></thead><tbody>{data.owners.map(person => <tr key={person.user_id}><td><strong>{person.user_name}</strong></td><td>{person.total}</td><td>{person.created_count}</td><td>{person.stage_change_count}</td><td>{person.realized_count}</td><td>{person.unrealized_count}</td></tr>)}</tbody></table>{!data.owners.length && <p className="empty">Nema promena za izabrani period.</p>}</div><p className="panel-note">Pregled se pripisuje komercijalisti koji vodi kompaniju. U istoriji se posebno vidi korisnik koji je izvršio promenu.</p></section>}
       <section className="panel">
         <div className="panel-heading"><h2>Hronologija promena</h2><span className="tag">Najnovije prvo</span></div>
         {!data.total ? <p className="empty">Nema zabeleženih promena u izabranom periodu. Izaberite drugi period{!demoItems && !includeDemo ? " ili uključite demo podatke" : ""}.</p> : <>
-          <div className="table-scroll"><table className="report-history"><thead><tr><th>Vreme</th><th>Kompanija / prilika</th><th>Promena</th><th>Vrednost pri promeni</th><th>Korisnik</th></tr></thead><tbody>
+          <div className="table-scroll"><table className="report-history"><thead><tr><th>Vreme</th><th>Kompanija / prilika</th><th>Komercijalista</th><th>Promena</th><th>Vrednost pri promeni</th><th>Korisnik</th></tr></thead><tbody>
             {data.items.map(row => <tr key={row.id}>
               <td>{formatTimestamp(row.changed_at)}</td>
               <td><strong>{row.company_name}</strong><small>{row.title}</small></td>
+              <td>{row.owner_name ?? row.actor_name}</td>
               <td><strong>{row.from_stage === null ? "Nova prilika" : row.from_stage === row.to_stage ? "Izmena podataka" : "Promena statusa"}</strong>
                 <small>{row.from_stage ? stageLabel(row.from_stage) : "Kreiranje"} → {stageLabel(row.to_stage)}</small>
                 {row.changes && Object.entries(row.changes).filter(([key]) => key !== "stage").map(([key, change]) =>

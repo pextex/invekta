@@ -78,3 +78,25 @@ def test_edits_and_creations_are_logged_without_false_noop_events(client, db, sa
     payload["version"] = 2
     assert client.patch(path, json=payload, headers=ORIGIN).status_code == 200
     assert len(client.get(path + "/stage-history").json()) == 2
+
+
+def test_admin_report_groups_by_owner_and_filters_without_leaking_other_salespeople(client, db, sales_records):
+    add_event(db, 9001, 2001, 101, "Kontaktiran", "Dobijeno", "2026-10-15T12:00:00+00:00")
+    add_event(db, 9002, 2002, 103, "Ponuda", "Izgubljeno", "2026-10-15T12:01:00+00:00")
+    db.commit()
+    params = {"date_from": "2026-10-15", "date_to": "2026-10-15"}
+    login(client)
+    report = client.get("/api/units/101/reports", params=params).json()
+    assert {row["user_id"] for row in report["owners"]} == {102, 103}
+    person = next(row for row in report["owners"] if row["user_id"] == 102)
+    assert person["realized_count"] == 1
+    assert sum(row["total"] for row in report["owners"]) == report["total"] == 2
+    filtered = client.get("/api/units/101/reports", params={**params, "owner_id": 102}).json()
+    assert filtered["total"] == 1 and filtered["items"][0]["actor_name"] == "manager"
+    assert filtered["items"][0]["owner_id"] == 102 and filtered["items"][0]["owner_name"] == "sales"
+    assert client.get("/api/units/101/reports", params={**params, "owner_id": 104}).status_code == 404
+    login(client, "sales")
+    own = client.get("/api/units/101/reports", params=params).json()
+    assert [p["id"] for p in own["people"]] == [102]
+    assert [p["user_id"] for p in own["owners"]] == [102]
+    assert client.get("/api/units/101/reports", params={**params, "owner_id": 103}).status_code == 403

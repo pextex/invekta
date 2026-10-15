@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CalendarDays, ArrowRight } from "lucide-react";
 import type { OpportunityStage } from "../features/crm/types";
 export function dailyRecommendations(
@@ -45,11 +45,13 @@ export default function DailyWelcome({
   recommendations,
   onNavigate,
   loading = false,
+  children,
 }: {
   name: string;
   recommendations: { label: string; page: string }[];
   onNavigate: (page: string) => void;
   loading?: boolean;
+  children?: ReactNode;
 }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function DailyWelcome({
   return (
     <section
       className="daily-welcome"
-      aria-label="Dobrodošlica i predlog za danas"
+      aria-label={children ? "Dobrodošlica i zadaci za danas" : "Dobrodošlica i predlog za danas"}
     >
       <div className="daily-welcome-heading">
         <div>
@@ -75,10 +77,10 @@ export default function DailyWelcome({
             {date}
           </div>
           <h2>Dobro došli, {name}!</h2>
-          <p>Predlog za danas, prema trenutnom stanju prodaje.</p>
+          <p>{children ? "Vaš plan za danas, na jednom mestu." : "Predlog za danas, prema trenutnom stanju prodaje."}</p>
         </div>
       </div>
-      <div className="daily-actions">
+      {children ?? <><div className="daily-actions">
         {loading ? (
           <p>Pripremam pregled…</p>
         ) : recommendations.length ? (
@@ -94,7 +96,7 @@ export default function DailyWelcome({
       </div>
       <small>
         Ovo su predloženi koraci, a ne zadaci sa dodeljenim rokovima.
-      </small>
+      </small></>}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import TodayTasks from "./TodayTasks";
 import { stageLabel } from "./types";
 import DailyWelcome, {
   dailyRecommendations,
@@ -59,7 +60,7 @@ export default function Dashboard({
         }
         onNavigate={onNavigate}
         loading={loading}
-      />
+      ><TodayTasks unit={unit} reload={reload} onOpen={() => onNavigate("Zadaci")} /></DailyWelcome>
       {error && (
         <p className="error-message" role="alert">
           {error}

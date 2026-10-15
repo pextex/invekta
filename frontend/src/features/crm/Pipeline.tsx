@@ -1,3 +1,4 @@
+import CompanyPicker from "./CompanyPicker";
 import { businessTypeLabel, businessTypesFor, type BusinessType } from "./businessTypes";
 import { stageLabel } from "./types";
 import { useStageDragDrop } from "./useStageDragDrop";
@@ -77,7 +78,7 @@ export default function Pipeline({
   }
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!form) return;
+    if (!form || form.company_id < 1) return;
     setBusy(true);
     setError("");
     const { company_id, ...fields } = form;
@@ -205,24 +206,8 @@ export default function Pipeline({
           <h2>{editing ? "Izmena prilike" : "Nova prodajna prilika"}</h2>
           <form onSubmit={save}>
             <div className="form-grid">
-              <label>
-                Kompanija
-                <select
-                  aria-label="Kompanija prilike"
-                  required
-                  disabled={busy || !!editing || !!companyId}
-                  value={form.company_id}
-                  onChange={(e) =>
-                    setForm({ ...form, company_id: Number(e.target.value) })
-                  }
-                >
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CompanyPicker unit={unit} value={form.company_id} options={companies} selectedName={editing?.company_name}
+                disabled={busy || !!editing || !!companyId} onChange={company_id => setForm({ ...form, company_id })} />
               <label>
                 Naziv prilike
                 <input
@@ -295,7 +280,7 @@ export default function Pipeline({
               Odgovorna osoba je komercijalista zadužen za kompaniju.
             </p>
             <div className="form-actions">
-              <button className="primary-button" disabled={busy}>
+              <button className="primary-button" disabled={busy || form.company_id < 1}>
                 <Save size={16} />
                 {busy ? "Čuvanje…" : "Sačuvaj priliku"}
               </button>

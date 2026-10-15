@@ -58,11 +58,11 @@
     },
     {
       "path": "/#crm/targets?unit=:unit",
-      "title": "Mesečni targeti"
+      "title": "Mesečni targeti i kolektivni bonus"
     },
     {
       "path": "/#demo/targets?organization=:organization",
-      "title": "Demo mesečni targeti"
+      "title": "Demo targeti i kolektivni bonus"
     }
   ]
 }

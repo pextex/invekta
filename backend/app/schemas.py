@@ -156,7 +156,25 @@ class UnitSummary(BaseModel):
     stages: dict[str, int]
 
 
+class ReportPerson(BaseModel):
+    id: int
+    name: str
+
+
+class ReportOwner(BaseModel):
+    user_id: int
+    user_name: str
+    total: int
+    created_count: int
+    stage_change_count: int
+    edit_count: int
+    realized_count: int
+    unrealized_count: int
+
+
 class ReportChange(BaseModel):
+    owner_id: int
+    owner_name: str
     id: int
     changed_at: datetime
     company_name: str
@@ -170,6 +188,8 @@ class ReportChange(BaseModel):
 
 
 class SalesReport(BaseModel):
+    people: list[ReportPerson]
+    owners: list[ReportOwner]
     total: int
     opportunity_count: int
     created_count: int
@@ -262,3 +282,25 @@ class TargetsOutput(BaseModel):
     categories: list[str]
     can_manage: bool
     salespeople: list[TargetSalesperson]
+
+
+class TeamBonusInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    month: str = Field(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])$")
+    target_amount: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
+    reward_note: str | None = Field(default=None, max_length=1000)
+    version: int | None = Field(default=None, ge=1)
+
+
+class TeamBonusOutput(BaseModel):
+    month: str
+    target_amount: Decimal | None
+    reward_note: str | None
+    version: int | None
+    can_manage: bool
+    individual_targets_total: Decimal
+    achieved_amount: Decimal
+    my_achieved_amount: Decimal
+    salespeople_count: int
+    achieved_count: int
+    unlocked: bool

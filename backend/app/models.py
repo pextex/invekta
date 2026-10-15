@@ -292,3 +292,18 @@ class MonthlyTarget(Base):
     category: Mapped[str] = mapped_column(String(30))
     target_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+
+
+class TeamBonus(Base):
+    __tablename__ = "team_bonuses"
+    __table_args__ = (
+        UniqueConstraint("business_unit_id", "period", name="unique_team_bonus_period"),
+        CheckConstraint("target_amount >= 0", name="nonnegative_team_bonus_target"),
+        CheckConstraint("version >= 1", name="positive_team_bonus_version"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"))
+    period: Mapped[date] = mapped_column(Date)
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    reward_note: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")

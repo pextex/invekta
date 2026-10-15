@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from ..business_types import resolve_business_type
 from ..access import visible_company, visible_query
 from ..constants import CLOSED_STAGES, OPPORTUNITY_STAGES
@@ -22,7 +22,7 @@ from ..schemas import (
     StageChangeOutput,
     UnitSummary,
 )
-from ..security import current_user, require_origin
+from ..security import current_user, membership, require_origin
 
 router = APIRouter(prefix="/api/units/{unit_id}", tags=["CRM"])
 
@@ -372,6 +372,7 @@ def sales_report(
     date_from: date,
     date_to: date,
     include_demo: bool = False,
+    owner_id: int | None = Query(None, gt=0),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     user: User = Depends(current_user),
@@ -379,8 +380,18 @@ def sales_report(
 ):
     if date_from > date_to or date_to == date.max:
         raise HTTPException(422, "Proverite početak i kraj perioda.")
+    member = membership(db, user, unit_id)
+    if member.role == "sales" and owner_id is not None and owner_id != user.id:
+        raise HTTPException(403, "Možete pregledati samo svoj izveštaj.")
+    company_scope = visible_query(db, user, unit_id)
+    people = db.execute(select(User.id, User.name).where(User.id.in_(
+        company_scope.with_only_columns(Company.owner_id))).order_by(User.name, User.id)).all()
+    if owner_id is not None and owner_id not in [person.id for person in people]:
+        raise HTTPException(404, "Komercijalista nije pronađen u ovoj firmi.")
     zone = ZoneInfo("Europe/Belgrade")
     visible = opportunities_query(db, user, unit_id)
+    if owner_id is not None:
+        visible = visible.where(Opportunity.company_id.in_(company_scope.where(Company.owner_id == owner_id).with_only_columns(Company.id)))
     if not include_demo:
         visible = visible.where(Opportunity.is_demo.is_(False))
     history = OpportunityStageChange
@@ -395,15 +406,32 @@ def sales_report(
         .where(*criteria).group_by(history.from_stage, history.to_stage)
     ).all()
     total = sum(count for _, _, count in grouped)
+    owner = aliased(User)
+    by_owner = db.execute(select(Company.owner_id, owner.name, history.from_stage, history.to_stage, func.count())
+        .select_from(history).join(Opportunity, Opportunity.id == history.opportunity_id)
+        .join(Company, Company.id == Opportunity.company_id).join(owner, owner.id == Company.owner_id)
+        .where(*criteria).group_by(Company.owner_id, owner.name, history.from_stage, history.to_stage)
+        .order_by(owner.name, Company.owner_id)).all()
+    owners = {}
+    for person_id, name, before, after, count in by_owner:
+        person = owners.setdefault(person_id, {"user_id": person_id, "user_name": name, "total": 0,
+            "created_count": 0, "stage_change_count": 0, "edit_count": 0, "realized_count": 0, "unrealized_count": 0})
+        person["total"] += count
+        person["created_count" if before is None else "edit_count" if before == after else "stage_change_count"] += count
+        if before != after and after == "Dobijeno": person["realized_count"] += count
+        if before != after and after == "Izgubljeno": person["unrealized_count"] += count
     rows = db.execute(
-        select(history, Opportunity.title, Company.name, User.name)
+        select(history, Opportunity.title, Company.name, User.name, Company.owner_id, owner.name)
         .join(Opportunity, Opportunity.id == history.opportunity_id)
         .join(Company, Company.id == Opportunity.company_id)
         .join(User, User.id == history.actor_id)
+        .join(owner, owner.id == Company.owner_id)
         .where(*criteria).order_by(history.changed_at.desc(), history.id.desc())
         .limit(limit).offset(offset)
     ).all()
     return {
+        "people": [{"id": person.id, "name": person.name} for person in people],
+        "owners": list(owners.values()),
         "total": total,
         "opportunity_count": db.scalar(select(func.count(func.distinct(history.opportunity_id))).where(*criteria)),
         "created_count": sum(n for before, _, n in grouped if before is None),
@@ -416,6 +444,6 @@ def sales_report(
         "items": [{"id": row.id, "changed_at": row.changed_at, "company_name": company,
                    "opportunity_id": row.opportunity_id, "title": title, "amount": row.amount,
                    "from_stage": row.from_stage, "to_stage": row.to_stage,
-                   "actor_name": actor, "changes": row.changes}
-                  for row, title, company, actor in rows],
+                   "actor_name": actor, "changes": row.changes, "owner_id": person_id, "owner_name": person_name}
+                  for row, title, company, actor, person_id, person_name in rows],
     }

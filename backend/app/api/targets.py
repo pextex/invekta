@@ -1,28 +1,16 @@
-from datetime import date, datetime, time
 from decimal import Decimal
-from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from ..target_progress import month_bounds, achievement_totals
 from ..business_types import unit_categories
 from ..db import get_db
-from ..models import Company, Membership, MonthlyTarget, Opportunity, OpportunityStageChange, User
+from ..models import Membership, MonthlyTarget, User
 from ..schemas import TargetsInput, TargetsOutput
 from ..security import current_user, membership, require_origin
 
 router = APIRouter(prefix="/api/units/{unit_id}/targets", tags=["Mesečni targeti"])
-
-
-def month_bounds(value: str):
-    try:
-        first = date.fromisoformat(value + "-01")
-        if first.year >= 9999:
-            raise ValueError
-        after = date(first.year + 1, 1, 1) if first.month == 12 else date(first.year, first.month + 1, 1)
-    except ValueError:
-        raise HTTPException(422, "Izaberite ispravan mesec.")
-    return first, after
 
 
 @router.get("", response_model=TargetsOutput)
@@ -41,25 +29,7 @@ def targets(unit_id: int, month: str = Query(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])
     goals = db.scalars(select(MonthlyTarget).where(MonthlyTarget.business_unit_id == unit_id,
                       MonthlyTarget.period == first, MonthlyTarget.user_id.in_(ids))).all()
     lookup = {(goal.user_id, goal.category): goal for goal in goals}
-    history = OpportunityStageChange
-    # Use the most recent actual transition into Realizovano for each currently
-    # realized opportunity. Metadata edits and repeated visits cannot duplicate it.
-    latest = select(history.opportunity_id.label("opportunity_id"), func.max(history.id).label("history_id")).where(
-        history.business_unit_id == unit_id, history.to_stage == "Dobijeno",
-        (history.from_stage.is_(None) | (history.from_stage != history.to_stage))
-    ).group_by(history.opportunity_id).subquery()
-    zone = ZoneInfo("Europe/Belgrade")
-    category = func.coalesce(history.business_type, Opportunity.business_type)
-    amounts = db.execute(select(Company.owner_id, category, func.sum(history.amount), func.count())
-        .select_from(Opportunity).join(Company, Company.id == Opportunity.company_id)
-        .join(latest, latest.c.opportunity_id == Opportunity.id)
-        .join(history, history.id == latest.c.history_id)
-        .where(Opportunity.business_unit_id == unit_id, Company.owner_id.in_(ids),
-               Opportunity.stage == "Dobijeno", Opportunity.is_demo.is_(False), Company.is_demo.is_(False),
-               history.amount.is_not(None), history.changed_at >= datetime.combine(first, time.min, zone),
-               history.changed_at < datetime.combine(after, time.min, zone))
-        .group_by(Company.owner_id, category)).all()
-    achieved = {(owner, kind): (amount, count) for owner, kind, amount, count in amounts}
+    achieved = achievement_totals(db, unit_id, first, after, ids)
     return {"month": month, "categories": list(categories), "can_manage": member.role in ("manager", "admin"),
             "salespeople": [{"user_id": person.id, "user_name": person.name, "targets": [
                 {"category": kind,

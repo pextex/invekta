@@ -1,3 +1,4 @@
+import TeamBonus from "./TeamBonus";
 import { useEffect, useState, type FormEvent } from "react";
 import { RefreshCw, Save, Target } from "lucide-react";
 import { api, errorText } from "../../lib/api";
@@ -18,6 +19,7 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [bonusReload, setBonusReload] = useState(0);
   const [reload, setReload] = useState(0);
   const [editing, setEditing] = useState<TargetPerson | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -48,6 +50,7 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
         setMessage("Mesečni target je sačuvan.");
       }
       setEditing(null);
+      setBonusReload(v => v + 1);
     } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
   }
   return <>
@@ -55,6 +58,12 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
     <div className="report-toolbar"><Target size={17} /><label className="target-month">Mesec<input type="month" required value={month} disabled={busy} onChange={e => { setMonth(e.target.value); setEditing(null); setMessage(""); }} /></label><span className="report-timezone">Vrednosti u RSD · vreme u Beogradu</span></div>
     {demo && <p className="section-hint">Demo cilj se čuva samo u ovom browseru. Ostvarenje prati demo prilike koje ste označili kao realizovane.</p>}
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
+    {(!demo || data) && <TeamBonus unit={unit} month={month} reload={reload + bonusReload} demo={demo && data ? {
+      organization: demo.organization,
+      individualTotal: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.target_amount ?? 0), 0).toFixed(2),
+      achieved: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.achieved_amount), 0).toFixed(2),
+      achievedCount: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + row.achieved_count, 0),
+    } : undefined} />}
     {!month ? <p className="empty">Izaberite mesec.</p> : loading ? <p className="empty" role="status">Učitavanje targeta…</p> : data && <>
       {!data.salespeople.length && <p className="empty">Nema aktivnih komercijalista u ovoj firmi. Pristup i uloge uređuje administrator.</p>}
       {data.salespeople.map(person => <section className="panel target-person" key={person.user_id}>
