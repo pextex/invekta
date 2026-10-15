@@ -20,7 +20,7 @@ Sačuvajte izmenu u `frontend/src` i prikaz će se odmah ažurirati; izmene u `b
 
 ## Ako komanda prijavi migracije
 
-Komanda nikada ne pokreće migracije, seed, reset ili kreiranje korisnika. Ako revizija nedostaje/zaostaje, ispisuje trenutnu reviziju i spisak potrebnih migracija, pa staje **pre pokretanja CRM servera**. Nije dodata nova migracija za Codespaces. Trenutni head je `a797e60f8c86` (kolektivni cilj); prethodni `f686d59e7b75` dodaje mesečne targete i vrste posla. Stvarni spisak zavisi od stanja vaše baze.
+Komanda nikada ne pokreće migracije, seed, reset ili kreiranje korisnika. Ako revizija nedostaje/zaostaje, ispisuje trenutnu reviziju i spisak potrebnih migracija, pa staje **pre pokretanja CRM servera**. Nije dodata nova migracija za Codespaces. Trenutni head je `b8a6c2d1e409` (prodajni fajlovi); prethodni `a797e60f8c86` dodaje kolektivni cilj, a `f686d59e7b75` mesečne targete i vrste posla. Stvarni spisak zavisi od stanja vaše baze.
 
 Za postojeću bazu prvo pregledajte navedene fajlove u `backend/alembic/versions`, napravite backup i odobrite migraciju. Tek zatim ručno, isključivo nad lokalnim PostgreSQL-om:
 

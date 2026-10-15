@@ -9,6 +9,7 @@ from sqlalchemy import (
     Index,
     Integer,
     JSON,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -18,8 +19,29 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from .db import Base
 from .types import UTCDateTime
+
+
+class SalesDocument(Base):
+    __tablename__ = "sales_documents"
+    __table_args__ = (
+        ForeignKeyConstraint(["uploaded_by_id", "business_unit_id"],
+                             ["memberships.user_id", "memberships.business_unit_id"],
+                             name="document_uploader_unit_fk"),
+        CheckConstraint("size_bytes > 0 AND size_bytes <= 10485760", name="valid_sales_document_size"),
+        Index("ix_sales_document_unit_created", "business_unit_id", "created_at"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"))
+    uploaded_by_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(200))
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(100))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    data: Mapped[bytes] = mapped_column(LargeBinary().with_variant(MEDIUMBLOB(), "mysql"), deferred=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now())
 
 
 class BusinessUnit(Base):

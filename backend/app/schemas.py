@@ -304,3 +304,19 @@ class TeamBonusOutput(BaseModel):
     salespeople_count: int
     achieved_count: int
     unlocked: bool
+
+
+class SalesDocumentOutput(BaseModel):
+    id: int
+    business_unit_id: int
+    title: str
+    filename: str
+    content_type: str
+    size_bytes: int
+    created_at: datetime
+    uploaded_by_name: str
+
+
+class SalesDocumentPage(BaseModel):
+    items: list[SalesDocumentOutput]
+    total: int

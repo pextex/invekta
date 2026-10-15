@@ -1,5 +1,6 @@
 import TodayTasks from "./features/crm/TodayTasks";
 import Targets from "./features/crm/Targets";
+import Quotes from "./features/crm/Quotes";
 import { businessTypeLabel, businessTypesFor, type BusinessType } from "./features/crm/businessTypes";
 import TasksCalendar from "./features/crm/TasksCalendar";
 import { loadDemoTasks } from "./features/crm/taskCalendar";
@@ -29,7 +30,6 @@ import {
   Plus,
   Search,
   Sparkles,
-  FileText,
 } from "lucide-react";
 import Workspace from "./Workspace";
 import Shell from "./Shell";
@@ -263,14 +263,6 @@ export default function App() {
         }}
       />
     );
-  const placeholder =
-    page === "Ponude"
-      ? {
-          icon: FileText,
-          title: "Ponude za LUU, Invektu i Cenobots",
-          text: "Kreiranje ponuda, obračun stavki i PDF izvoz dolaze u narednoj fazi.",
-        }
-      : null;
   return (
     <Shell
       organization={unit === "all" ? undefined : unit}
@@ -293,7 +285,7 @@ export default function App() {
       role="Razvojni pregled"
       onConnect={connect}
     >
-      {!["AI asistent", "Zadaci", "Izveštaji", "Targeti"].includes(page) && (
+      {!["AI asistent", "Zadaci", "Izveštaji", "Targeti", "Ponude"].includes(page) && (
         <div className="page-heading">
           <div>
             <h1>
@@ -348,6 +340,7 @@ export default function App() {
         </>
       )}
       {page === "Kompanije" && table}
+      {page === "Ponude" && <Quotes demo />}
       {page === "Prodajni levak" && (
         <>
           <p className="section-hint">
@@ -448,14 +441,6 @@ export default function App() {
             is_demo: true,
           }))}
         />
-      )}
-      {placeholder && (
-        <section className="panel placeholder">
-          <placeholder.icon size={36} />
-          <h2>{placeholder.title}</h2>
-          <p>{placeholder.text}</p>
-          <span className="tag gray">Planirano · još nije implementirano</span>
-        </section>
       )}
       <footer>
         LUU × INVEKTA × CENOBOTS <span>Demo podaci · Nema pristupa stvarnom CRM-u</span>

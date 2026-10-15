@@ -13,6 +13,7 @@ from .api.team_bonus import router as team_bonus_router
 from .api.targets import router as targets_router
 from .api.tasks import router as tasks_router
 from .api.sales import router as sales_router
+from .api.sales_documents import router as sales_documents_router
 from .api.users import router as users_router
 from .api.ai import router as ai_router
 from .config import get_settings
@@ -35,6 +36,7 @@ app.include_router(team_bonus_router)
 app.include_router(targets_router)
 app.include_router(tasks_router)
 app.include_router(sales_router)
+app.include_router(sales_documents_router)
 app.include_router(users_router)
 app.include_router(ai_router)
 
@@ -76,6 +78,7 @@ def ready(db: Session = Depends(get_db)):
         db.execute(text("SELECT id, due_date FROM tasks LIMIT 1"))
         db.execute(text("SELECT id, period FROM monthly_targets LIMIT 1"))
         db.execute(text("SELECT id, period FROM team_bonuses LIMIT 1"))
+        db.execute(text("SELECT id, filename, size_bytes FROM sales_documents LIMIT 1"))
         db.execute(text("SELECT business_type FROM opportunities LIMIT 1"))
         db.execute(text("SELECT business_type FROM opportunity_stage_changes LIMIT 1"))
         db.execute(

@@ -30,7 +30,7 @@
     },
     {
       "path": "/#crm/quotes?unit=:unit",
-      "title": "Ponude"
+      "title": "Ponude i prodajni fajlovi"
     },
     {
       "path": "/#crm/tasks?unit=:unit",
@@ -55,6 +55,10 @@
     {
       "path": "/#demo/tasks?organization=:organization",
       "title": "Demo kalendar zadataka"
+    },
+    {
+      "path": "/#demo/quotes?organization=:organization",
+      "title": "Demo prikaz Ponuda"
     },
     {
       "path": "/#crm/targets?unit=:unit",

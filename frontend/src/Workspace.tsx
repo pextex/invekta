@@ -1,4 +1,5 @@
 import Targets from "./features/crm/Targets";
+import Quotes from "./features/crm/Quotes";
 import TasksCalendar from "./features/crm/TasksCalendar";
 import Reports from "./features/crm/Reports";
 import AiAssistant from "./features/crm/AiAssistant";
@@ -337,6 +338,8 @@ export default function Workspace({
         </>
       ) : page === "Targeti" ? (
         <Targets key={unit} unit={unit} />
+      ) : page === "Ponude" ? (
+        <Quotes key={unit} unit={unit} canUpload={user.is_platform_admin || activeRole === "admin"} />
       ) : page === "Zadaci" ? (
         <TasksCalendar key={unit} unit={unit} companies={rows} />
       ) : page === "Izveštaji" ? (

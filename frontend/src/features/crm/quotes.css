@@ -1,0 +1,25 @@
+.sales-document-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.sales-document-toolbar h2 { margin: 0; }
+.sales-document-search { display: flex; align-items: center; gap: 8px; width: min(100%, 340px); margin: 0; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); }
+.sales-document-search input { min-width: 0; width: 100%; padding: 10px 0; border: 0; background: transparent; }
+.sales-document-search:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sales-document-search input:focus { outline: 0; box-shadow: none; }
+.sales-document-search .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sales-document-editor { margin-bottom: 20px; }
+.sales-document-editor fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sales-document-file { margin-top: 16px; }
+.sales-document-file input { width: 100%; padding: 18px; border: 1px dashed #9cb6dc; background: #f6f9fe; border-radius: 10px; }
+.sales-document-selected { display: flex; align-items: flex-start; gap: 8px; color: var(--blue); overflow-wrap: anywhere; }
+.sales-document-selected svg { flex-shrink: 0; }
+.sales-document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+.sales-document-card { min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.sales-document-type { display: grid; align-content: center; justify-items: center; gap: 5px; align-self: start; border-radius: 9px; background: #edf3ff; color: var(--blue); padding: 9px 3px; font-size: 10px; font-weight: 700; }
+.sales-document-details h3 { margin: 0 0 7px; font-size: 15px; overflow-wrap: anywhere; }
+.sales-document-details p { margin: 0 0 8px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.sales-document-details small { display: block; color: var(--muted); margin-top: 4px; }
+.sales-document-card > button { grid-column: 1 / -1; justify-content: center; }
+.sales-document-empty { display: grid; justify-items: center; text-align: center; color: var(--muted); padding: 42px 16px; }
+.sales-document-empty > svg { color: #8aa6cd; }
+.sales-document-empty h3 { color: var(--ink); margin: 14px 0 4px; }
+.sales-document-empty p { max-width: 450px; margin: 0; }
+@media (max-width: 600px) { .sales-document-search { width: 100%; } .sales-document-card { padding: 14px; } }
