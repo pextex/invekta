@@ -51,41 +51,25 @@ Pokrenite `alembic upgrade head` iz foldera `backend`. Migracija prenosi raniju 
 API lista prilika koristi paginaciju (100 po strani u UI, najviše 200 po API zahtevu). Dashboard računa sve ovlašćene zapise, nezavisno od stranice. Tabela kompanija i izbor kompanije pri kreiranju prilike i dalje prikazuju najviše 200 pogodaka. Pretragom pronađite kompaniju i otvorite njen profil za unos prilike ako je nema u početnom izboru.
 
 ## Pokretanje u privatnom cloud / Codespaces razvoju
-Potrebni: Node.js 22/24 LTS, Python 3.12+, `uv` i Docker sa Compose-om. Koristite postojeći checkout; ne kreirajte dodatni projekat.
 
-Iz korena repozitorijuma:
-
-```bash
-python scripts/setup_dev.py
-docker compose up -d --wait db
-cd backend
-uv sync --frozen
-.venv/bin/python -m alembic upgrade head
-.venv/bin/python -m app.seed
-.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-Seed traži lozinku demo naloga, bez prikaza unosa. Izaberite najmanje 12 znakova. Korisničko ime je **demo**; ovaj razvojni menadžer ima pristup svim trima jedinicama. Za neinteraktivno pokretanje postavite `CRM_DEMO_PASSWORD` u proces kroz siguran kanal. Ponovni seed ne menja postojeću lozinku. Za izričiti reset samo demo naloga:
+U Codespaces-u otvorite postojeći projekat sa `.devcontainer` konfiguracijom, pa iz korena pokrenite:
 
 ```bash
-.venv/bin/python -m app.seed --reset-password
+python scripts/dev.py
 ```
 
-U drugom terminalu, iz korena repozitorijuma:
+Otvorite **Ports → 5173 → Open in Browser**, uz **Private** vidljivost. Komanda pokreće PostgreSQL, FastAPI sa reload-om i Vite sa HMR-om/proxy-jem. Čuva postojeći `.env`, korisnike, sesije i podatke u lokalnom volume-u. Ako šema baze zaostaje, prijavljuje potrebne migracije i staje; **ne izvršava migracije, seed ili reset**. Novi Codespace ne preuzima Manus bazu preko Git-a.
 
-```bash
-cd frontend
-npm ci
-npm run dev
-```
-
-Vite prosleđuje `/api` lokalnom backend-u na portu 8000. U Codespaces kartici **Ports** otvorite port 5173 u browseru i zadržite **Private** vidljivost. Portove 8000 i 5432 ne objavljujte.
-
-Za Codespaces u korenskom `.env` podesite `CRM_ALLOWED_ORIGINS` na tačnu HTTPS adresu pregleda sa kartice Ports (bez završne kose crte), i `CRM_COOKIE_SECURE=true`, pa ponovo pokrenite backend. Za lokalni privatni HTTP test generator postavlja `false`. Ne koristite ovo podešavanje na javnom HTTP serveru. Koristimo isti origin i Vite proxy; nema potrebe za širokim CORS pravilima.
-
-Na Windows-u koristite `npm.cmd` i `backend\.venv\Scripts\python.exe` umesto aktivacije PowerShell skripti. Cloud razvoj ne zahteva lokalnu Windows instalaciju.
+[Uputstvo za Codespaces, prvu praznu bazu i postojeće migracije](docs/codespaces.md). Lokalno su potrebni Node 22/24, Python 3.12+, uv i Docker Compose; ista komanda otvara CRM na `http://localhost:5173`. Produkcioni Manus deployment ostaje odvojen.
 
 ## Provere
+
+Provera bezbednosnih pravila razvojne komande (iz korena, bez pristupa bazi):
+
+```bash
+backend/.venv/bin/python scripts/test_dev.py
+```
+
 Iz `backend`:
 
 ```bash
