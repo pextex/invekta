@@ -11,6 +11,9 @@ class Base(DeclarativeBase):
 
 
 url = make_url(get_settings().database_url)
+if url.drivername in ("postgres", "postgresql"):
+    # Hosted providers use the standard Postgres URI; the locked driver is psycopg 3.
+    url = url.set(drivername="postgresql+psycopg")
 if url.get_backend_name() == "mysql" and url.drivername == "mysql":
     url = url.set(drivername="mysql+pymysql")
 

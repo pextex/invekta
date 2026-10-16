@@ -72,6 +72,8 @@ Otvorite **Ports → 5173 → Open in Browser**, uz **Private** vidljivost. Koma
 
 Za opciono pokretanje istog koda na jednom Vercel projektu sa dva servisa dodat je root `vercel.json`: `/api/...` ide FastAPI backend-u, ostalo statičkom Vite frontend-u. [Vercel podešavanje, baza, lokalni `vercel dev -L` i ograničenje većih fajlova](docs/vercel.md). Manus Docker/startup nije izmenjen; ova konfiguracija sama ne objavljuje sajt niti migrira podatke.
 
+Za nastavak sa **novom praznom PostgreSQL bazom**, bez prenosa sa Manus-a, pogledati [jednokratne migracije i početni administratorski nalog](docs/vercel.md#nova-prazna-baza-umesto-manus-podataka). Standardni Neon/provider URI koristi postojeći psycopg drajver automatski. Kreiranje online baze zahteva povezan nalog kod njenog pružaoca; aplikacija je ne kreira pri build-u ili prvom HTTP zahtevu.
+
 ## Provere
 
 Provera bezbednosnih pravila razvojne komande (iz korena, bez pristupa bazi):
@@ -135,7 +137,7 @@ Ponovno pokretanje pripreme za isti pending nalog je no-op. Drugi administrators
 .venv/bin/python -m app.bootstrap_admin --email osoba@example.com --name 'Ime Prezime' --activate
 ```
 
-Aktivacija prihvata samo postojeći, neaktivan nalog sa `bootstrap_pending=true`; posle uspeha trajno troši marker. Ponovljeni poziv `--activate` ne može resetovati lozinku, aktivirati drugi nalog ili kreirati novog administratora. Za automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz zaštićeni unos okruženja i koristite ga samo za ovu komandu; ne postavljajte lozinku kao argument, u chat ili u Git. Komanda je eksplicitna i ne izvršava se tokom pokretanja servera. U Manus deployment-u podaci naloga ostaju u managed MySQL bazi; PostgreSQL je samo za lokalni razvoj. Lozinku drugih korisnika kasnije menjajte kroz ovlašćeni interfejs, ne bootstrap komandom.
+Aktivacija prihvata samo postojeći, neaktivan nalog sa `bootstrap_pending=true`; posle uspeha trajno troši marker. Ponovljeni poziv `--activate` ne može resetovati lozinku, aktivirati drugi nalog ili kreirati novog administratora. Za automatizaciju unesite `CRM_ACCOUNT_PASSWORD` kroz zaštićeni unos okruženja i koristite ga samo za ovu komandu; ne postavljajte lozinku kao argument, u chat ili u Git. Komanda je eksplicitna i ne izvršava se tokom pokretanja servera. Manus deployment zadržava managed MySQL bazu; odvojeni Vercel deployment može koristiti novu PostgreSQL bazu. Lozinku drugih korisnika kasnije menjajte kroz ovlašćeni interfejs, ne bootstrap komandom.
 
 ## Invekta AI — prodajni mejlovi uz GroqCloud
 
