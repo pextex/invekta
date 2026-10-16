@@ -162,6 +162,24 @@ API: `POST /api/units/{unit_id}/ai/generate` prihvata samo `{company_id, instruc
 
 Testovi koriste izolovanu PostgreSQL `_test` bazu i simuliran Groq transport: proveravaju JSON protokol, greške/limit, privatnost i autorizaciju, verzije znanja i odvajanje brendova. Ne potvrđuju stvarni Groq ključ ili kvalitet modela. Posle serverskog podešavanja potreban je jedan probni mejl sa neosetljivim podacima.
 
+### Provera Groq veze / HTTP 403
+
+U **objavljenom produkcionom kontejneru**, iz `/app/backend`, pokrenuti jednom:
+
+```bash
+python -m app.check_ai_connection
+```
+
+Komanda koristi postojeću runtime konfiguraciju i isti HTTP klijent, model i validaciju kao CRM. Šalje **jedan generički zahtev bez CRM podataka**, bez ponavljanja ili dodatnog model-list poziva. Ne otvara bazu, ne pokreće migracije i ne upisuje nacrte/pokušaje. Ako AI nije uključen ili zaseban Groq ključ nedostaje, nema mrežnog poziva. Troši samo običan Groq inference zahtev u okviru postojećeg paketa; ne menja billing. Izlaz je kratak JSON bez ključa, zaglavlja, sirovog odgovora ili generisanog teksta. Exit kod: 0 potvrđeno generisanje, 1 neuspešan poziv/odgovor, 2 nepotpuna konfiguracija.
+
+- `generation_validated`: odgovor je primljen i prošao istu validaciju subject/body kao pravi CRM. Proveru treba pokrenuti u published runtime-u; uspeh u preview-u ne potvrđuje produkcionu konfiguraciju.
+- `model_permission_blocked_org` / `model_permission_blocked_project`: proveriti odgovarajući Organization/Project Limits u Groq Console. Organizacione zabrane imaju prednost. [Groq model permissions](https://console.groq.com/docs/model-permissions).
+- `edge_block`: prepoznat zaštitni odgovor, uz `cloudflare_1010` samo kada telo sadrži taj konkretan potpis. Proveriti podržan izlazni pristup sa Manus servera sa platformom/Groq podrškom. Ne menjati ključ na osnovu same ove oznake. [Cloudflare 1010](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/).
+- `forbidden_unknown`: 403 bez potvrđenog uzroka. `response_format` razlikuje JSON, HTML, tekst i nečitljiv/prevelik odgovor, bez objave njihovog sadržaja. DNS/TLS uspeh i odbijen model-list sami ne dokazuju da je ključ neispravan.
+- `authentication`: HTTP 401; proveriti ključ i njegov projekat. `rate_limit`: sačekati, bez prelaska na plaćeni paket. `connection_or_response_invalid` / `timeout`: proveriti vezu ili ispravnost odgovora.
+
+Klijent se sada predstavlja kao `InvektaCRM/0.4` i traži `application/json`; ne imitira browser, ne menja TLS/proxy pravila i ne zaobilazi zabrane. To je poboljšanje kompatibilnosti, **ne potvrda da je produkcioni 403 rešen**. Serverska obrada greške čita najviše 8 KiB i propušta samo unapred dozvoljene dijagnostičke oznake. Za ovu izmenu nema nove migracije, paketa ili rute. Integracija GitHub commita i Manus objava ostaju odvojeni koraci.
+
 ## Unos kompanije i pristup podacima
 
 Komercijalista vidi i menja samo svoje kompanije, njihove kontakte i prodajne prilike. Menadžer i administrator firme vide sve kompanije unutar firme kojoj imaju pristup; prava ne prelaze u druge firme. Nova kompanija automatski pripada korisniku koji je unosi.

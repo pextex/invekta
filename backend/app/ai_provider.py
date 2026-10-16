@@ -6,6 +6,7 @@ from urllib.error import HTTPError, URLError
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .config import get_settings
+from .groq_errors import GroqProviderError, classify_http_error
 
 
 class GeneratedDraft(BaseModel):
@@ -60,7 +61,12 @@ def generate(context: dict) -> GeneratedDraft:
         "https://api.groq.com/openai/v1/chat/completions",
         data=json.dumps(payload).encode(),
         method="POST",
-        headers={"Authorization": "Bearer " + settings.crm_groq_api_key, "Content-Type": "application/json"},
+        headers={
+            "Authorization": "Bearer " + settings.crm_groq_api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "InvektaCRM/0.4",
+        },
     )
     try:
         with urlopen(request, timeout=45) as response:
@@ -73,11 +79,7 @@ def generate(context: dict) -> GeneratedDraft:
             raise ValueError("Incomplete response")
         return GeneratedDraft.model_validate_json(choice["message"]["content"])
     except HTTPError as error:
-        if error.code == 429:
-            raise HTTPException(503, "Groq je dostigao limit. Sačekajte i pokušajte kasnije.")
-        if error.code in (401, 403):
-            raise HTTPException(503, "Groq veza nije dostupna. Administrator treba da proveri ključ i pristup servisu.")
-        raise HTTPException(502, "Groq nije odgovorio. Administrator treba da proveri vezu i izabrani model.")
+        raise GroqProviderError(classify_http_error(error)) from None
     except (TimeoutError, socket.timeout):
         raise HTTPException(504, "Invekta AI nije odgovorio na vreme. Pokušajte ponovo.")
     except (URLError, ValueError, KeyError, IndexError, TypeError, ValidationError):

@@ -242,6 +242,8 @@ def test_groq_protocol_and_invalid_outputs(monkeypatch):
         captured.append(json.loads(request.data))
         assert request.full_url == "https://api.groq.com/openai/v1/chat/completions"
         assert request.get_header("Authorization") == "Bearer test-groq-placeholder"
+        assert request.get_header("User-agent") == "InvektaCRM/0.4"
+        assert request.get_header("Accept") == "application/json"
         assert timeout == 45
         return io.BytesIO(json.dumps(response).encode())
 
@@ -320,6 +322,27 @@ def test_legacy_openai_key_is_never_sent_to_groq(monkeypatch):
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 503
+
+
+def test_groq_access_failure_is_safe_in_real_api(client, db, monkeypatch):
+    settings = get_settings().model_copy(update={
+        "crm_ai_enabled": True, "crm_groq_api_key": "private-test-placeholder",
+    })
+    monkeypatch.setattr(ai, "get_settings", lambda: settings)
+    monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
+
+    def transport(request, timeout):
+        raise HTTPError(request.full_url, 403, "private-test-placeholder", {}, io.BytesIO(
+            b'{"error":{"code":"model_permission_blocked_project","message":"private-test-placeholder"}}'))
+
+    monkeypatch.setattr(ai_provider, "urlopen", transport)
+    login(client)
+    response = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
+    assert response.status_code == 503
+    assert "Project Limits" in response.json()["detail"]
+    assert "private-test-placeholder" not in response.text
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+    assert db.scalar(select(func.count()).select_from(AiAttempt)) == 1
 
 
 def test_only_current_brand_knowledge_and_selected_client_reach_provider(client, db, provider):
