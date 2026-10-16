@@ -11,3 +11,5 @@
 frontend/dist
 backend/app/static
 work
+**/.vercel
+backend/app/_vercel_data

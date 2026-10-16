@@ -1,0 +1,12 @@
+# Development credentials and local/generated artifacts never belong in a deploy.
+**/.env
+**/.env.*
+**/.venv/**
+.dev-tools/**
+**/node_modules/**
+**/__pycache__/**
+**/.pytest_cache/**
+frontend/dist/**
+backend/app/static/**
+demo/**
+**/.vercel/**

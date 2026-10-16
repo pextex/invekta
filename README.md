@@ -70,6 +70,8 @@ Otvorite **Ports → 5173 → Open in Browser**, uz **Private** vidljivost. Koma
 
 [Uputstvo za Codespaces, recovery režim, prvu praznu bazu i postojeće migracije](docs/codespaces.md). Lokalno su potrebni Node 22/24, Python 3.12+ i Docker Compose; uv se po potrebi instalira u privatni `.dev-tools` folder. Ista komanda otvara CRM na `http://localhost:5173`. Produkcioni Manus deployment ostaje odvojen.
 
+Za opciono pokretanje istog koda na jednom Vercel projektu sa dva servisa dodat je root `vercel.json`: `/api/...` ide FastAPI backend-u, ostalo statičkom Vite frontend-u. [Vercel podešavanje, baza, lokalni `vercel dev -L` i ograničenje većih fajlova](docs/vercel.md). Manus Docker/startup nije izmenjen; ova konfiguracija sama ne objavljuje sajt niti migrira podatke.
+
 ## Provere
 
 Provera bezbednosnih pravila razvojne komande (iz korena, bez pristupa bazi):

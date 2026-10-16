@@ -5,9 +5,11 @@ import re
 from pathlib import Path
 from .ai_provider import GeneratedDraft
 
-CATALOG = json.loads(
-    (Path(__file__).resolve().parents[2] / "shared/message_catalog.json").read_text()
-)
+_catalog_path = Path(__file__).resolve().parents[2] / "shared/message_catalog.json"
+if not _catalog_path.is_file():
+    # Independently bundled Vercel services cannot depend on sibling runtime files.
+    _catalog_path = Path(__file__).with_name("_vercel_data") / "message_catalog.json"
+CATALOG = json.loads(_catalog_path.read_text(encoding="utf-8"))
 
 
 def generate(context: dict) -> GeneratedDraft:
