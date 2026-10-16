@@ -20,3 +20,12 @@ assert url.password == 'placeholder'
 engine.dispose()
 '''], cwd=Path(__file__).resolve().parents[1], env=env, capture_output=True, text=True)
     assert result.returncode == 0, "Provider URI configuration failed; private output suppressed."
+
+
+def test_offline_schema_export_does_not_connect_or_include_credentials():
+    env = {**os.environ, "DATABASE_URL": "postgresql://export:placeholder@database.invalid/crm_test?sslmode=require"}
+    result = subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head", "--sql"],
+                            cwd=Path(__file__).resolve().parents[1], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, "Offline export failed; private output suppressed."
+    assert "CREATE TABLE companies" in result.stdout and "CREATE TABLE ai_brand_knowledge" in result.stdout
+    assert "database.invalid" not in result.stdout and "placeholder" not in result.stdout

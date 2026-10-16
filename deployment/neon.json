@@ -1,0 +1,19 @@
+{
+  "project_name": "invekta-crm",
+  "project_id": "falling-glitter-57126600",
+  "region_id": "aws-eu-central-1",
+  "postgres_version": 16,
+  "database_name": "crm",
+  "role_name": "crm_owner",
+  "initialized_revision": "c9d7a4e8f201",
+  "production": {
+    "branch_id": "br-delicate-resonance-bai93o9j",
+    "direct_host": "ep-dawn-night-ba7z46cl.c-8.eu-central-1.aws.neon.tech",
+    "pooled_host": "ep-dawn-night-ba7z46cl-pooler.c-8.eu-central-1.aws.neon.tech"
+  },
+  "preview": {
+    "branch_id": "br-autumn-waterfall-ba2j0a2o",
+    "direct_host": "ep-dry-night-bacjudsl.c-8.eu-central-1.aws.neon.tech",
+    "pooled_host": "ep-dry-night-bacjudsl-pooler.c-8.eu-central-1.aws.neon.tech"
+  }
+}

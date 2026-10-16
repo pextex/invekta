@@ -5,12 +5,14 @@ import subprocess
 import sys
 from decimal import Decimal
 from uuid import uuid4
+import pytest
 import psycopg
 from psycopg import sql
 from sqlalchemy.engine import make_url
 
 
-def test_empty_postgres_database_and_first_admin_without_seed():
+@pytest.mark.parametrize("offline", [False, True])
+def test_empty_postgres_database_and_first_admin_without_seed(offline):
     target = make_url(os.environ["CRM_TEST_DATABASE_URL"])
     assert target.database.endswith("_test") and target.host in ("localhost", "127.0.0.1")
     schema = "fresh_crm_" + uuid4().hex
@@ -34,9 +36,15 @@ def test_empty_postgres_database_and_first_admin_without_seed():
         result = subprocess.run([sys.executable, *args], env=env, capture_output=True, text=True)
         # Do not expose a connection string if a subprocess fails.
         assert result.returncode == 0, "Fresh isolated CRM initialization failed; private output suppressed."
+        return result.stdout
 
     try:
-        run("-m", "alembic", "upgrade", "head")
+        if offline:
+            source = run("-m", "alembic", "upgrade", "head", "--sql")
+            with psycopg.connect(isolated.render_as_string(hide_password=False), autocommit=True) as connection:
+                connection.execute(source)
+        else:
+            run("-m", "alembic", "upgrade", "head")
         with psycopg.connect(isolated.render_as_string(hide_password=False)) as connection:
             assert set(row[0] for row in connection.execute("SELECT code FROM business_units")) == {"LUU", "INVEKTA", "CENOBOTS"}
             for table in ("users", "companies", "contacts", "opportunities", "tasks", "monthly_targets", "team_bonuses", "sales_documents", "login_sessions"):

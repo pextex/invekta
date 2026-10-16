@@ -74,6 +74,8 @@ Za opciono pokretanje istog koda na jednom Vercel projektu sa dva servisa dodat 
 
 Za nastavak sa **novom praznom PostgreSQL bazom**, bez prenosa sa Manus-a, pogledati [jednokratne migracije i početni administratorski nalog](docs/vercel.md#nova-prazna-baza-umesto-manus-podataka). Standardni Neon/provider URI koristi postojeći psycopg drajver automatski. Kreiranje online baze zahteva povezan nalog kod njenog pružaoca; aplikacija je ne kreira pri build-u ili prvom HTTP zahtevu.
 
+Neon projekat `invekta-crm` je kreiran sa zasebnim production/preview bazama i postojećom CRM šemom. [Podaci o projektu i skriveni unos za aktivaciju prvog administratora](docs/vercel.md#kreiran-neon-projekat); netajni identifikatori su u `deployment/neon.json`. Objavljivanje i povezivanje Vercel projekta su zaseban korak.
+
 ## Provere
 
 Provera bezbednosnih pravila razvojne komande (iz korena, bez pristupa bazi):

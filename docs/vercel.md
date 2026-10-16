@@ -46,6 +46,22 @@ Vlasnik je izabrao novu bazu. Predloženi servis je Neon PostgreSQL, projekat `i
 
 Stara Manus baza se ne menja. Njeni korisnici, kompanije, istorija, zadaci i fajlovi neće se pojaviti u novoj bazi. Eventualni kasniji uvoz zahteva zaseban plan za povezane zapise i sprečavanje duplikata. Ograničenje većih fajlova na Vercel-u opisano ispod i dalje važi.
 
+### Kreiran Neon projekat
+
+Dana 2026-10-16 kreiran je namenski projekat **invekta-crm**, PostgreSQL 16 u Frankfurtu, na potvrđenom Free nalogu. [Otvori projekat](https://console.neon.tech/app/projects/falling-glitter-57126600). Baza je `crm`, vlasnička DB uloga `crm_owner`. Netajni identifikatori i direktni/pooled host su u `deployment/neon.json`; connection URL i lozinke nisu u repozitorijumu. Postojeći lokalni `.env` nije preusmeren na online bazu.
+
+Grane **production** i **preview** inicijalizovane su do revizije `c9d7a4e8f201` postojećim Alembic migracijama: 17 tabela sa Alembic metapodacima, tri poslovne jedinice, bez klijenata i demo sadržaja. Najpre je proverena preview grana; ista transakcija je potom primenjena na praznu production bazu. Prvi administratorski profil pripremljen je samo na production grani kao **neaktivan / bootstrap_pending**, sa pristupom sva tri brenda. Stvarna lozinka se postavlja odvojeno i nije generisana, prikazana ili poslata kroz chat. Preview nema taj nalog. Vercel projekat još nije povezan niti objavljen.
+
+Za aktivaciju iz privatnog interaktivnog terminala checkout-a, uz instaliran uv/Python 3.12, iz korena repozitorijuma pokrenuti (zameniti email i ime svojim):
+
+```bash
+uv run --frozen --project backend python scripts/activate_neon_admin.py --email osoba@example.com --name 'Ime Prezime'
+```
+
+U Neon projektu izabrati **production → Connect**, bazu `crm`, ulogu `crm_owner` i direktnu vezu (isključeno pooling). Connection URL nalepiti u skriveni terminalski unos, zatim uneti i potvrditi svoju novu lozinku. Skripta proverava da je cilj baš nova production baza i da TLS ostaje uključen; zatim poziva postojeći `app.bootstrap_admin --activate`. Ne preuzima tajne kroz chat, ne menja `.env`, ne koristi nasleđenu `CRM_ACCOUNT_PASSWORD`, ne pokreće migracije/seed i ne može ponovljenom aktivacijom resetovati aktivan nalog. Ne pokretati je u chat poruci, javnom logu ili neinteraktivnom CI job-u.
+
+Za primenu migracija preko odobrene veze koja prihvata SQL, Alembic sada podržava standardni **offline izvoz** `alembic upgrade head --sql`: on generiše SQL iz postojećih migracija bez povezivanja na bazu i bez URL-a/lozinke u izlazu. Taj puni izvoz je namenjen isključivo praznoj bazi, uz proveru cilja; ne izvršavati ga ponovo nad postojećim CRM-om. Uobičajeni online Alembic tok i Manus startup ostaju isti. Nisu dodavane nove migracije.
+
 ## Lokalna provera svih servisa
 
 Postojeće `python scripts/dev.py` ostaje dostupno. Za proveru baš Vercel rutiranja koristiti aktuelni Vercel CLI iz korena:
@@ -68,4 +84,4 @@ Reference: [Services](https://vercel.com/docs/services), [rutiranje koje zadrža
 
 ## Provera ove konfiguracije
 
-Lokalno je proverena sa Vercel CLI 64.3.1 kroz `vercel dev -L`: oba servisa, React stranica, `/api/health`, `/api/ready`, 401 bez sesije, prava prijava/refresh, čitanje lokalne PostgreSQL `_test` baze, izolacija kompanija komercijaliste i generisanje lokalnog šablona bez Groq poziva. Prošla su i 124 backend testa (uključujući generisanje šablona bez sibling `shared/` direktorijuma, standardne provider URL-ove i sve migracije u novoj praznoj šemi sa aktivacijom/prijavom prvog administratora), 11 frontend testova, frontend build, Pyright i postojeći Manus Docker build/runtime provera na `_test` bazi. Nije izvršen cloud Vercel build/deployment niti kreiranje/povezivanje online baze; za to su potrebni povezani nalozi. Manus produkcija nije menjana.
+Lokalno je proverena sa Vercel CLI 64.3.1 kroz `vercel dev -L`: oba servisa, React stranica, `/api/health`, `/api/ready`, 401 bez sesije, prava prijava/refresh, čitanje lokalne PostgreSQL `_test` baze, izolacija kompanija komercijaliste i generisanje lokalnog šablona bez Groq poziva. Prošlo je 130 backend testova (uključujući online/offline migracije prazne šeme, aktivaciju/prijavu prvog administratora i zaštitu unosa nove aktivacione komande), 11 frontend testova, frontend build, Pyright i Manus Docker build/runtime provera na `_test` bazi. Neon šema primenjena je i proverena na preview i production grani; produkcioni početni nalog ostaje pending do privatnog postavljanja lozinke. Cloud Vercel build/deployment i povezivanje Vercel projekta još nisu izvršeni. Manus produkcija nije menjana.
