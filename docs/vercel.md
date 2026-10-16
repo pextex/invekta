@@ -62,6 +62,8 @@ U Neon projektu izabrati **production → Connect**, bazu `crm`, ulogu `crm_owne
 
 Za primenu migracija preko odobrene veze koja prihvata SQL, Alembic sada podržava standardni **offline izvoz** `alembic upgrade head --sql`: on generiše SQL iz postojećih migracija bez povezivanja na bazu i bez URL-a/lozinke u izlazu. Taj puni izvoz je namenjen isključivo praznoj bazi, uz proveru cilja; ne izvršavati ga ponovo nad postojećim CRM-om. Uobičajeni online Alembic tok i Manus startup ostaju isti. Nisu dodavane nove migracije.
 
+Ako aktivacija odbije vezu pre zahteva za lozinku, ažurirati checkout sa `git pull --ff-only`. Skripta sada razlikuje pogrešan endpoint, bazu, port i TLS bez ispisivanja unetih vrednosti. U Connect prozoru baza mora biti **crm**, ne podrazumevana `neondb`, a grana **production** u projektu **invekta-crm**. Može se nalepiti sam URL, URL u navodnicima ili Neon komanda `psql 'URL'`; komanda se samo parsira, nikad ne izvršava kroz shell. Pooled URL se prihvata samo za unapred zabeleženi production endpoint i pretvara u njegovu direktnu vezu uz očuvanje lozinke i TLS parametara. Preview i svi drugi endpoint-i se odbijaju. Ako uv nije u PATH-u, prvo pokrenuti `python scripts/dev_tools.py`, a zatim koristiti `.dev-tools/bin/uv` umesto `uv` u komandi za aktivaciju. Nijedna od ovih komandi ne pokreće razvojni CRM, migracije ili seed.
+
 ## Lokalna provera svih servisa
 
 Postojeće `python scripts/dev.py` ostaje dostupno. Za proveru baš Vercel rutiranja koristiti aktuelni Vercel CLI iz korena:

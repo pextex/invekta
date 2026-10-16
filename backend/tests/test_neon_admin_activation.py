@@ -25,6 +25,37 @@ def test_activation_url_requires_expected_direct_database_and_tls():
         assert "placeholder" not in str(error.value)
 
 
+def test_pooler_is_normalized_only_for_the_recorded_production_endpoint():
+    host = "production.example.invalid"
+    pooler = "production-pooler.example.invalid"
+    value = f"postgresql://owner:placeholder@{pooler}/crm?sslmode=require&channel_binding=require"
+    result = helper.activation_url(value, host, "crm", pooler)
+    assert helper.make_url(result) == helper.make_url(value).set(host=host, drivername="postgresql+psycopg")
+    with pytest.raises(ValueError, match="endpoint nije CRM production"):
+        helper.activation_url(value.replace(pooler, "preview-pooler.example.invalid"), host, "crm", pooler)
+
+
+@pytest.mark.parametrize("wrapper", ["{}", "'{}'", '"{}"', "psql '{}'", 'psql "{}"'])
+def test_connection_copy_formats_are_parsed_without_running_a_shell(wrapper):
+    host = "production.example.invalid"
+    value = f"postgresql://owner:placeholder@{host}/crm?sslmode=require"
+    assert helper.activation_url(wrapper.format(value), host, "crm") == value.replace("postgresql://", "postgresql+psycopg://")
+
+
+@pytest.mark.parametrize(("value", "message"), [
+    ("postgresql://private:secret@other.example.invalid/crm?sslmode=require", "endpoint nije CRM production"),
+    ("postgresql://private:secret@production.example.invalid/neondb?sslmode=require", "Database: crm"),
+    ("postgresql://private:secret@production.example.invalid:6432/crm?sslmode=require", "port 5432"),
+    ("postgresql://private:secret@production.example.invalid:bad/crm?sslmode=require", "Neispravan connection URL"),
+    ("psql 'postgresql://private:secret@production.example.invalid/crm' ; echo private", "Neispravan connection URL"),
+])
+def test_input_errors_explain_the_field_without_disclosing_values(value, message):
+    with pytest.raises(ValueError, match=message) as error:
+        helper.activation_url(value, "production.example.invalid", "crm")
+    assert "private" not in str(error.value) and "secret" not in str(error.value)
+    assert value not in str(error.value)
+
+
 @pytest.mark.parametrize("returncode", [0, 1])
 def test_helper_uses_existing_activation_and_never_echoes_credentials(monkeypatch, capsys, tmp_path, returncode):
     config = tmp_path / "neon.json"
