@@ -6,6 +6,7 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from ..access import visible_company, visible_query
 from ..ai_provider import GeneratedDraft, generate
+from ..ai_recipients import AiRecipient, company_recipients
 from ..message_templates import generate as generate_template
 from ..config import get_settings
 from ..brand_knowledge import content_for
@@ -45,15 +46,17 @@ class GenerateInput(BaseModel):
     company_id: int = Field(gt=0)
     contact_id: int | None = Field(default=None, gt=0)
     opportunity_id: int | None = Field(default=None, gt=0)
-    goal: Literal["meeting", "introduction", "information", "proposal"] = "meeting"
-    mode: Literal["email", "reply", "follow_up"] = "email"
-    tone: Literal["professional", "friendly", "concise"] = "professional"
-    language: Literal["sr", "en"] = "sr"
+    goal: Literal["auto", "meeting", "introduction", "information", "proposal"] = "auto"
+    mode: Literal["auto", "email", "reply", "follow_up"] = "auto"
+    tone: Literal["auto", "professional", "friendly", "concise"] = "auto"
+    language: Literal["auto", "sr", "en"] = "auto"
     instructions: str = Field(default="", max_length=4000)
     incoming_message: str = Field(default="", max_length=10000)
 
     @model_validator(mode="after")
     def valid_text(self):
+        if self.mode == "auto" and not self.instructions.strip():
+            raise ValueError("Napišite kakav mejl želite.")
         if self.mode == "reply" and not self.incoming_message.strip():
             raise ValueError("Unesite instrukcije i poruku na koju odgovarate.")
         return self
@@ -61,6 +64,7 @@ class GenerateInput(BaseModel):
 
 class GeneratedMessage(GeneratedDraft):
     recipient: str | None
+    recipients: list[AiRecipient]
     model: str
 
 
@@ -127,6 +131,13 @@ def list_drafts(
     }
 
 
+@router.get("/companies/{company_id}/recipients", response_model=list[AiRecipient])
+def email_recipients(unit_id: int, company_id: int,
+                     user: User = Depends(current_user), db: Session = Depends(get_db)):
+    visible_company(db, user, unit_id, company_id)
+    return company_recipients(db, unit_id, company_id)
+
+
 @router.post("/generate", response_model=GeneratedMessage, dependencies=[Depends(require_origin)])
 def generate_message(
     unit_id: int,
@@ -163,6 +174,9 @@ def generate_message(
     business_unit = db.get(BusinessUnit, unit_id)
     if business_unit is None:
         raise HTTPException(404, "Poslovna jedinica nije pronađena.")
+    recipients = company_recipients(db, unit_id, company.id, data.contact_id)
+    if contact is None and len(recipients) == 1:
+        contact = db.get(Contact, recipients[0].id)
     context = {
         "sender": {
             "name": user.name,
@@ -176,6 +190,8 @@ def generate_message(
         "contact": {"name": contact.name, "position": contact.position}
         if contact
         else None,
+        "contacts": [{"name": person.name, "position": person.position} for person in recipients],
+        "recipient_count": len(recipients),
         "opportunity": {
             "title": opportunity.title,
             "stage": opportunity.stage,
@@ -200,7 +216,6 @@ def generate_message(
         "brand": business_unit.name,
         "content": content_for(business_unit, knowledge),
     }
-    recipient = contact.email if contact else None
     actor_id = user.id
     db.scalar(select(User).where(User.id == actor_id).with_for_update())
     now = datetime.now(timezone.utc)
@@ -224,10 +239,12 @@ def generate_message(
     db.expire_all()
     verified = current_user(request, db)
     visible_company(db, verified, unit_id, data.company_id)
+    recipients = company_recipients(db, unit_id, data.company_id, data.contact_id)
     return {
         "subject": result.subject,
         "body": result.body,
-        "recipient": recipient,
+        "recipient": ", ".join(str(person.email) for person in recipients) or None,
+        "recipients": recipients,
         "model": settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
     }
 

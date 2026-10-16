@@ -102,7 +102,8 @@ def test_selected_context_and_message_response_are_not_persisted(client, db, pro
     assert provider[0]["language"] == "en"
     assert "recipient@example.com" not in json.dumps(provider[0])
     assert "Test firma B" not in json.dumps(provider[0])
-    assert set(draft) == {"subject", "body", "recipient", "model"}
+    assert set(draft) == {"subject", "body", "recipient", "recipients", "model"}
+    assert draft["recipients"] == [{"id": contact.id, "name": "Test Contact", "position": "Direktor", "email": "recipient@example.com"}]
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
     assert db.scalar(select(func.count()).select_from(AiAttempt)) == 1
     assert client.get(BASE + "/drafts").json()["total"] == 0
@@ -337,3 +338,106 @@ def test_only_current_brand_knowledge_and_selected_client_reach_provider(client,
     status = client.get(BASE + "/status").json()
     assert status["engine"] == "groq" and status["configured"] is True
     assert "test-placeholder" not in json.dumps(status)
+
+
+def test_two_field_compose_automatically_uses_real_company_contacts_without_exposing_emails_to_model(client, db, provider):
+    people = [
+        Contact(company_id=101, business_unit_id=101, name="Jelena", position="Direktor", email="jelena@example.com"),
+        Contact(company_id=101, business_unit_id=101, name="Marko", position="Nabavka", email="marko@example.com"),
+        Contact(company_id=101, business_unit_id=101, name="Duplikat", email="JELENA@example.com"),
+        Contact(company_id=101, business_unit_id=101, name="Bez emaila"),
+        Contact(company_id=101, business_unit_id=101, name="Stari neispravan unos", email="not-an-email"),
+        Contact(company_id=102, business_unit_id=101, name="Tuđ kontakt", email="other@example.com"),
+        Contact(company_id=103, business_unit_id=102, name="Drugi brend", email="brand@example.com"),
+    ]
+    db.add_all(people)
+    db.commit()
+    login(client)
+    path = BASE + "/companies/101/recipients"
+    preview = client.get(path)
+    assert preview.status_code == 200
+    assert [item["email"] for item in preview.json()] == ["jelena@example.com", "marko@example.com"]
+    response = client.post(BASE + "/generate", json={"company_id": 101, "instructions": "Napiši kratak odgovor na engleskom."}, headers=ORIGIN)
+    assert response.status_code == 200
+    output = response.json()
+    assert output["recipient"] == "jelena@example.com, marko@example.com"
+    assert output["recipients"] == preview.json()
+    context = provider[0]
+    assert context["contact"] is None
+    assert context["contacts"] == [{"name": "Jelena", "position": "Direktor"}, {"name": "Marko", "position": "Nabavka"}]
+    assert all(context[key] == "auto" for key in ("mode", "goal", "tone", "language"))
+    assert "@example.com" not in json.dumps(context)
+    assert "Tuđ kontakt" not in json.dumps(context) and "Drugi brend" not in json.dumps(context)
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+    # An explicit contact_id from an older API client still narrows recipients.
+    narrowed = client.post(BASE + "/generate", json=payload(contact_id=people[1].id), headers=ORIGIN)
+    assert narrowed.status_code == 200 and narrowed.json()["recipient"] == "marko@example.com"
+    assert provider[1]["contact"]["name"] == "Marko"
+
+
+def test_recipient_preview_requires_company_access_and_enabled_membership(client, db):
+    from app.models import Membership
+    db.add(Contact(company_id=102, business_unit_id=101, name="Other company contact", email="other@example.com"))
+    db.commit()
+    path = BASE + "/companies/102/recipients"
+    assert client.get(path).status_code == 401
+    login(client)
+    assert client.get(path).status_code == 404
+    assert client.get("/api/units/102/ai/companies/103/recipients").status_code == 403
+    login(client, "manager")
+    assert client.get(path).json()[0]["email"] == "other@example.com"
+    assert client.get(BASE + "/companies/103/recipients").status_code == 404
+    db.get(Membership, (101, 101)).enabled = False
+    db.commit()
+    assert client.get(path).status_code == 403
+
+
+def test_missing_contact_email_stays_empty_and_blank_simple_instructions_are_rejected(client, db, provider):
+    db.add(Contact(company_id=101, business_unit_id=101, name="Kontakt bez emaila"))
+    db.commit()
+    login(client)
+    assert client.get(BASE + "/companies/101/recipients").json() == []
+    for instructions in ("", "   "):
+        assert client.post(BASE + "/generate", json=payload(instructions=instructions), headers=ORIGIN).status_code == 422
+    assert not provider
+    result = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
+    assert result.status_code == 200 and result.json()["recipient"] is None
+    assert result.json()["recipients"] == [] and provider[0]["contacts"] == []
+
+
+def test_recipient_addresses_are_refreshed_after_generation_and_new_owner_blocks_response(client, db, provider, monkeypatch):
+    from app.models import Company
+    person = Contact(company_id=101, business_unit_id=101, name="Kontakt", email="old@example.com")
+    db.add(person)
+    db.commit()
+    login(client)
+    def change_address(context):
+        person.email = "current@example.com"
+        db.commit()
+        return GeneratedDraft(subject="Subject", body="Body")
+    monkeypatch.setattr(ai, "generate", change_address)
+    result = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
+    assert result.status_code == 200 and result.json()["recipient"] == "current@example.com"
+    def transfer_company(context):
+        db.get(Company, 101).owner_id = 103
+        db.commit()
+        return GeneratedDraft(subject="Private", body="Must not be returned")
+    monkeypatch.setattr(ai, "generate", transfer_company)
+    result = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
+    assert result.status_code == 404 and "Must not be returned" not in result.text
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
+
+
+def test_two_field_compose_keeps_offline_templates_available_without_network(client, db, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Disabled Groq must not use the network")
+    monkeypatch.setattr(ai_provider, "urlopen", forbidden)
+    db.add(Contact(company_id=101, business_unit_id=101, name="Test", email="recipient@example.com"))
+    db.commit()
+    login(client)
+    result = client.post(BASE + "/generate", json={"company_id": 101, "instructions": "Predstavi našu ponudu."}, headers=ORIGIN)
+    assert result.status_code == 200
+    assert result.json()["recipient"] == "recipient@example.com"
+    assert result.json()["model"] == "local-templates"
+    assert result.json()["body"].strip()
+    assert db.scalar(select(func.count()).select_from(AiDraft)) == 0

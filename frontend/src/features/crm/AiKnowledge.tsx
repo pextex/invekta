@@ -3,7 +3,7 @@ import { BookOpen, Save } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 
 type Knowledge = { content: string; version: number | null; updated_at: string | null };
-export default function AiKnowledge({ unit, brand, canManage }: { unit: number; brand: string; canManage: boolean }) {
+export default function AiKnowledge({ unit, brand, canManage, expanded = false }: { unit: number; brand: string; canManage: boolean; expanded?: boolean }) {
   const [saved, setSaved] = useState<Knowledge | null>(null);
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,7 +31,7 @@ export default function AiKnowledge({ unit, brand, canManage }: { unit: number; 
     } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
   }
   return <section className="panel ai-knowledge">
-    <details>
+    <details open={expanded || undefined}>
       <summary><BookOpen size={18} /> Znanje brenda · {brand} <span>{loading ? "Učitavanje…" : saved?.content.trim() ? "Dodato" : "Nije dodato"}</span></summary>
       <p className="panel-note">Odobrene informacije o proizvodima, uslugama, prednostima i uslovima ovog brenda. Administrator ih dopunjava; AI ih koristi pri pisanju mejla. Ne unosite lozinke niti privatne podatke klijenata.</p>
       {error && <p className="error-message" role="alert">{error}</p>}

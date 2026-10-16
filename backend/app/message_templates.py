@@ -32,6 +32,8 @@ def generate(context: dict) -> GeneratedDraft:
         return re.sub(r"\{(\w+)\}", lambda match: values.get(match[1], ""), text)
 
     goal = context.get("goal", "meeting")
+    if goal not in catalog["subjects"]:
+        goal = "meeting"  # Local templates cannot infer a goal from free-form text.
     mode = context["mode"]
     concise = context.get("tone") == "concise"
     if mode == "reply":

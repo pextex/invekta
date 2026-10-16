@@ -13,6 +13,8 @@ U **Prodajni levak** prevucite karticu u drugu kolonu ili izaberite status na nj
 Po otvaranju izaberite LUU, Invekta ili Cenobots, pa kliknite **Pogledaj demo bez prijave**. Stvarna prijava ne radi iz samostalnog HTML fajla. Cenobots partneri su izmišljeni i jasno označeni, kao i podaci ostalih jedinica.
 
 
-Besplatni šabloni rade i u samostalnom HTML-u bez servera i interneta. U odeljku Invekta AI izaberite klijenta i cilj poruke, pa Pripremi nacrt iz šablona. Tekst se može urediti i kopirati dugmetom **Kopiraj mejl**. Ako browser blokira clipboard, tekst se označi za ručno kopiranje. Mejl, potpis i sadržaj pripreme ne čuvaju se u browser storage-u; osvežavanje ili napuštanje ekrana ih uklanja. Nema dugmeta za čuvanje, istorije ni spiska ranijih poruka. Stari lokalni zapisi se ne učitavaju i ne brišu automatski.
+Besplatni šabloni rade i u samostalnom HTML-u bez servera i interneta. U odeljku Invekta AI opišite mejl, izaberite kompaniju pretragom i kliknite **Pripremi mejl iz šablona**. Tekst se može urediti i kopirati dugmetom **Kopiraj mejl**. Ako browser blokira clipboard, tekst se označi za ručno kopiranje. Mejl, potpis i sadržaj pripreme ne čuvaju se u browser storage-u; osvežavanje ili napuštanje ekrana ih uklanja. Nema dugmeta za čuvanje, istorije ni spiska ranijih poruka. Stari lokalni zapisi se ne učitavaju i ne brišu automatski.
 
 Invekta AI u samostalnom HTML-u prikazuje novi prozor za zahtev i primere, ali radi samo sa lokalnim šablonima. Slobodno uputstvo tumači pravi Groq model tek u povezanom CRM-u sa serverskim ključem. Znanje brenda administrator uređuje u prijavljenoj aplikaciji.
+
+Forma ima samo zahtev i kompaniju. Stvarni kontakti se automatski popunjavaju samo u prijavljenom CRM-u; demo ne izmišlja email adrese klijenata. U pripremljenom mejlu primaoci, predmet i tekst su izmenjivi.
