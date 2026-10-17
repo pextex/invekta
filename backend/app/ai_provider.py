@@ -1,4 +1,4 @@
-"""Server-side Groq chat completions. No tools, email sending or paid fallback."""
+"""Server-side Gemini generation. No tools, email sending, retries or paid fallback."""
 import json
 import socket
 from urllib.request import Request, urlopen
@@ -6,7 +6,7 @@ from urllib.error import HTTPError, URLError
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .config import get_settings
-from .groq_errors import GroqProviderError, classify_http_error
+from .gemini_errors import GeminiProviderError, classify_http_error
 
 
 class GeneratedDraft(BaseModel):
@@ -42,27 +42,25 @@ def generate(context: dict) -> GeneratedDraft:
     settings = get_settings()
     if not settings.crm_ai_enabled:
         raise HTTPException(503, "AI generisanje je isključeno. Nema poziva AI servisu.")
-    # A separate key prevents an existing OpenAI binding from being sent to Groq.
-    if not settings.crm_groq_api_key:
-        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Groq ključ na serveru.")
+    # Only the explicitly configured Gemini key may cross this provider boundary.
+    if not settings.crm_gemini_api_key:
+        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
     payload = {
-        "model": settings.crm_groq_model,
-        "temperature": 0.4,
-        "max_completion_tokens": 2200,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": json.dumps(context, ensure_ascii=False)},
-        ],
+        "systemInstruction": {"parts": [{"text": SYSTEM}]},
+        "contents": [{"role": "user", "parts": [{"text": json.dumps(context, ensure_ascii=False)}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 2200,
+            "responseMimeType": "application/json",
+            "responseJsonSchema": GeneratedDraft.model_json_schema(),
+        },
     }
-    if settings.crm_groq_model.startswith("openai/gpt-oss-"):
-        payload["reasoning_effort"] = "low"
     request = Request(
-        "https://api.groq.com/openai/v1/chat/completions",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{settings.crm_gemini_model}:generateContent",
         data=json.dumps(payload).encode(),
         method="POST",
         headers={
-            "Authorization": "Bearer " + settings.crm_groq_api_key,
+            "x-goog-api-key": settings.crm_gemini_api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": "InvektaCRM/0.4",
@@ -74,13 +72,22 @@ def generate(context: dict) -> GeneratedDraft:
         if len(raw) > 200000:
             raise ValueError("Oversized response")
         result = json.loads(raw)
-        choice = result["choices"][0]
-        if choice["finish_reason"] != "stop":
+        if not isinstance(result, dict) or result.get("promptFeedback", {}).get("blockReason"):
+            raise ValueError("Blocked response")
+        candidates = result["candidates"]
+        if len(candidates) != 1:
+            raise ValueError("Ambiguous response")
+        choice = candidates[0]
+        if choice["finishReason"] != "STOP":
             raise ValueError("Incomplete response")
-        return GeneratedDraft.model_validate_json(choice["message"]["content"])
+        parts = choice["content"]["parts"]
+        if not isinstance(parts, list) or any(not isinstance(part, dict) or not isinstance(part.get("text"), str) for part in parts):
+            raise ValueError("Non-text response")
+        text = "".join(part["text"] for part in parts if not part.get("thought"))
+        return GeneratedDraft.model_validate_json(text)
     except HTTPError as error:
-        raise GroqProviderError(classify_http_error(error)) from None
+        raise GeminiProviderError(classify_http_error(error)) from None
     except (TimeoutError, socket.timeout):
         raise HTTPException(504, "Invekta AI nije odgovorio na vreme. Pokušajte ponovo.")
-    except (URLError, ValueError, KeyError, IndexError, TypeError, ValidationError):
-        raise HTTPException(502, "AI nacrt nije uspešno pripremljen. Pokušajte ponovo.")
+    except (URLError, ValueError, KeyError, IndexError, TypeError, AttributeError, RecursionError, ValidationError):
+        raise HTTPException(502, "AI nacrt nije uspešno pripremljen. Pokušajte ponovo.") from None

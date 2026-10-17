@@ -102,10 +102,10 @@ def status(
     member = membership(db, user, unit_id)
     settings = get_settings()
     return {
-        "configured": bool(settings.crm_groq_api_key) if settings.crm_ai_enabled else True,
+        "configured": bool(settings.crm_gemini_api_key) if settings.crm_ai_enabled else True,
         "disabled": not settings.crm_ai_enabled,
-        "model": settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
-        "engine": "groq" if settings.crm_ai_enabled else "templates",
+        "model": settings.crm_gemini_model if settings.crm_ai_enabled else "local-templates",
+        "engine": "gemini" if settings.crm_ai_enabled else "templates",
         "can_manage_knowledge": member.role == "admin" or user.is_platform_admin,
     }
 
@@ -209,8 +209,8 @@ def generate_message(
         "incoming_message": data.incoming_message,
     }
     settings = get_settings()
-    if settings.crm_ai_enabled and not settings.crm_groq_api_key:
-        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Groq ključ na serveru.")
+    if settings.crm_ai_enabled and not settings.crm_gemini_api_key:
+        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
     knowledge = db.get(AiBrandKnowledge, unit_id)
     context["brand_knowledge"] = {
         "brand": business_unit.name,
@@ -245,7 +245,7 @@ def generate_message(
         "body": result.body,
         "recipient": ", ".join(str(person.email) for person in recipients) or None,
         "recipients": recipients,
-        "model": settings.crm_groq_model if settings.crm_ai_enabled else "local-templates",
+        "model": settings.crm_gemini_model if settings.crm_ai_enabled else "local-templates",
     }
 
 

@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,9 +13,9 @@ class Settings(BaseSettings):
     crm_cookie_secure: bool = True
     crm_ai_enabled: bool = False
     crm_ai_api_key: str = ""
-    crm_ai_model: str = "gpt-4.1-mini"  # Legacy configuration; never used for Groq.
-    crm_groq_api_key: str = ""
-    crm_groq_model: str = "openai/gpt-oss-120b"
+    crm_ai_model: str = "gpt-4.1-mini"  # Legacy configuration; never used for Gemini.
+    crm_gemini_api_key: str = ""
+    crm_gemini_model: str = Field(default="gemini-3.1-flash-lite", pattern=r"^gemini-[a-zA-Z0-9][a-zA-Z0-9._-]{0,90}$")
 
     @property
     def allowed_origins(self) -> set[str]:

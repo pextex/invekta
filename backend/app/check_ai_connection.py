@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from .ai_provider import generate
 from .config import get_settings
-from .groq_errors import GroqProviderError
+from .gemini_errors import GeminiProviderError
 
 
 def main() -> int:
@@ -15,13 +15,13 @@ def main() -> int:
     except ValidationError:
         print(json.dumps({"ok": False, "category": "configuration_invalid"}))
         return 2
-    if not settings.crm_ai_enabled or not settings.crm_groq_api_key:
-        category = "ai_disabled" if not settings.crm_ai_enabled else "groq_key_missing"
+    if not settings.crm_ai_enabled or not settings.crm_gemini_api_key:
+        category = "ai_disabled" if not settings.crm_ai_enabled else "gemini_key_missing"
         print(json.dumps({"ok": False, "category": category}))
         return 2
     try:
         generate({"instructions": 'Provera veze bez klijentskih podataka. Vrati subject "Provera" i body "Veza radi.".'})
-    except GroqProviderError as error:
+    except GeminiProviderError as error:
         failure = error.failure
         print(json.dumps({
             "ok": False,

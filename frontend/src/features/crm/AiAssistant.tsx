@@ -20,7 +20,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   const [draft, setDraft] = useState<Draft | null>(null);
   const [recipients, setRecipients] = useState<RecipientsState>({ company: 0, items: [], loading: false, error: "" });
   const [refreshContacts, setRefreshContacts] = useState(0);
-  const [engine, setEngine] = useState<"groq" | "templates">("templates");
+  const [engine, setEngine] = useState<"gemini" | "templates">("templates");
   const [configured, setConfigured] = useState(false);
   const [checking, setChecking] = useState(!demo);
   const [canManageKnowledge, setCanManageKnowledge] = useState(false);
@@ -37,7 +37,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
     if (demo) return;
     const controller = new AbortController();
     setChecking(true);
-    api<{ configured: boolean; engine: "groq" | "templates"; can_manage_knowledge: boolean }>(
+    api<{ configured: boolean; engine: "gemini" | "templates"; can_manage_knowledge: boolean }>(
       `/units/${unit}/ai/status`, { signal: controller.signal },
     ).then(data => {
       if (controller.signal.aborted) return;
@@ -116,9 +116,9 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
     </div>
     {error && <p className="error-message" role="alert">{error}</p>}
     {message && <p className="success-message" role="status">{message}</p>}
-    {demo ? <p className="demo-notice">Demo koristi lokalni šablon. Automatski kontakti i Groq AI rade u prijavljenom CRM-u.</p> :
-      !checking && !configured ? <p className="demo-notice">Invekta AI još nije povezan. Administrator treba da podesi Groq ključ na serveru.</p> :
-        !checking && engine === "templates" ? <p className="demo-notice">Groq AI je isključen. Lokalni šablon ne tumači slobodno uputstvo.</p> : null}
+    {demo ? <p className="demo-notice">Demo koristi lokalni šablon. Automatski kontakti i Gemini AI rade u prijavljenom CRM-u.</p> :
+      !checking && !configured ? <p className="demo-notice">Invekta AI još nije povezan. Administrator treba da podesi Gemini ključ na serveru.</p> :
+        !checking && engine === "templates" ? <p className="demo-notice">Gemini AI je isključen. Lokalni šablon ne tumači slobodno uputstvo.</p> : null}
     {canManageKnowledge && showKnowledge && <div id="ai-brand-settings">
       <AiKnowledge unit={unit} brand={organization} canManage expanded />
     </div>}
@@ -143,7 +143,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
                 <ul>{currentRecipients.map(person => <li key={person.id}><span>{person.name}{person.position ? ` · ${person.position}` : ""}</span><small>{person.email}</small></li>)}</ul>
               </> : <p>{demo ? "Demo nema stvarne kontakte klijenata." : "Kompanija nema kontakt sa unetom ispravnom email adresom. Dodajte kontakt u profilu kompanije ili popunite primaoce u pripremljenom mejlu."}</p>}
             </div>}
-            {!demo && engine === "groq" && configured && <p className="panel-note">Pripremom šaljete zahtev, podatke izabrane kompanije i imena kontakata Groq servisu. Znanje aktivnog brenda koristi se za tekst mejla.</p>}
+            {!demo && engine === "gemini" && configured && <p className="panel-note">Pripremom šaljete zahtev, podatke izabrane kompanije i imena kontakata Gemini servisu. Znanje aktivnog brenda koristi se za tekst mejla.</p>}
             <button className="primary-button" disabled={(!demo && !configured) || !company || !instructions.trim() || contactsLoading || !!contactsError}>
               <Sparkles size={16} /> {busy ? "Pripremanje mejla…" : demo || engine === "templates" ? "Pripremi mejl iz šablona" : "Napiši mejl"}
             </button>

@@ -18,7 +18,7 @@ BASE = "/api/units/101/ai"
 @pytest.fixture(autouse=True)
 def local_ai_settings(monkeypatch):
     # Tests never inherit enabled AI/key bindings from a developer environment.
-    settings = get_settings().model_copy(update={"crm_ai_enabled": False, "crm_groq_api_key": ""})
+    settings = get_settings().model_copy(update={"crm_ai_enabled": False, "crm_gemini_api_key": ""})
     monkeypatch.setattr(ai, "get_settings", lambda: settings)
     monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
 
@@ -41,8 +41,8 @@ def provider(monkeypatch):
     settings = get_settings().model_copy(
         update={
             "crm_ai_enabled": True,
-            "crm_groq_api_key": "test-placeholder",
-            "crm_groq_model": "test-model",
+            "crm_gemini_api_key": "test-placeholder",
+            "crm_gemini_model": "gemini-test-model",
         }
     )
     monkeypatch.setattr(ai, "get_settings", lambda: settings)
@@ -184,7 +184,7 @@ def test_access_context_validation_and_disabled_generation(
     monkeypatch.setattr(
         ai,
         "get_settings",
-        lambda: get_settings().model_copy(update={"crm_ai_enabled": True, "crm_groq_api_key": ""}),
+        lambda: get_settings().model_copy(update={"crm_ai_enabled": True, "crm_gemini_api_key": ""}),
     )
     assert client.get(BASE + "/status").json()["configured"] is False
     assert (
@@ -232,16 +232,18 @@ def test_generation_budget_failure_and_session_revocation(
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
 
 
-def test_groq_protocol_and_invalid_outputs(monkeypatch):
+def test_gemini_protocol_and_invalid_outputs(monkeypatch):
     monkeypatch.setattr(ai_provider, "get_settings", lambda: get_settings().model_copy(
-        update={"crm_ai_enabled": True, "crm_groq_api_key": "test-groq-placeholder", "crm_groq_model": "test-model"}))
+        update={"crm_ai_enabled": True, "crm_gemini_api_key": "test-gemini-placeholder", "crm_gemini_model": "gemini-test-model"}))
     captured = []
-    response = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({"subject": "Subject", "body": "Body"})}}]}
+    response = {"candidates": [{"finishReason": "STOP", "content": {"parts": [{"text": json.dumps({"subject": "Subject", "body": "Body"})}]}}]}
 
     def transport(request, timeout):
         captured.append(json.loads(request.data))
-        assert request.full_url == "https://api.groq.com/openai/v1/chat/completions"
-        assert request.get_header("Authorization") == "Bearer test-groq-placeholder"
+        assert request.full_url == "https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent"
+        assert request.get_header("X-goog-api-key") == "test-gemini-placeholder"
+        assert request.get_header("Authorization") is None
+        assert "test-gemini-placeholder" not in request.full_url
         assert request.get_header("User-agent") == "InvektaCRM/0.4"
         assert request.get_header("Accept") == "application/json"
         assert timeout == 45
@@ -249,27 +251,26 @@ def test_groq_protocol_and_invalid_outputs(monkeypatch):
 
     monkeypatch.setattr(ai_provider, "urlopen", transport)
     assert ai_provider.generate({"instructions": "Write an email"}).subject == "Subject"
-    assert captured[0]["response_format"] == {"type": "json_object"}
-    assert captured[0]["model"] == "test-model"
-    assert captured[0]["messages"][0]["role"] == "system"
-    assert "Invekta AI" in captured[0]["messages"][0]["content"]
+    assert captured[0]["generationConfig"]["responseMimeType"] == "application/json"
+    assert captured[0]["generationConfig"]["responseJsonSchema"]["required"] == ["subject", "body"]
+    assert "Invekta AI" in captured[0]["systemInstruction"]["parts"][0]["text"]
     assert "tools" not in captured[0]
-    assert json.loads(captured[0]["messages"][1]["content"])["instructions"] == "Write an email"
-    for finish in ("length", "content_filter", None):
-        response["choices"][0]["finish_reason"] = finish
+    assert json.loads(captured[0]["contents"][0]["parts"][0]["text"])["instructions"] == "Write an email"
+    for finish in ("MAX_TOKENS", "SAFETY", "RECITATION", None):
+        response["candidates"][0]["finishReason"] = finish
         with pytest.raises(HTTPException) as error:
             ai_provider.generate({})
         assert error.value.status_code == 502
-    response["choices"][0]["finish_reason"] = "stop"
+    response["candidates"][0]["finishReason"] = "STOP"
     for content in ('{"subject":"x","body":"y","send":true}', '{"subject":" ","body":"y"}', 'not JSON', None):
-        response["choices"][0]["message"]["content"] = content
+        response["candidates"][0]["content"]["parts"] = [{"text": content}]
         with pytest.raises(HTTPException):
             ai_provider.generate({})
-    response["choices"] = []
+    response["candidates"] = []
     with pytest.raises(HTTPException):
         ai_provider.generate({})
 
-    for code, status in ((429, 503), (401, 503), (403, 503), (500, 502)):
+    for code, status in ((400, 503), (401, 503), (403, 503), (404, 503), (429, 503), (500, 502)):
         def limited(request, timeout):
             raise HTTPError(request.full_url, code, "private upstream details", {}, None)
         monkeypatch.setattr(ai_provider, "urlopen", limited)
@@ -284,7 +285,6 @@ def test_groq_protocol_and_invalid_outputs(monkeypatch):
     with pytest.raises(HTTPException) as error:
         ai_provider.generate({})
     assert error.value.status_code == 504
-
 
 
 def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
@@ -313,9 +313,9 @@ def test_free_assistant_never_calls_paid_provider(client, monkeypatch):
     assert error.value.status_code == 503
 
 
-def test_legacy_openai_key_is_never_sent_to_groq(monkeypatch):
+def test_legacy_openai_key_is_never_sent_to_gemini(monkeypatch):
     monkeypatch.setattr(ai_provider, "get_settings", lambda: get_settings().model_copy(
-        update={"crm_ai_enabled": True, "crm_ai_api_key": "legacy-test-placeholder", "crm_groq_api_key": ""}))
+        update={"crm_ai_enabled": True, "crm_ai_api_key": "legacy-test-placeholder", "crm_gemini_api_key": ""}))
     def forbidden(*args, **kwargs):
         raise AssertionError("A legacy key must not be sent to another provider")
     monkeypatch.setattr(ai_provider, "urlopen", forbidden)
@@ -324,22 +324,22 @@ def test_legacy_openai_key_is_never_sent_to_groq(monkeypatch):
     assert error.value.status_code == 503
 
 
-def test_groq_access_failure_is_safe_in_real_api(client, db, monkeypatch):
+def test_gemini_access_failure_is_safe_in_real_api(client, db, monkeypatch):
     settings = get_settings().model_copy(update={
-        "crm_ai_enabled": True, "crm_groq_api_key": "private-test-placeholder",
+        "crm_ai_enabled": True, "crm_gemini_api_key": "private-test-placeholder",
     })
     monkeypatch.setattr(ai, "get_settings", lambda: settings)
     monkeypatch.setattr(ai_provider, "get_settings", lambda: settings)
 
     def transport(request, timeout):
         raise HTTPError(request.full_url, 403, "private-test-placeholder", {}, io.BytesIO(
-            b'{"error":{"code":"model_permission_blocked_project","message":"private-test-placeholder"}}'))
+            b'{"error":{"status":"PERMISSION_DENIED","message":"private-test-placeholder"}}'))
 
     monkeypatch.setattr(ai_provider, "urlopen", transport)
     login(client)
     response = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
     assert response.status_code == 503
-    assert "Project Limits" in response.json()["detail"]
+    assert "dozvole" in response.json()["detail"]
     assert "private-test-placeholder" not in response.text
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
     assert db.scalar(select(func.count()).select_from(AiAttempt)) == 1
@@ -355,11 +355,11 @@ def test_only_current_brand_knowledge_and_selected_client_reach_provider(client,
     login(client)
     response = client.post(BASE + "/generate", json=payload(), headers=ORIGIN)
     assert response.status_code == 200
-    assert response.json()["model"] == "test-model"
+    assert response.json()["model"] == "gemini-test-model"
     assert provider[0]["brand_knowledge"] == {"brand": "Test LUU", "content": "Approved LUU offering"}
     assert "Other brand knowledge" not in json.dumps(provider[0])
     status = client.get(BASE + "/status").json()
-    assert status["engine"] == "groq" and status["configured"] is True
+    assert status["engine"] == "gemini" and status["configured"] is True
     assert "test-placeholder" not in json.dumps(status)
 
 
@@ -453,7 +453,7 @@ def test_recipient_addresses_are_refreshed_after_generation_and_new_owner_blocks
 
 def test_two_field_compose_keeps_offline_templates_available_without_network(client, db, monkeypatch):
     def forbidden(*args, **kwargs):
-        raise AssertionError("Disabled Groq must not use the network")
+        raise AssertionError("Disabled Gemini must not use the network")
     monkeypatch.setattr(ai_provider, "urlopen", forbidden)
     db.add(Contact(company_id=101, business_unit_id=101, name="Test", email="recipient@example.com"))
     db.commit()
