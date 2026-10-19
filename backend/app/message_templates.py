@@ -85,7 +85,7 @@ def generate(context: dict) -> GeneratedDraft:
         personal.get("sender_name") or sender.get("name") or catalog["namePlaceholder"],
         personal.get("sender_title"),
         sender["organization"],
-        personal.get("sender_phone"),
+        personal.get("sender_phone") or sender.get("phone"),
         personal.get("sender_email"),
     ]
     body = (

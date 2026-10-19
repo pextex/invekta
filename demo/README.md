@@ -34,3 +34,9 @@ Vodič otvara ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI gen
 Mejlovi imaju odvojene pasuse, umereno podebljane ključne fraze i direktan poziv na sledeći korak. **Uredi tekst** otvara izmenu, a **Prikaži mejl** formatirani pregled. **Kopiraj mejl** prenosi i HTML formatiranje u programe koji ga podržavaju; rezervno kopiranje daje čist tekst bez oznaka za bold.
 
 Povezani Gemini dobija prodajna pravila na serveru i referentni sadržaj zvaničnog sajta izabranog brenda. Serverska provera javnih stranica kešira se 15 minuta. Ako provera ne uspe, koristi se jasno označen sačuvani sažetak. Izvori su prikazani ispod mejla. Provera sajta ne šalje podatke klijenata tim sajtovima. Promena zahteva novu verziju frontenda i backenda na Manusu; samostalni demo i dalje koristi lokalne šablone.
+
+## Moj profil
+
+Dugme **Moj profil** nalazi se gore desno, pored imena korisnika. U prijavljenom CRM-u korisnik može sačuvati ili ukloniti telefon i promeniti šifru uz trenutnu šifru i potvrdu nove (najmanje 12 znakova). Nova šifra odjavljuje ostale uređaje, dok trenutna sesija ostaje aktivna. Telefon se koristi u potpisu AI mejlova. Samostalni demo prikazuje profil bez čuvanja podataka i promene šifre.
+
+Za ovu izmenu Manus treba da objavi frontend i backend i izvrši standardne Alembic migracije (`python -m app.run_migrations` iz backend direktorijuma); nova migracija dodaje opciono polje `users.phone`.

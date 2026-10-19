@@ -1,0 +1,17 @@
+.my-profile { width: min(520px, calc(100vw - 28px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid #dce4ef; border-radius: 18px; color: #202936; background: #fff; box-shadow: 0 24px 90px #142b4b40; }
+.my-profile::backdrop { background: #10213b80; }
+.my-profile > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 22px 24px; border-bottom: 1px solid #e4eaf2; }
+.my-profile h2 { margin: 0 0 6px; font-size: 22px; }
+.my-profile header p { margin: 0; color: #66758a; font-size: 13px; }
+.my-profile-content { padding: 22px 24px; }
+.profile-identity { display: grid; gap: 6px; overflow-wrap: anywhere; margin-bottom: 24px; }
+.profile-identity span { color: #66758a; font-size: 13px; }
+.my-profile form + form { margin-top: 26px; padding-top: 22px; border-top: 1px solid #e4eaf2; }
+.my-profile fieldset { padding: 0; margin: 0; border: 0; display: grid; gap: 14px; min-width: 0; }
+.my-profile legend { font-weight: 700; padding: 0 0 16px; }
+.my-profile label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; }
+.my-profile input { width: 100%; min-width: 0; }
+.my-profile small { color: #66758a; line-height: 1.6; }
+.my-profile .primary-button { justify-self: start; }
+.profile-launch { white-space: nowrap; }
+@media(max-width:600px) { .my-profile > header, .my-profile-content { padding: 18px; } .profile-launch { padding: 8px 10px; font-size: 12px; } }

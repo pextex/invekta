@@ -66,6 +66,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(100), unique=True)
     email: Mapped[str | None] = mapped_column(String(254), unique=True)
     name: Mapped[str] = mapped_column(String(150))
+    phone: Mapped[str | None] = mapped_column(String(40))
     password_hash: Mapped[str] = mapped_column(String(300))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_platform_admin: Mapped[bool] = mapped_column(Boolean, default=False)

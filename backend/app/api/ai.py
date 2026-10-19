@@ -185,6 +185,7 @@ def generate_message(
         "sender": {
             "name": user.name,
             "organization": business_unit.name,
+            "phone": user.phone,
         },
         "company": {
             "name": company.name,

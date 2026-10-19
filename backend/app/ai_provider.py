@@ -67,6 +67,7 @@ Nepoznat bitan podatak označi sa [dopuniti]; ne popunjavaj mejl nepotrebnim pla
 Contacts sadrži stvarna imena i funkcije odabranih primalaca. Jednom se obrati po imenu, grupi grupno.
 Email adrese popunjava CRM: ne izmišljaj ih i ne dodaj ih u tekst mejla.
 Potpis preuzmi iz sender i dopunjenog personalization: ime, funkciju, brend i kontakte samo kada su dati.
+Ako sender.phone postoji, dodaj taj broj telefona u potpis osim ako korisnik traži drugačije.
 Ne izmišljaj funkciju ili broj telefona pošiljaoca. U potpisu koristi naziv brenda
 LUU, INVEKTA ili CENOBOTS bez dodatka AI. Pozdrav, ime i brend ostaju u jednoj celini
 razdvojeni pojedinačnim novim redovima, bez praznih redova unutar potpisa.

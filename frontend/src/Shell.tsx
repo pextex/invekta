@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import AppTour from "./components/AppTour";
+import MyProfile from "./components/MyProfile";
 
 export const navigation = [
   { title: "Početna tabla", icon: LayoutDashboard },
@@ -66,6 +67,7 @@ export default function Shell({
   children,
 }: Props) {
   const [tourOpen, setTourOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   function navigate(next: string) {
     onPage(next);
   }
@@ -151,6 +153,7 @@ export default function Shell({
                 <strong>{role}</strong>
               </div>
             </div>
+            <button className="secondary-button profile-launch" disabled={busy} onClick={() => { setTourOpen(false); setProfileOpen(true); }} aria-haspopup="dialog">Moj profil</button>
             {onConnect && (
               <button
                 className="primary-button connect-button"
@@ -178,6 +181,7 @@ export default function Shell({
         </header>
         <div className="content" data-tour-content>{children}</div>
       </main>
+      {profileOpen && <MyProfile name={user} demo={!connected} onClose={() => setProfileOpen(false)} />}
       {tourOpen && <AppTour key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
     </div>
   );
