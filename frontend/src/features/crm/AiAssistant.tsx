@@ -28,6 +28,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   const [engine, setEngine] = useState<"gemini" | "templates">("templates");
   const [configured, setConfigured] = useState(false);
   const [checking, setChecking] = useState(!demo);
+  const [canViewKnowledge, setCanViewKnowledge] = useState(false);
   const [canManageKnowledge, setCanManageKnowledge] = useState(false);
   const [showKnowledge, setShowKnowledge] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -42,11 +43,11 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
     if (demo) return;
     const controller = new AbortController();
     setChecking(true);
-    api<{ configured: boolean; engine: "gemini" | "templates"; can_manage_knowledge: boolean }>(
+    api<{ configured: boolean; engine: "gemini" | "templates"; can_view_knowledge: boolean; can_manage_knowledge: boolean }>(
       `/units/${unit}/ai/status`, { signal: controller.signal },
     ).then(data => {
       if (controller.signal.aborted) return;
-      setConfigured(data.configured); setEngine(data.engine); setCanManageKnowledge(data.can_manage_knowledge);
+      setConfigured(data.configured); setEngine(data.engine); setCanManageKnowledge(data.can_manage_knowledge); setCanViewKnowledge(data.can_view_knowledge);
     }).catch(e => { if (!controller.signal.aborted) setError(errorText(e)); })
       .finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => controller.abort();
@@ -129,7 +130,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   return <>
     <div className="page-heading">
       <div><h1>{assistantName}</h1><p>Opišite mejl i izaberite kompaniju. Kontakte popunjavamo automatski.</p></div>
-      {canManageKnowledge ? <button className="secondary-button" aria-expanded={showKnowledge} aria-controls="ai-brand-settings"
+      {canViewKnowledge ? <button className="secondary-button" aria-expanded={showKnowledge} aria-controls="ai-brand-settings"
         onClick={() => setShowKnowledge(value => !value)}><BookOpen size={16} /> Znanje brenda</button> : <Sparkles size={28} />}
     </div>
     {error && <p className="error-message" role="alert">{error}</p>}
@@ -137,8 +138,8 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
     {demo ? <p className="demo-notice">Demo koristi lokalni šablon. Automatski kontakti i Gemini AI rade u prijavljenom CRM-u.</p> :
       !checking && !configured ? <p className="demo-notice">{assistantName} još nije povezan. Administrator treba da podesi Gemini ključ na serveru.</p> :
         !checking && engine === "templates" ? <p className="demo-notice">Gemini AI je isključen. Lokalni šablon ne tumači slobodno uputstvo.</p> : null}
-    {canManageKnowledge && showKnowledge && <div id="ai-brand-settings">
-      <AiKnowledge unit={unit} brand={organization} canManage expanded />
+    {canViewKnowledge && showKnowledge && <div id="ai-brand-settings">
+      <AiKnowledge unit={unit} brand={organization} canManage={canManageKnowledge} expanded />
     </div>}
     <div className="ai-grid">
       <section className="panel">

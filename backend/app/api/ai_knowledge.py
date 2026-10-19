@@ -28,7 +28,9 @@ def output(knowledge, unit=None):
 
 @router.get("/knowledge")
 def knowledge(unit_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    membership(db, user, unit_id)
+    member = membership(db, user, unit_id)
+    if member.role not in {"manager", "admin"} and not user.is_platform_admin:
+        raise HTTPException(403, "Znanje brenda mogu videti samo menadžeri i administratori.")
     return output(db.get(AiBrandKnowledge, unit_id), db.get(BusinessUnit, unit_id))
 
 

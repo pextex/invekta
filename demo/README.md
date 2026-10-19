@@ -44,3 +44,5 @@ Za ovu izmenu Manus treba da objavi frontend i backend i izvrši standardne Alem
 Potpis prodajnih mejlova sada sadrži ime i prezime sa korisničkog naloga, naziv aktivnog brenda, telefon iz profila, njegov zvanični sajt i adresu. Potpis za Gemini dodaje server iz CRM podataka, a lokalni šabloni koriste iste kontakt podatke. Bez unetog telefona stoji podsetnik da se dopuni u „Moj profil“; broj se ne izmišlja. Adrese su proverene prema kontakt stranicama [LUU](https://luu.rs/kontakt/), [INVEKTA](https://invekta.rs/kontakt/) i [CENOBOTS](https://cenobots.rs/kontakt/) 19.10.2026. U samostalnom demo fajlu ime i telefon ostaju za dopunu jer nema prijavljenog korisnika.
 
 Lični podaci potpisa (ime, telefon i ostala sender_* polja) izuzeti su iz konteksta koji se šalje Gemini modelu; potpis se sastavlja na serveru nakon generisanja.
+
+Pristup „Znanje brenda“: administratori i menadžeri imaju pregled, a izmenu zadržavaju administratori. Komercijalistima je skriveno dugme i server odbija direktan zahtev za sadržaj; AI i dalje koristi odobreno znanje za pripremu mejlova. Pristup uvek zahteva aktivno članstvo u odgovarajućem brendu.

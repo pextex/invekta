@@ -13,7 +13,7 @@ def login(client, username="sales"):
 def test_knowledge_is_admin_managed_shared_with_members_and_separated_by_brand(client, db):
     assert client.get(BASE).status_code == 401
     login(client)
-    assert client.get(BASE).json()["content"] == ""
+    assert client.get(BASE).status_code == 403
     for username in ("sales", "manager"):
         login(client, username)
         assert client.put(BASE, json={"content": "Not permitted"}, headers=ORIGIN).status_code == 403
@@ -24,12 +24,15 @@ def test_knowledge_is_admin_managed_shared_with_members_and_separated_by_brand(c
     row = response.json()
     assert row["content"] == "Proverene usluge LUU" and row["version"] == 1
     login(client, "sales")
+    assert client.get(BASE).status_code == 403
+    login(client, "manager")
     assert client.get(BASE).json() == row
+    login(client, "sales")
     assert client.put(BASE, json={"content": "Changed", "version": 1}, headers=ORIGIN).status_code == 403
     assert client.get("/api/units/102/ai/knowledge").status_code == 403
     login(client, "outsider")
     assert client.get(BASE).status_code == 403
-    assert client.get("/api/units/102/ai/knowledge").json()["content"] == ""
+    assert client.get("/api/units/102/ai/knowledge").status_code == 403
     db.get(Membership, (104, 102)).enabled = False
     db.commit()
     assert client.get("/api/units/102/ai/knowledge").status_code == 403

@@ -110,6 +110,7 @@ def status(
         "disabled": not settings.crm_ai_enabled,
         "model": settings.crm_gemini_model if settings.crm_ai_enabled else "local-templates",
         "engine": "gemini" if settings.crm_ai_enabled else "templates",
+        "can_view_knowledge": member.role in {"manager", "admin"} or user.is_platform_admin,
         "can_manage_knowledge": member.role == "admin" or user.is_platform_admin,
     }
 
