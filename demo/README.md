@@ -21,14 +21,10 @@ Forma ima samo zahtev i kompaniju. Stvarni kontakti se automatski popunjavaju sa
 
 ## Vodič sa naracijom
 
-Dugme **Vodič kroz aplikaciju** otvara kratke lekcije sa pokazivačem, isticanjem elemenata i unapred generisanom AI naracijom ženskim glasom na srpskom. Snimci su uključeni u HTML, pa glas ne zavisi od instaliranih glasova uređaja niti zahteva serverski ključ pri reprodukciji. Pauza zadržava mesto u snimku; Ponovi korak pokreće ga od početka. Dostupni su isključivanje naracije, ručno preskakanje i automatski prelazak. Ako browser blokira zvuk, pritisnite Ponovi korak. Pre pokretanja sačuvajte otvoren unos ili kopirajte pripremljeni mejl.
+Dugme **Vodič kroz aplikaciju** otvara lekcije sa pokazivačem, isticanjem elemenata i unapred pripremljenom AI naracijom ženskim glasom na srpskom. Svih 26 jedinstvenih koraka ima snimak, uključujući uvode za INVEKTA AI i CENOBOTS AI. Snimci su uključeni u HTML i pri reprodukciji ne zahtevaju nalog ili serverski ključ.
 
-Vodič sam otvara odgovarajuće ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja.
+**Pokreni vodič od početka** počinje lekcijom **Početna tabla**: današnji zadaci, pokazatelji prodaje i pregled levka. Posle nje automatski slede Kompanije i ostale dostupne lekcije. Naslovi odgovaraju nazivima kartica, a na početku snimljene lekcije izgovara se njen naziv. Uvodi za Zadaci i Izveštaji su celi snimci sa jasno odvojenim naslovom.
 
-Trenutno je snimljeno 18 od 22 jedinstvena koraka. Zbog dnevnog Gemini limita, uvodna AI lekcija za Invektu, Cenobots i opšti pregled, kao i lekcija administracije korisnika zasad imaju tekst bez zvuka. Ostali koraci imaju snimljenu naraciju. ElevenLabs se ne koristi.
+Tokom lekcije vodič se minimizuje. Dugme **Proširi vodič** prikazuje tekst i podešavanja. Pauza zadržava mesto u snimku i zaustavlja automatski prelazak. **Ponovi korak** pušta snimak od početka. Dostupni su isključivanje naracije i ručno preskakanje. Ako browser blokira zvuk, pritisnite Ponovi korak.
 
-Naslovi lekcija odgovaraju nazivima kartica. Vodič podrazumevano automatski nastavlja kroz naredne dostupne lekcije sve do kraja, a tokom lekcije prikazuje se minimizovan panel sa kontrolama. Dugme Proširi vodič prikazuje detaljan tekst i podešavanja; pauza zaustavlja zvuk i automatski prelazak.
-
-Snimljene lekcije počinju izgovorenim nazivom kartice (Kompanije, Prodajni levak, Targeti, Zadaci i Izveštaji), zatim objašnjenjem. Najave za LUU AI i Hronologiju već izgovaraju odgovarajući naziv. Četiri prethodno označena koraka bez snimka i dalje imaju tekstualno uputstvo.
-
-Dugme **Pokreni vodič od početka** počinje od kartice **Kompanije**. Lekcija Početna tabla privremeno je uklonjena iz vodiča.
+Vodič otvara ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. Pre početka sačuvajte otvoren unos ili kopirajte pripremljeni mejl. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja. ElevenLabs se ne koristi.
