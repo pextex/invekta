@@ -19,7 +19,7 @@ import { nextTourPosition, previousTourPosition } from "./tourLessons";
 it("uses the same lesson titles as the corresponding navigation cards", () => {
   const lessons = tourLessons("LUU", true, true);
   expect(lessons.map(item => item.title)).toEqual([
-    "Kompanije", "Prodajni levak", "Targeti", "Zadaci", "LUU AI", "Izveštaji", "Hronologija promena - log", "Korisnici i pristup",
+    "Početna tabla", "Kompanije", "Prodajni levak", "Targeti", "Zadaci", "LUU AI", "Izveštaji", "Hronologija promena - log", "Korisnici i pristup",
   ]);
 });
 it("continues between lessons, permits going back across their boundary, and ends at the last permitted lesson", () => {
@@ -33,5 +33,14 @@ it("continues between lessons, permits going back across their boundary, and end
     const last = lessons[lessons.length - 1];
     expect(nextTourPosition(lessons, last.id, last.steps.length - 1)).toBeNull();
     expect(previousTourPosition(lessons, lessons[0].id, 0)).toBeNull();
+  }
+});
+
+it("begins on the dashboard and then continues to Companies", () => {
+  for (const brand of ["LUU", "INVEKTA", "CENOBOTS"]) {
+    const lessons = tourLessons(brand);
+    expect(lessons[0].id).toBe("dashboard");
+    expect(lessons[0].steps.every(step => step.page === "Početna tabla")).toBe(true);
+    expect(nextTourPosition(lessons, "dashboard", lessons[0].steps.length - 1)).toEqual({ lessonId: "companies", index: 0 });
   }
 });

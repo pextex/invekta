@@ -33,3 +33,5 @@
 .app-tour .tour-caption { max-height: 72px; overflow: auto; font-size: 12px; margin: 10px 0 0; }
 .tour-step-title { font-size: 14px; color: #52627b; margin: 0; }
 @media (max-width: 600px) { .app-tour-minimized { width: min(330px, calc(100vw - 16px)); right: 8px; bottom: 8px; } }
+
+.app-tour .tour-start { width: 100%; margin-top: 8px; }

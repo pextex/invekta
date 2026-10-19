@@ -15,5 +15,5 @@ it("covers every narration with a recording or an explicitly documented text-onl
   }
   expect(new Set([...Object.keys(tourAudio), ...pendingNarration])).toEqual(required);
   expect(Object.keys(tourAudio)).toHaveLength(18);
-  expect(pendingNarration).toHaveLength(4);
+  expect(pendingNarration).toHaveLength(8);
 });

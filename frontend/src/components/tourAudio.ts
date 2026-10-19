@@ -38,6 +38,10 @@ export const tourAudio: Record<string, string> = {
   "Pronađite promenu. Izaberite period i komercijalistu. Promene su poređane od najnovije. Dugmad ispod tabele služe za prelazak na starije zapise.": audio17,
 };
 export const pendingNarration: string[] = [
+  "Početna tabla. Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja.",
+  "Vaš plan za danas. U ovom delu nalaze se zadaci za danas. Dugme Otvori kalendar vodi na karticu Zadaci, gde možete pregledati druge dane i planirati sledeće aktivnosti.",
+  "Pokazatelji prodaje. Ove kartice pokazuju ključne podatke o kompanijama i prodajnim prilikama. Vrednost otvorenih prilika predstavlja potencijal prodaje, a ne ostvaren prihod. Prikazane vrednosti pripadaju trenutno izabranom brendu.",
+  "Pregled prodajnog levka. Ovaj pregled pokazuje koliko je prilika u svakoj fazi prodaje. Dugme Otvori prodajni levak vodi na detaljne kartice prilika. Vodič sada nastavlja na karticu Kompanije.",
   "Administracija pristupa. Ovde administrator upravlja korisnicima i njihovim pristupom poslovnim jedinicama. Pre promene uloge proverite kom brendu korisnik treba da pristupa. Vodič ne menja ovlašćenja.",
   "INVEKTA AI. INVEKTA AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
   "CENOBOTS AI. CENOBOTS AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
