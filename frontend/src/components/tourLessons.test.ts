@@ -14,3 +14,24 @@ it("uses the current brand name with the shared AI route", () => {
     expect(ai.steps.every(step => step.page === "Invekta AI")).toBe(true);
   }
 });
+
+import { nextTourPosition, previousTourPosition } from "./tourLessons";
+it("uses the same lesson titles as the corresponding navigation cards", () => {
+  const lessons = tourLessons("LUU", true, true);
+  expect(lessons.map(item => item.title)).toEqual([
+    "Kompanije", "Prodajni levak", "Targeti", "Zadaci", "LUU AI", "Izveštaji", "Hronologija promena - log", "Korisnici i pristup",
+  ]);
+});
+it("continues between lessons, permits going back across their boundary, and ends at the last permitted lesson", () => {
+  for (const privileged of [false, true]) {
+    const lessons = tourLessons("LUU", privileged, privileged);
+    for (let i = 0; i < lessons.length - 1; i++) {
+      const current = lessons[i], next = lessons[i + 1];
+      expect(nextTourPosition(lessons, current.id, current.steps.length - 1)).toEqual({ lessonId: next.id, index: 0 });
+      expect(previousTourPosition(lessons, next.id, 0)).toEqual({ lessonId: current.id, index: current.steps.length - 1 });
+    }
+    const last = lessons[lessons.length - 1];
+    expect(nextTourPosition(lessons, last.id, last.steps.length - 1)).toBeNull();
+    expect(previousTourPosition(lessons, lessons[0].id, 0)).toBeNull();
+  }
+});

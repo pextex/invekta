@@ -26,3 +26,5 @@ Dugme **Vodič kroz aplikaciju** otvara kratke lekcije sa pokazivačem, isticanj
 Vodič sam otvara odgovarajuće ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja.
 
 Trenutno je snimljeno 18 od 22 jedinstvena koraka. Zbog dnevnog Gemini limita, uvodna AI lekcija za Invektu, Cenobots i opšti pregled, kao i lekcija administracije korisnika zasad imaju tekst bez zvuka. Ostali koraci imaju snimljenu naraciju. ElevenLabs se ne koristi.
+
+Naslovi lekcija odgovaraju nazivima kartica. Vodič podrazumevano automatski nastavlja kroz naredne dostupne lekcije sve do kraja, a tokom lekcije prikazuje se minimizovan panel sa kontrolama. Dugme Proširi vodič prikazuje detaljan tekst i podešavanja; pauza zaustavlja zvuk i automatski prelazak.

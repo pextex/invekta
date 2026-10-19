@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, MousePointer2, Pause, Play, RotateCcw, Volume2, X } from "lucide-react";
-import { tourLessons } from "./tourLessons";
+import { ArrowLeft, ArrowRight, Maximize2, Minimize2, MousePointer2, Pause, Play, RotateCcw, Volume2, X } from "lucide-react";
+import { nextTourPosition, previousTourPosition, tourLessons } from "./tourLessons";
 import { tourAudio } from "./tourAudio";
 import "./appTour.css";
 
@@ -12,7 +12,8 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [narration, setNarration] = useState(true);
-  const [auto, setAuto] = useState(false);
+  const [auto, setAuto] = useState(true);
+  const [minimized, setMinimized] = useState(false);
   const [repeat, setRepeat] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
   const [waiting, setWaiting] = useState(false);
@@ -27,6 +28,9 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
   closeRef.current = onClose;
   const lesson = lessons.find(item => item.id === lessonId);
   const step = lesson?.steps[index];
+  const nextPosition = nextTourPosition(lessons, lessonId, index);
+  const previousPosition = previousTourPosition(lessons, lessonId, index);
+  const compact = !!lesson && !finished && minimized;
   const audioSource = step ? tourAudio[`${step.title}. ${step.text}`] : undefined;
 
   useEffect(() => {
@@ -103,31 +107,51 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
     const textOnly = !narration || !audioSource || speechError;
     if (!textOnly && !narrationEnded) return;
     const timer = setTimeout(() => {
-      if (index + 1 < (lesson?.steps.length ?? 0)) setIndex(value => value + 1);
-      else setFinished(true);
+      if (nextPosition) {
+        if (nextPosition.lessonId !== lessonId) setMinimized(true);
+        setLessonId(nextPosition.lessonId); setIndex(nextPosition.index);
+      } else setFinished(true);
     }, textOnly ? Math.max(8000, step.text.split(/\s+/).length * 500) : 1800);
     return () => clearTimeout(timer);
-  }, [step?.text, step?.page, finished, playing, auto, page, narration, audioSource, speechError, narrationEnded, index, lesson?.steps.length]);
+  }, [step?.text, step?.page, finished, playing, auto, page, narration, audioSource, speechError, narrationEnded, lessonId, nextPosition?.lessonId, nextPosition?.index]);
 
-  function start(id: string) { setLessonId(id); setIndex(0); setFinished(false); setPlaying(true); setRepeat(value => value + 1); }
-  function next() { if (lesson && index + 1 < lesson.steps.length) setIndex(value => value + 1); else setFinished(true); }
+  function start(id: string) { setLessonId(id); setIndex(0); setFinished(false); setPlaying(true); setMinimized(true); setRepeat(value => value + 1); }
+  function next() {
+    if (nextPosition) {
+      if (nextPosition.lessonId !== lessonId) setMinimized(true);
+      setLessonId(nextPosition.lessonId); setIndex(nextPosition.index);
+    } else setFinished(true);
+  }
+  function previous() { if (previousPosition) { setLessonId(previousPosition.lessonId); setIndex(previousPosition.index); } }
+  const nextLabel = !nextPosition ? "Završi vodič" : nextPosition.lessonId !== lessonId ? "Sledeća lekcija" : "Sledeći korak";
   return <>
     {step && !finished && box && <div className="tour-markers" aria-hidden="true">
       <div className="tour-highlight" style={box} />
       <MousePointer2 className="tour-pointer" size={36} fill="#2563eb" stroke="white" style={{ top: Math.max(8, Math.min(window.innerHeight - 48, box.top + Math.min(box.height / 2, 60))), left: Math.max(8, Math.min(window.innerWidth - 44, box.left + Math.min(box.width - 16, 80))) }} />
     </div>}
-    <section className="app-tour" role="dialog" aria-modal="false" aria-labelledby="tour-title" ref={panelRef} tabIndex={-1}>
-      <header><span><MousePointer2 size={17} />Vodič kroz aplikaciju</span><button type="button" aria-label="Zatvori vodič" onClick={onClose}><X size={19} /></button></header>
+    <section className={`app-tour${compact ? " app-tour-minimized" : ""}`} role="dialog" aria-modal="false" aria-labelledby="tour-title" ref={panelRef} tabIndex={-1}>
+      <header><span><MousePointer2 size={17} />{compact ? <span><strong id="tour-title">{lesson?.title}</strong><small>{step?.title} · {index + 1}/{lesson?.steps.length}</small></span> : "Vodič kroz aplikaciju"}</span><div className="tour-header-actions">
+        {lesson && !finished && <button type="button" aria-label={compact ? "Proširi vodič" : "Minimizuj vodič"} onClick={() => setMinimized(value => !value)}>{compact ? <Maximize2 size={17} /> : <Minimize2 size={17} />}</button>}
+        <button type="button" aria-label="Zatvori vodič" onClick={onClose}><X size={19} /></button></div></header>
       {!lesson ? <>
         <h2 id="tour-title">Šta želite da naučite?</h2>
-        <p>Izaberite kratku lekciju. Pokazivač će pratiti elemente aplikacije uz objašnjenje na srpskom. Vodič otvara ekrane, a unos i čuvanje podataka ostaju vama. Pre početka sačuvajte otvoren unos ili kopirajte pripremljeni mejl.</p>
+        <p>Izaberite karticu od koje želite da počnete. Vodič zatim automatski nastavlja kroz ostale dostupne lekcije. Pokazivač će pratiti elemente aplikacije uz objašnjenje na srpskom. Vodič otvara ekrane, a unos i čuvanje podataka ostaju vama. Pre početka sačuvajte otvoren unos ili kopirajte pripremljeni mejl.</p>
         <div className="tour-lessons">{lessons.map(item => <button type="button" key={item.id} onClick={() => start(item.id)}>{item.title}<ArrowRight size={16} /></button>)}</div>
       </> : finished ? <>
-        <h2 id="tour-title">Lekcija je završena</h2><p>Prošli ste lekciju „{lesson.title}“. Možete je ponoviti ili izabrati drugu.</p>
+        <h2 id="tour-title">Vodič je završen</h2><p>Stigli ste do kraja dostupnih lekcija. Možete ponoviti poslednju lekciju ili izabrati karticu od koje želite ponovo da počnete.</p>
         <div className="tour-actions"><button type="button" onClick={() => start(lesson.id)}><RotateCcw size={15} />Ponovi lekciju</button><button type="button" onClick={() => setLessonId(null)}>Sve lekcije</button></div>
+      </> : step && compact ? <>
+        {(!audioSource || speechError) && <p className="tour-caption" aria-live="polite">{step.text}</p>}
+        <div className="tour-compact-controls">
+          <button type="button" aria-label="Prethodni korak" disabled={!previousPosition} onClick={previous}><ArrowLeft size={16} /></button>
+          <button type="button" onClick={() => setPlaying(value => !value)}>{playing ? <Pause size={16} /> : <Play size={16} />}{playing ? "Pauza" : "Nastavi"}</button>
+          <button type="button" aria-label="Ponovi korak" onClick={() => { setPlaying(true); setRepeat(value => value + 1); }}><RotateCcw size={16} /></button>
+          <button type="button" className="tour-next" aria-label={nextLabel} onClick={next}><ArrowRight size={16} /></button>
+        </div>
+        {speechError && <small role="status">Zvuk nije pokrenut. Pritisnite Ponovi korak.</small>}
       </> : step && <>
         <div className="tour-progress">{lesson.title} · Korak {index + 1} od {lesson.steps.length}</div>
-        <h2 id="tour-title">{step.title}</h2><p aria-live="polite">{step.text}</p>
+        <h2 id="tour-title">{lesson.title}</h2><h3 className="tour-step-title">{step.title}</h3><p aria-live="polite">{step.text}</p>
         {waiting && <small className="tour-note">Element trenutno nije prikazan. Sačekajte učitavanje, ponovite korak ili ga preskočite.</small>}
         <div className="tour-actions">
           <button type="button" onClick={() => setPlaying(value => !value)}>{playing ? <Pause size={15} /> : <Play size={15} />}{playing ? "Pauza" : "Nastavi"}</button>
@@ -137,7 +161,7 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
         <div className="tour-options"><label><input type="checkbox" checked={narration} disabled={!audioSource} onChange={event => setNarration(event.target.checked)} /><Volume2 size={15} />Naracija</label><label><input type="checkbox" checked={auto} onChange={event => setAuto(event.target.checked)} />Automatski prelazi</label></div>
         {audioSource && <small className="tour-note">AI naracija · ženski glas na srpskom.</small>}
         {(!audioSource || speechError) && <small className="tour-note" role="status">{!audioSource ? "Za ovaj korak je trenutno dostupno tekstualno uputstvo. Ostale snimljene korake prati ženski glas na srpskom." : "Zvuk nije pokrenut. Pritisnite Ponovi korak ili pratite tekst."}</small>}
-        <footer><button type="button" disabled={index === 0} onClick={() => setIndex(value => value - 1)}><ArrowLeft size={15} />Nazad</button><button type="button" onClick={next}>Preskoči</button><button type="button" className="tour-next" onClick={next}>{index + 1 === lesson.steps.length ? "Završi" : "Sledeći korak"}<ArrowRight size={15} /></button></footer>
+        <footer><button type="button" disabled={!previousPosition} onClick={previous}><ArrowLeft size={15} />Nazad</button><button type="button" onClick={next}>Preskoči</button><button type="button" className="tour-next" onClick={next}>{nextLabel}<ArrowRight size={15} /></button></footer>
       </>}
     </section>
   </>;

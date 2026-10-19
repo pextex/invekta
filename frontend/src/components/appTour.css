@@ -22,3 +22,14 @@
 @media (max-width: 600px) { .app-tour { right: 8px; bottom: 8px; width: calc(100vw - 16px); max-height: 54dvh; padding: 13px; } .app-tour h2 { font-size: 17px; } }
 @media (prefers-reduced-motion: reduce) { .tour-pointer { transition: none; } }
 @media (max-width: 690px) { .tour-launch { flex-shrink: 0; width: auto; white-space: nowrap; margin: 0 6px; } }
+.tour-header-actions { display: flex; gap: 5px; }
+.app-tour-minimized { width: min(330px, calc(100vw - 32px)); padding: 12px; }
+.app-tour-minimized header > span { min-width: 0; align-items: flex-start; }
+.app-tour-minimized header > span > span { display: grid; gap: 4px; min-width: 0; }
+.app-tour-minimized header strong { font-size: 14px; }
+.app-tour-minimized header small { color: #52627b; font-size: 11px; font-weight: 400; }
+.app-tour-minimized header button { padding: 6px; }
+.tour-compact-controls { display: flex; justify-content: space-between; gap: 6px; margin-top: 10px; }
+.app-tour .tour-caption { max-height: 72px; overflow: auto; font-size: 12px; margin: 10px 0 0; }
+.tour-step-title { font-size: 14px; color: #52627b; margin: 0; }
+@media (max-width: 600px) { .app-tour-minimized { width: min(330px, calc(100vw - 16px)); right: 8px; bottom: 8px; } }
