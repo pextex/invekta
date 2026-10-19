@@ -37,7 +37,6 @@ def generate(context: dict) -> GeneratedDraft:
     if goal not in catalog["subjects"]:
         goal = "meeting"  # Local templates cannot infer a goal from free-form text.
     mode = context["mode"]
-    concise = context.get("tone") == "concise"
     if mode == "reply":
         subject = render(catalog["replySubject"])
         paragraphs = [
@@ -70,8 +69,6 @@ def generate(context: dict) -> GeneratedDraft:
         else goal + "Cta"
     )
     paragraphs.append(catalog[cta])
-    if not concise:
-        paragraphs.append(catalog["thanks"])
     greeting = personal.get("greeting") or (
         f"Dear {contact['name']},"
         if en and contact.get("name")

@@ -10,6 +10,7 @@ from ..ai_recipients import AiRecipient, company_recipients
 from ..message_templates import generate as generate_template
 from ..config import get_settings
 from ..brand_knowledge import content_for
+from ..brand_sources import website_reference
 from ..db import get_db
 from ..models import (
     AiBrandKnowledge,
@@ -66,6 +67,9 @@ class GeneratedMessage(GeneratedDraft):
     recipient: str | None
     recipients: list[AiRecipient]
     model: str
+    sources: list[str] = Field(default_factory=list)
+    source_status: Literal["live", "cached", "snapshot", "unavailable"] = "unavailable"
+    sources_checked_at: str | None = None
 
 
 def output(draft):
@@ -234,6 +238,10 @@ def generate_message(
     db.execute(delete(AiAttempt).where(AiAttempt.created_at < now - timedelta(days=1)))
     db.add(AiAttempt(actor_id=actor_id))
     db.commit()
+    reference = website_reference(business_unit.code) if settings.crm_ai_enabled else {
+        "status": "unavailable", "sources": [], "content": "", "checked_at": None,
+    }
+    context["website_reference"] = reference
     result = generate(context) if settings.crm_ai_enabled else generate_template(context)
     # Recheck after the external call: revoked access must not receive the content.
     db.expire_all()
@@ -246,6 +254,9 @@ def generate_message(
         "recipient": ", ".join(str(person.email) for person in recipients) or None,
         "recipients": recipients,
         "model": settings.crm_gemini_model if settings.crm_ai_enabled else "local-templates",
+        "sources": reference["sources"],
+        "source_status": reference["status"],
+        "sources_checked_at": reference["checked_at"],
     }
 
 

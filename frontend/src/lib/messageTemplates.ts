@@ -84,7 +84,6 @@ export function prepareLocalMessage(input: {
           ? c.proposalCta
           : c.introductionCta,
   );
-  if (input.tone !== "concise") paragraphs.push(c.thanks);
   const signature = [
     p.sender_name || c.namePlaceholder,
     p.sender_title,

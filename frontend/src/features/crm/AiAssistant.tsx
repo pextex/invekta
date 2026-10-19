@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { BookOpen, Copy, Sparkles } from "lucide-react";
 import AiKnowledge from "./AiKnowledge";
+import EmailPreview from "./EmailPreview";
+import { emailClipboard } from "../../lib/emailFormatting";
 import CompanyPicker from "./CompanyPicker";
 import { api, errorText } from "../../lib/api";
 import { prepareLocalMessage } from "../../lib/messageTemplates";
@@ -9,7 +11,7 @@ import "./aiAssistant.css";
 import { organizationAiName } from "../../organizations";
 
 type Recipient = { id: number; name: string; position: string | null; email: string };
-type Draft = { subject: string; body: string; recipient: string | null; recipients: Recipient[]; model: string };
+type Draft = { subject: string; body: string; recipient: string | null; recipients: Recipient[]; model: string; sources?: string[]; source_status?: "live" | "cached" | "snapshot" | "unavailable"; sources_checked_at?: string | null };
 type RecipientsState = { company: number; items: Recipient[]; loading: boolean; error: string };
 
 export default function AiAssistant({ unit, companies, demo = false, organization = "CRM" }: {
@@ -20,6 +22,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   const [companyName, setCompanyName] = useState("");
   const [instructions, setInstructions] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [editingBody, setEditingBody] = useState(false);
   const [recipients, setRecipients] = useState<RecipientsState>({ company: 0, items: [], loading: false, error: "" });
   const [refreshContacts, setRefreshContacts] = useState(0);
   const [engine, setEngine] = useState<"gemini" | "templates">("templates");
@@ -66,7 +69,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   const contactsLoading = !demo && company > 0 && (recipients.company !== company || recipients.loading);
   const contactsError = recipients.company === company ? recipients.error : "";
   function chooseCompany(id: number, name?: string) {
-    setCompany(id); setCompanyName(name ?? ""); setDraft(null); setError(""); setMessage("");
+    setCompany(id); setCompanyName(name ?? ""); setDraft(null); setEditingBody(false); setError(""); setMessage("");
   }
   async function generate(event: FormEvent) {
     event.preventDefault();
@@ -87,7 +90,7 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
         });
       }
       if (controller.signal.aborted) return;
-      setDraft(next);
+      setDraft(next); setEditingBody(false);
       setRecipients({ company, items: next.recipients, loading: false, error: "" });
       setMessage("Mejl je pripremljen. Pregledajte primaoce i tekst pre kopiranja.");
     } catch (e) { if (!controller.signal.aborted) setError(errorText(e)); }
@@ -101,12 +104,25 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
       return;
     }
     try {
-      await navigator.clipboard.writeText(addressesOnly ? draft.recipient ?? "" :
-        `${draft.recipient?.trim() ? `Za: ${draft.recipient.trim()}\n` : ""}Predmet: ${draft.subject}\n\n${draft.body}`);
+      if (addressesOnly) await navigator.clipboard.writeText(draft.recipient ?? "");
+      else {
+        const content = emailClipboard(draft);
+        if (typeof ClipboardItem !== "undefined" && navigator.clipboard.write) {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({
+              "text/html": new Blob([content.html], { type: "text/html" }),
+              "text/plain": new Blob([content.plain], { type: "text/plain" }),
+            })]);
+          } catch { await navigator.clipboard.writeText(content.plain); }
+        } else await navigator.clipboard.writeText(content.plain);
+      }
       setMessage(addressesOnly ? "Adrese primalaca su kopirane." : "Mejl je kopiran. Nalepite ga u svoj email program.");
     } catch {
-      const field = addressesOnly ? recipientRef.current : bodyRef.current;
-      field?.focus(); field?.select();
+      if (!addressesOnly) setEditingBody(true);
+      requestAnimationFrame(() => {
+        const field = addressesOnly ? recipientRef.current : bodyRef.current;
+        field?.focus(); field?.select();
+      });
       setError("Browser nije dozvolio kopiranje. Označeni tekst kopirajte ručno.");
     }
   }
@@ -160,8 +176,16 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
               onChange={event => setDraft({ ...draft, recipient: event.target.value })} placeholder="Email adrese odvojene zarezom" />
           </label>
           <label>Predmet<input maxLength={200} value={draft.subject} onChange={event => setDraft({ ...draft, subject: event.target.value })} /></label>
-          <label>Tekst poruke<textarea ref={bodyRef} aria-label="Tekst poruke" maxLength={20000} rows={16}
-            value={draft.body} onChange={event => setDraft({ ...draft, body: event.target.value })} /></label>
+          <div className="email-editor-heading"><strong>Tekst poruke</strong><button type="button" className="text-button" aria-pressed={editingBody} onClick={() => setEditingBody(value => !value)}>{editingBody ? "Prikaži mejl" : "Uredi tekst"}</button></div>
+          {editingBody ? <>
+            <textarea ref={bodyRef} aria-label="Tekst poruke" maxLength={20000} rows={16} value={draft.body} onChange={event => setDraft({ ...draft, body: event.target.value })} />
+            <small className="section-hint">Pasuse razdvojite praznim redom. Za podebljavanje koristite **važan deo teksta**.</small>
+          </> : <EmailPreview body={draft.body} />}
+          {!!draft.sources?.length && <aside className="email-sources" aria-label="Izvori korišćeni za mejl">
+            <strong>Reference brenda</strong>
+            <p>{draft.source_status === "snapshot" ? "Sajt trenutno nije dostupan. Korišćen je sačuvan sažetak; aktuelne komercijalne uslove treba potvrditi." : draft.source_status === "cached" ? "Korišćena je nedavno proverena verzija zvaničnog sajta." : "Ponuda je proverena prema zvaničnom sajtu brenda."}</p>
+            <ul>{draft.sources.map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></li>)}</ul>
+          </aside>}
           <div className="form-actions">
             <button type="button" className="primary-button" onClick={() => copy()}><Copy size={16} /> Kopiraj mejl</button>
             <button type="button" className="secondary-button" disabled={!draft.recipient?.trim()} onClick={() => copy(true)}>Kopiraj adrese</button>

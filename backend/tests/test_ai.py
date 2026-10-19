@@ -102,7 +102,7 @@ def test_selected_context_and_message_response_are_not_persisted(client, db, pro
     assert provider[0]["language"] == "en"
     assert "recipient@example.com" not in json.dumps(provider[0])
     assert "Test firma B" not in json.dumps(provider[0])
-    assert set(draft) == {"subject", "body", "recipient", "recipients", "model"}
+    assert set(draft) == {"subject", "body", "recipient", "recipients", "model", "sources", "source_status", "sources_checked_at"}
     assert draft["recipients"] == [{"id": contact.id, "name": "Test Contact", "position": "Direktor", "email": "recipient@example.com"}]
     assert db.scalar(select(func.count()).select_from(AiDraft)) == 0
     assert db.scalar(select(func.count()).select_from(AiAttempt)) == 1
@@ -253,7 +253,7 @@ def test_gemini_protocol_and_invalid_outputs(monkeypatch):
     assert ai_provider.generate({"instructions": "Write an email"}).subject == "Subject"
     assert captured[0]["generationConfig"]["responseMimeType"] == "application/json"
     assert captured[0]["generationConfig"]["responseJsonSchema"]["required"] == ["subject", "body"]
-    assert "Invekta AI" in captured[0]["systemInstruction"]["parts"][0]["text"]
+    assert "INVEKTA AI" in captured[0]["systemInstruction"]["parts"][0]["text"]
     assert "tools" not in captured[0]
     assert json.loads(captured[0]["contents"][0]["parts"][0]["text"])["instructions"] == "Write an email"
     for finish in ("MAX_TOKENS", "SAFETY", "RECITATION", None):

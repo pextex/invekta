@@ -28,3 +28,9 @@ Dugme **Vodič kroz aplikaciju** otvara lekcije sa pokazivačem, isticanjem elem
 Tokom lekcije vodič se minimizuje. Dugme **Proširi vodič** prikazuje tekst i podešavanja. Pauza zadržava mesto u snimku i zaustavlja automatski prelazak. **Ponovi korak** pušta snimak od početka. Dostupni su isključivanje naracije i ručno preskakanje. Ako browser blokira zvuk, pritisnite Ponovi korak.
 
 Vodič otvara ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. Pre početka sačuvajte otvoren unos ili kopirajte pripremljeni mejl. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja. ElevenLabs se ne koristi.
+
+## Pregledni prodajni mejlovi
+
+Mejlovi imaju odvojene pasuse, umereno podebljane ključne fraze i direktan poziv na sledeći korak. **Uredi tekst** otvara izmenu, a **Prikaži mejl** formatirani pregled. **Kopiraj mejl** prenosi i HTML formatiranje u programe koji ga podržavaju; rezervno kopiranje daje čist tekst bez oznaka za bold.
+
+Povezani Gemini dobija prodajna pravila na serveru i referentni sadržaj zvaničnog sajta izabranog brenda. Serverska provera javnih stranica kešira se 15 minuta. Ako provera ne uspe, koristi se jasno označen sačuvani sažetak. Izvori su prikazani ispod mejla. Provera sajta ne šalje podatke klijenata tim sajtovima. Promena zahteva novu verziju frontenda i backenda na Manusu; samostalni demo i dalje koristi lokalne šablone.
