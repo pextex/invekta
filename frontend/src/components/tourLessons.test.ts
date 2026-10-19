@@ -19,7 +19,7 @@ import { nextTourPosition, previousTourPosition } from "./tourLessons";
 it("uses the same lesson titles as the corresponding navigation cards", () => {
   const lessons = tourLessons("LUU", true, true);
   expect(lessons.map(item => item.title)).toEqual([
-    "Početna tabla", "Kompanije", "Prodajni levak", "Targeti", "Zadaci", "LUU AI", "Izveštaji", "Hronologija promena - log", "Korisnici i pristup",
+    "Kompanije", "Prodajni levak", "Targeti", "Zadaci", "LUU AI", "Izveštaji", "Hronologija promena - log", "Korisnici i pristup",
   ]);
 });
 it("continues between lessons, permits going back across their boundary, and ends at the last permitted lesson", () => {
@@ -36,11 +36,12 @@ it("continues between lessons, permits going back across their boundary, and end
   }
 });
 
-it("begins on the dashboard and then continues to Companies", () => {
+it("begins with Companies while the dashboard lesson is excluded", () => {
   for (const brand of ["LUU", "INVEKTA", "CENOBOTS"]) {
     const lessons = tourLessons(brand);
-    expect(lessons[0].id).toBe("dashboard");
-    expect(lessons[0].steps.every(step => step.page === "Početna tabla")).toBe(true);
-    expect(nextTourPosition(lessons, "dashboard", lessons[0].steps.length - 1)).toEqual({ lessonId: "companies", index: 0 });
+    expect(lessons[0].id).toBe("companies");
+    expect(lessons.some(lesson => lesson.id === "dashboard")).toBe(false);
+    expect(lessons[0].steps.every(step => step.page === "Kompanije")).toBe(true);
+    expect(nextTourPosition(lessons, "companies", lessons[0].steps.length - 1)).toEqual({ lessonId: "pipeline", index: 0 });
   }
 });

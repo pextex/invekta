@@ -5,12 +5,6 @@ const nav = (page: string) => `[data-tour-nav="${page}"]`;
 export function tourLessons(organization?: string, canViewHistory = false, canManageUsers = false): TourLesson[] {
   const ai = organizationAiName(organization);
   const lessons: TourLesson[] = [
-    { id: "dashboard", title: "Početna tabla", steps: [
-      { page: "Početna tabla", target: nav("Početna tabla"), title: "Početna tabla", text: "Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja." },
-      { page: "Početna tabla", target: ".daily-welcome", title: "Vaš plan za danas", text: "U ovom delu nalaze se zadaci za danas. Dugme Otvori kalendar vodi na karticu Zadaci, gde možete pregledati druge dane i planirati sledeće aktivnosti." },
-      { page: "Početna tabla", target: ".metrics", title: "Pokazatelji prodaje", text: "Ove kartice pokazuju ključne podatke o kompanijama i prodajnim prilikama. Vrednost otvorenih prilika predstavlja potencijal prodaje, a ne ostvaren prihod. Prikazane vrednosti pripadaju trenutno izabranom brendu." },
-      { page: "Početna tabla", target: ".bars", title: "Pregled prodajnog levka", text: "Ovaj pregled pokazuje koliko je prilika u svakoj fazi prodaje. Dugme Otvori prodajni levak vodi na detaljne kartice prilika. Vodič sada nastavlja na karticu Kompanije." },
-    ]},
     { id: "companies", title: "Kompanije", steps: [
       { page: "Kompanije", target: nav("Kompanije"), title: "Vaše kompanije", text: "U kartici Kompanije nalaze se kompanije kojima imate pristup. Vodič pokazuje elemente aplikacije. Vi birate kada ćete preći na sledeći korak." },
       { page: "Kompanije", target: ".global-search", title: "Pronađite kompaniju", text: "U ovo polje unesite naziv kompanije ili delatnost. Pretraga sužava prikaz. Otvaranjem kompanije možete pregledati njene kontakte i prodajne prilike." },

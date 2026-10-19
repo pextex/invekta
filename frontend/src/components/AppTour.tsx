@@ -136,7 +136,7 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
       {!lesson ? <>
         <h2 id="tour-title">Šta želite da naučite?</h2>
         <p>Izaberite karticu od koje želite da počnete. Vodič zatim automatski nastavlja kroz ostale dostupne lekcije. Pokazivač će pratiti elemente aplikacije uz objašnjenje na srpskom. Vodič otvara ekrane, a unos i čuvanje podataka ostaju vama. Pre početka sačuvajte otvoren unos ili kopirajte pripremljeni mejl.</p>
-        <button type="button" className="tour-next tour-start" onClick={() => start("dashboard")}><Play size={16} />Pokreni vodič od početka</button>
+        <button type="button" className="tour-next tour-start" onClick={() => start(lessons[0].id)}><Play size={16} />Pokreni vodič od početka</button>
         <div className="tour-lessons">{lessons.map(item => <button type="button" key={item.id} onClick={() => start(item.id)}>{item.title}<ArrowRight size={16} /></button>)}</div>
       </> : finished ? <>
         <h2 id="tour-title">Vodič je završen</h2><p>Stigli ste do kraja dostupnih lekcija. Možete ponoviti poslednju lekciju ili izabrati karticu od koje želite ponovo da počnete.</p>

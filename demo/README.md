@@ -25,10 +25,10 @@ Dugme **Vodič kroz aplikaciju** otvara kratke lekcije sa pokazivačem, isticanj
 
 Vodič sam otvara odgovarajuće ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja.
 
-Trenutno je snimljeno 18 od 26 jedinstvenih koraka. Zbog dnevnog Gemini limita, uvodna AI lekcija za Invektu, Cenobots i opšti pregled, lekcija administracije korisnika i četiri nova koraka početne table zasad imaju tekst bez zvuka. Ostali koraci imaju snimljenu naraciju. ElevenLabs se ne koristi.
+Trenutno je snimljeno 18 od 22 jedinstvena koraka. Zbog dnevnog Gemini limita, uvodna AI lekcija za Invektu, Cenobots i opšti pregled, kao i lekcija administracije korisnika zasad imaju tekst bez zvuka. Ostali koraci imaju snimljenu naraciju. ElevenLabs se ne koristi.
 
 Naslovi lekcija odgovaraju nazivima kartica. Vodič podrazumevano automatski nastavlja kroz naredne dostupne lekcije sve do kraja, a tokom lekcije prikazuje se minimizovan panel sa kontrolama. Dugme Proširi vodič prikazuje detaljan tekst i podešavanja; pauza zaustavlja zvuk i automatski prelazak.
 
 Snimljene lekcije počinju izgovorenim nazivom kartice (Kompanije, Prodajni levak, Targeti, Zadaci i Izveštaji), zatim objašnjenjem. Najave za LUU AI i Hronologiju već izgovaraju odgovarajući naziv. Četiri prethodno označena koraka bez snimka i dalje imaju tekstualno uputstvo.
 
-Dugme **Pokreni vodič od početka** otvara prvu lekciju, **Početna tabla**: dnevne zadatke, pokazatelje prodaje i pregled levka. Nakon nje automatski sledi kartica Kompanije. Lekcija početne table zasad je tekstualna zbog iscrpljenog dnevnog limita za glas.
+Dugme **Pokreni vodič od početka** počinje od kartice **Kompanije**. Lekcija Početna tabla privremeno je uklonjena iz vodiča.
