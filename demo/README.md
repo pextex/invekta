@@ -40,3 +40,7 @@ Povezani Gemini dobija prodajna pravila na serveru i referentni sadržaj zvanič
 Dugme **Moj profil** nalazi se gore desno, pored imena korisnika. U prijavljenom CRM-u korisnik može sačuvati ili ukloniti telefon i promeniti šifru uz trenutnu šifru i potvrdu nove (najmanje 12 znakova). Nova šifra odjavljuje ostale uređaje, dok trenutna sesija ostaje aktivna. Telefon se koristi u potpisu AI mejlova. Samostalni demo prikazuje profil bez čuvanja podataka i promene šifre.
 
 Za ovu izmenu Manus treba da objavi frontend i backend i izvrši standardne Alembic migracije (`python -m app.run_migrations` iz backend direktorijuma); nova migracija dodaje opciono polje `users.phone`.
+
+Potpis prodajnih mejlova sada sadrži ime i prezime sa korisničkog naloga, naziv aktivnog brenda, telefon iz profila, njegov zvanični sajt i adresu. Potpis za Gemini dodaje server iz CRM podataka, a lokalni šabloni koriste iste kontakt podatke. Bez unetog telefona stoji podsetnik da se dopuni u „Moj profil“; broj se ne izmišlja. Adrese su proverene prema kontakt stranicama [LUU](https://luu.rs/kontakt/), [INVEKTA](https://invekta.rs/kontakt/) i [CENOBOTS](https://cenobots.rs/kontakt/) 19.10.2026. U samostalnom demo fajlu ime i telefon ostaju za dopunu jer nema prijavljenog korisnika.
+
+Lični podaci potpisa (ime, telefon i ostala sender_* polja) izuzeti su iz konteksta koji se šalje Gemini modelu; potpis se sastavlja na serveru nakon generisanja.

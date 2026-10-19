@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 from .ai_provider import GeneratedDraft
+from .email_signature import contact_for
 
 _catalog_path = Path(__file__).resolve().parents[2] / "shared/message_catalog.json"
 if not _catalog_path.is_file():
@@ -81,12 +82,15 @@ def generate(context: dict) -> GeneratedDraft:
         if context.get("tone") == "friendly"
         else catalog["closing"]
     )
+    brand = contact_for(sender.get("organization_code") or sender["organization"])
     signature = [
         personal.get("sender_name") or sender.get("name") or catalog["namePlaceholder"],
         personal.get("sender_title"),
         sender["organization"],
-        personal.get("sender_phone") or sender.get("phone"),
+        personal.get("sender_phone") or sender.get("phone") or ("[Add phone number in My profile]" if en else "[Dopunite telefon u Moj profil]"),
         personal.get("sender_email"),
+        brand.get("website"),
+        brand.get("address"),
     ]
     body = (
         greeting

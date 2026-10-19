@@ -58,5 +58,25 @@
     "friendlyClosing": "Best regards,",
     "defaultTopic": "potential cooperation",
     "namePlaceholder": "[Full name]"
+  },
+  "brandContacts": {
+    "LUU": {
+      "website": "https://luu.rs/",
+      "address": "Jablanička 184, Beograd",
+      "source": "https://luu.rs/kontakt/",
+      "verified_on": "2026-10-19"
+    },
+    "INVEKTA": {
+      "website": "https://invekta.rs/",
+      "address": "Jablanička 184, Beograd",
+      "source": "https://invekta.rs/kontakt/",
+      "verified_on": "2026-10-19"
+    },
+    "CENOBOTS": {
+      "website": "https://cenobots.rs/",
+      "address": "Jablanička 184, Beograd",
+      "source": "https://cenobots.rs/kontakt/",
+      "verified_on": "2026-10-19"
+    }
   }
 }

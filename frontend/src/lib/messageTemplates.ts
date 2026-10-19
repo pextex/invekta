@@ -84,12 +84,15 @@ export function prepareLocalMessage(input: {
           ? c.proposalCta
           : c.introductionCta,
   );
+  const brand = catalog.brandContacts[input.organization.toUpperCase() as keyof typeof catalog.brandContacts];
   const signature = [
     p.sender_name || c.namePlaceholder,
     p.sender_title,
     input.organization,
-    p.sender_phone,
+    p.sender_phone || (en ? "[Add phone number in My profile]" : "[Dopunite telefon u Moj profil]"),
     p.sender_email,
+    brand?.website,
+    brand?.address,
   ]
     .filter(Boolean)
     .join("\n");
