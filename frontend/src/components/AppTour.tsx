@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Maximize2, Minimize2, MousePointer2, Pause, Play, RotateCcw, Volume2, X } from "lucide-react";
 import { nextTourPosition, previousTourPosition, tourLessons } from "./tourLessons";
-import { tourAudio } from "./tourAudio";
+import { getTourNarration } from "./tourOpenings";
 import "./appTour.css";
 
 type Props = { organization?: string; page: string; onPage: (page: string) => void; canViewHistory: boolean; canManageUsers: boolean; onClose: () => void };
@@ -31,7 +31,7 @@ export default function AppTour({ organization, page, onPage, canViewHistory, ca
   const nextPosition = nextTourPosition(lessons, lessonId, index);
   const previousPosition = previousTourPosition(lessons, lessonId, index);
   const compact = !!lesson && !finished && minimized;
-  const audioSource = step ? tourAudio[`${step.title}. ${step.text}`] : undefined;
+  const audioSource = getTourNarration(lesson, index);
 
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
