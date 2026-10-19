@@ -190,6 +190,7 @@ export default function Workspace({
         ? "Menadžer prodaje"
         : "Administrator";
   const activeRole = user?.units.find((u) => u.id === unit)?.role;
+  const canViewHistory = user?.is_platform_admin || activeRole === "manager" || activeRole === "admin";
   const supported = [
     "Kompanije",
     "Početna tabla",
@@ -269,6 +270,7 @@ export default function Workspace({
     );
   return (
     <Shell
+      canViewHistory={canViewHistory}
       organization={
         user?.units.find((u) => u.id === unit)?.code as
           | OrganizationCode
@@ -330,7 +332,7 @@ export default function Workspace({
               <p>Pregled procesa od prvog kontakta do odluke klijenta.</p>
             </div>
           </div>
-          <Pipeline organization={user.units.find(u => u.id === unit)?.code} key={unit} unit={unit} companies={rows} />
+          <Pipeline organization={user.units.find(u => u.id === unit)?.code} key={unit} unit={unit} companies={rows} canViewHistory={canViewHistory} />
           <p className="section-hint">
             Izbor kompanije nudi najviše 200 kompanija iz odabrane jedinice. Za
             ostale otvorite profil kompanije preko pretrage.
@@ -344,6 +346,8 @@ export default function Workspace({
         <TasksCalendar key={unit} unit={unit} companies={rows} />
       ) : page === "Izveštaji" ? (
         <Reports key={unit} unit={unit} role={activeRole} />
+      ) : page === "Hronologija promena - log" ? (
+        canViewHistory ? <Reports key={`history-${unit}`} unit={unit} role="manager" historyOnly /> : <p className="error-message" role="alert">Hronologija promena je dostupna samo menadžerima i administratorima.</p>
       ) : page === "Početna tabla" ? (
         <Dashboard
           userName={user.name}

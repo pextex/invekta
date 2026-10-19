@@ -1,6 +1,8 @@
-import { organizations, type OrganizationCode } from "./organizations";
-import { type CSSProperties, type ReactNode } from "react";
+import { organizationAiName, organizations, type OrganizationCode } from "./organizations";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import {
+  CircleHelp,
+  History,
   Target,
   LayoutDashboard,
   Building2,
@@ -16,6 +18,8 @@ import {
   LogOut,
 } from "lucide-react";
 
+import AppTour from "./components/AppTour";
+
 export const navigation = [
   { title: "Početna tabla", icon: LayoutDashboard },
   { title: "Kompanije", icon: Building2 },
@@ -25,6 +29,7 @@ export const navigation = [
   { title: "Zadaci", icon: ListTodo },
   { title: "Izveštaji", icon: ChartNoAxesCombined },
   { title: "Invekta AI", icon: Sparkles },
+  { title: "Hronologija promena - log", icon: History },
 ];
 type Props = {
   organization?: OrganizationCode;
@@ -36,6 +41,7 @@ type Props = {
   role: string;
   connected?: boolean;
   canManageUsers?: boolean;
+  canViewHistory?: boolean;
   busy?: boolean;
   onConnect?: () => void;
   onBack?: () => void;
@@ -52,12 +58,14 @@ export default function Shell({
   role,
   connected = false,
   canManageUsers = false,
+  canViewHistory = false,
   busy = false,
   onConnect,
   onBack,
   onLogout,
   children,
 }: Props) {
+  const [tourOpen, setTourOpen] = useState(false);
   function navigate(next: string) {
     onPage(next);
   }
@@ -78,22 +86,24 @@ export default function Shell({
         </a>
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">
-            {navigation.map(({ title, icon: Icon }) => (
+            {navigation.filter(item => item.title !== "Hronologija promena - log" || canViewHistory).map(({ title, icon: Icon }) => (
               <button
                 key={title}
+                data-tour-nav={title}
                 disabled={busy}
                 aria-current={page === title ? "page" : undefined}
                 className={page === title ? "active" : ""}
                 onClick={() => navigate(title)}
               >
                 <Icon size={16} />
-                {title}
+                {title === "Invekta AI" ? organizationAiName(organization) : title}
               </button>
             ))}
           </nav>
           {connected && canManageUsers && (
             <nav className="settings-nav" aria-label="Podešavanja">
               <button
+                data-tour-nav="Podešavanja"
                 className={page === "Podešavanja" ? "active" : ""}
                 onClick={() => navigate("Podešavanja")}
               >
@@ -102,6 +112,7 @@ export default function Shell({
               </button>
             </nav>
           )}
+          <button className="tour-launch" disabled={busy} onClick={() => setTourOpen(value => !value)}><CircleHelp size={17} />Vodič kroz aplikaciju</button>
         </div>
         <div className="sidebar-status">
           <span>● {connected ? "Razvojni CRM" : "Demo režim"}</span>
@@ -165,8 +176,9 @@ export default function Shell({
             )}
           </div>
         </header>
-        <div className="content">{children}</div>
+        <div className="content" data-tour-content>{children}</div>
       </main>
+      {tourOpen && <AppTour key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

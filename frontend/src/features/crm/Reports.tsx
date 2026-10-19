@@ -54,7 +54,8 @@ export function summarizeChanges(items: Change[], offset = 0): SalesReport {
     items: items.slice(offset, offset + 50),
   };
 }
-export default function Reports({ unit, role, demoItems }: { unit: number; role?: string; demoItems?: Change[] }) {
+export default function Reports({ unit, role, demoItems, historyOnly = false }: { unit: number; role?: string; demoItems?: Change[]; historyOnly?: boolean }) {
+  const allowed = !historyOnly || role === "manager" || role === "admin";
   const [mode, setMode] = useState<"day" | "month">("day");
   const [day, setDay] = useState(today);
   const [month, setMonth] = useState(() => today().slice(0, 7));
@@ -70,7 +71,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
   useEffect(() => {
     const controller = new AbortController();
     setData(null); setError("");
-    if (!value) { setLoading(false); return; }
+    if (!allowed || !value) { setLoading(false); return; }
     setLoading(true);
     const period = reportPeriod(mode, value);
     if (demoItems) {
@@ -82,17 +83,19 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
       setData(summarizeChanges(selected, offset)); setLoading(false); return;
     }
     const params = new URLSearchParams({ date_from: period.from, date_to: period.to, include_demo: String(includeDemo), limit: "50", offset: String(offset) });
+    if (historyOnly) params.set("include_history", "true");
     if (ownerId) params.set("owner_id", ownerId);
     api<SalesReport>(`/units/${unit}/reports?${params}`, { signal: controller.signal })
       .then(data => { setData(data); setPeople(data.people); })
       .catch(e => { if (!controller.signal.aborted) setError(errorText(e)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [unit, mode, value, includeDemo, reload, offset, demoItems, ownerId]);
+  }, [unit, mode, value, includeDemo, reload, offset, demoItems, ownerId, historyOnly, allowed]);
 
+  if (!allowed) return <p className="error-message" role="alert">Hronologija promena je dostupna samo menadžerima i administratorima.</p>;
   return <>
     <div className="page-heading">
-      <div><div className="eyebrow">AKTIVNOSTI U PRODAJNOM LEVKU</div><h1>Izveštaji</h1>
+      <div><div className="eyebrow">AKTIVNOSTI U PRODAJNOM LEVKU</div><h1>{historyOnly ? "Hronologija promena - log" : "Izveštaji"}</h1>
         <p>{role === "sales" ? "Nove prilike i promene statusa za vaše kompanije." : "Nove prilike i promene statusa u prodajnom levku vaše firme."}</p></div>
       <button className="secondary-button" disabled={loading || !value} onClick={() => { setOffset(0); setReload(v => v + 1); }}><RefreshCw size={15} />Osveži</button>
     </div>
@@ -110,6 +113,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
     {demoItems && <p className="section-hint">Demo istorija se beleži u ovom browseru od prve promene statusa. Nema veze sa CRM bazom.</p>}
     {error && <p className="error-message" role="alert">{error}</p>}
     {!value ? <p className="empty">Izaberite {mode === "day" ? "datum" : "mesec"} za pregled.</p> : loading ? <p className="empty" role="status">Učitavanje izveštaja…</p> : data && <>
+      {!historyOnly && <>
       <div className="metrics report-metrics">
         {[
           { label: "Nove prilike", value: data.created_count, note: "Kreirane u periodu" },
@@ -145,8 +149,9 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
         </section>
       </div>
       {role !== "sales" && <section className="panel report-salespeople"><div className="panel-heading"><h2>Izveštaj po komercijalisti</h2></div><div className="table-scroll"><table><thead><tr><th>Komercijalista</th><th>Nove prilike</th><th>Promene statusa</th><th>Realizovano</th><th>Nije realizovano</th></tr></thead><tbody>{data.owners.map(person => <tr key={person.user_id}><td><strong>{person.user_name}</strong></td><td>{person.created_count}</td><td>{person.stage_change_count}</td><td>{person.realized_count}</td><td>{person.unrealized_count}</td></tr>)}</tbody></table>{!data.owners.length && <p className="empty">Nema promena za izabrani period.</p>}</div><p className="panel-note">Pregled se pripisuje komercijalisti koji vodi kompaniju. U istoriji se posebno vidi korisnik koji je izvršio promenu.</p></section>}
-      <section className="panel">
-        <div className="panel-heading"><h2>Hronologija promena</h2><span className="tag">Najnovije prvo</span></div>
+      </>}
+      {historyOnly && <section className="panel">
+        <div className="panel-heading"><h2>Hronologija promena - log</h2><span className="tag">Najnovije prvo</span></div>
         {!data.total ? <p className="empty">Nema zabeleženih promena u izabranom periodu. Izaberite drugi period{!demoItems && !includeDemo ? " ili uključite demo podatke" : ""}.</p> : <>
           <div className="table-scroll"><table className="report-history"><thead><tr><th>Vreme</th><th>Kompanija / prilika</th><th>Komercijalista</th><th>Promena</th><th>Vrednost pri promeni</th><th>Korisnik</th></tr></thead><tbody>
             {data.items.map(row => <tr key={row.id}>
@@ -167,7 +172,7 @@ export default function Reports({ unit, role, demoItems }: { unit: number; role?
           </div>
         </>}
         <p className="panel-note">Prikazuju se kreiranje prilika i promene statusa u izabranom periodu. Jedna prilika može imati više promena statusa tokom istog perioda.</p>
-      </section>
+      </section>}
     </>}
   </>;
 }

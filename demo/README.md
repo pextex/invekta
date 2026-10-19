@@ -13,8 +13,16 @@ U **Prodajni levak** prevucite karticu u drugu kolonu ili izaberite status na nj
 Po otvaranju izaberite LUU, Invekta ili Cenobots, pa kliknite **Pogledaj demo bez prijave**. Stvarna prijava ne radi iz samostalnog HTML fajla. Cenobots partneri su izmišljeni i jasno označeni, kao i podaci ostalih jedinica.
 
 
-Besplatni šabloni rade i u samostalnom HTML-u bez servera i interneta. U odeljku Invekta AI opišite mejl, izaberite kompaniju pretragom i kliknite **Pripremi mejl iz šablona**. Tekst se može urediti i kopirati dugmetom **Kopiraj mejl**. Ako browser blokira clipboard, tekst se označi za ručno kopiranje. Mejl, potpis i sadržaj pripreme ne čuvaju se u browser storage-u; osvežavanje ili napuštanje ekrana ih uklanja. Nema dugmeta za čuvanje, istorije ni spiska ranijih poruka. Stari lokalni zapisi se ne učitavaju i ne brišu automatski.
+Besplatni šabloni rade i u samostalnom HTML-u bez servera i interneta. U odeljku AI asistenta izabranog brenda opišite mejl, izaberite kompaniju pretragom i kliknite **Pripremi mejl iz šablona**. Tekst se može urediti i kopirati dugmetom **Kopiraj mejl**. Ako browser blokira clipboard, tekst se označi za ručno kopiranje. Mejl, potpis i sadržaj pripreme ne čuvaju se u browser storage-u; osvežavanje ili napuštanje ekrana ih uklanja. Nema dugmeta za čuvanje, istorije ni spiska ranijih poruka. Stari lokalni zapisi se ne učitavaju i ne brišu automatski.
 
-Invekta AI u samostalnom HTML-u prikazuje novi prozor za zahtev i primere, ali radi samo sa lokalnim šablonima. Slobodno uputstvo tumači pravi Groq model tek u povezanom CRM-u sa serverskim ključem. Znanje brenda administrator uređuje u prijavljenoj aplikaciji.
+AI asistent u samostalnom HTML-u prikazuje novi prozor za zahtev i primere, ali radi samo sa lokalnim šablonima. Slobodno uputstvo tumači Gemini model tek u povezanom CRM-u sa serverskim ključem. Znanje brenda administrator uređuje u prijavljenoj aplikaciji.
 
 Forma ima samo zahtev i kompaniju. Stvarni kontakti se automatski popunjavaju samo u prijavljenom CRM-u; demo ne izmišlja email adrese klijenata. U pripremljenom mejlu primaoci, predmet i tekst su izmenjivi.
+
+## Vodič sa naracijom
+
+Dugme **Vodič kroz aplikaciju** otvara kratke lekcije sa pokazivačem, isticanjem elemenata i unapred generisanom AI naracijom ženskim glasom na srpskom. Snimci su uključeni u HTML, pa glas ne zavisi od instaliranih glasova uređaja niti zahteva serverski ključ pri reprodukciji. Pauza zadržava mesto u snimku; Ponovi korak pokreće ga od početka. Dostupni su isključivanje naracije, ručno preskakanje i automatski prelazak. Ako browser blokira zvuk, pritisnite Ponovi korak. Pre pokretanja sačuvajte otvoren unos ili kopirajte pripremljeni mejl.
+
+Vodič sam otvara odgovarajuće ekrane, ali ne unosi podatke, ne čuva zapise i ne pokreće AI generisanje. U povezanom CRM-u hronologija i administrativne lekcije prate korisnička ovlašćenja.
+
+Trenutno je snimljeno 18 od 22 jedinstvena koraka. Zbog dnevnog Gemini limita, uvodna AI lekcija za Invektu, Cenobots i opšti pregled, kao i lekcija administracije korisnika zasad imaju tekst bez zvuka. Ostali koraci imaju snimljenu naraciju. ElevenLabs se ne koristi.

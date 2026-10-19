@@ -210,7 +210,7 @@ def generate_message(
     }
     settings = get_settings()
     if settings.crm_ai_enabled and not settings.crm_gemini_api_key:
-        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
+        raise HTTPException(503, "AI asistent nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
     knowledge = db.get(AiBrandKnowledge, unit_id)
     context["brand_knowledge"] = {
         "brand": business_unit.name,
@@ -253,7 +253,7 @@ def generate_message(
 def retired_create_draft(unit_id: int, data: GenerateInput,
                          user: User = Depends(current_user), db: Session = Depends(get_db)):
     visible_company(db, user, unit_id, data.company_id)
-    raise HTTPException(410, "Čuvanje nacrta je uklonjeno. Koristite Invekta AI za pripremu i kopiranje mejla.")
+    raise HTTPException(410, "Čuvanje nacrta je uklonjeno. Koristite AI asistenta za pripremu i kopiranje mejla.")
 
 
 @router.patch("/drafts/{draft_id}", deprecated=True, dependencies=[Depends(require_origin)])
@@ -262,4 +262,4 @@ def retired_update_draft(unit_id: int, draft_id: int,
     draft = db.scalar(query(db, user, unit_id).where(AiDraft.id == draft_id))
     if draft is None:
         raise HTTPException(404, "Nacrt nije pronađen.")
-    raise HTTPException(410, "Čuvanje izmena nacrta je uklonjeno. Mejl uredite i kopirajte u Invekta AI odeljku.")
+    raise HTTPException(410, "Čuvanje izmena nacrta je uklonjeno. Mejl uredite i kopirajte u odeljku AI asistenta.")

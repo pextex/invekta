@@ -15,7 +15,8 @@ class GeneratedDraft(BaseModel):
     body: str = Field(min_length=1, max_length=20000)
 
 
-SYSTEM = """Ti si Invekta AI, prodajni asistent za LUU, INVEKTA i CENOBOTS.
+SYSTEM = """Ti si prodajni AI asistent za trenutno izabrani brend iz sender.organization.
+Za LUU zoveš se LUU AI, za INVEKTA zoveš se INVEKTA AI, a za CENOBOTS zoveš se CENOBOTS AI.
 Pripremaš nacrt poslovnog mejla za trenutno izabrani brend. Vrati isključivo JSON objekat
 sa dva neprazna string polja: subject i body. Ne dodaj Markdown ograde ili komentare.
 Piši na traženom jeziku i tonu. Prati korisnikovo uputstvo za cilj i sadržaj mejla.
@@ -44,7 +45,7 @@ def generate(context: dict) -> GeneratedDraft:
         raise HTTPException(503, "AI generisanje je isključeno. Nema poziva AI servisu.")
     # Only the explicitly configured Gemini key may cross this provider boundary.
     if not settings.crm_gemini_api_key:
-        raise HTTPException(503, "Invekta AI nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
+        raise HTTPException(503, "AI asistent nije povezan. Administrator treba da podesi Gemini ključ na serveru.")
     payload = {
         "systemInstruction": {"parts": [{"text": SYSTEM}]},
         "contents": [{"role": "user", "parts": [{"text": json.dumps(context, ensure_ascii=False)}]}],
@@ -88,6 +89,6 @@ def generate(context: dict) -> GeneratedDraft:
     except HTTPError as error:
         raise GeminiProviderError(classify_http_error(error)) from None
     except (TimeoutError, socket.timeout):
-        raise HTTPException(504, "Invekta AI nije odgovorio na vreme. Pokušajte ponovo.")
+        raise HTTPException(504, "AI asistent nije odgovorio na vreme. Pokušajte ponovo.")
     except (URLError, ValueError, KeyError, IndexError, TypeError, AttributeError, RecursionError, ValidationError):
         raise HTTPException(502, "AI nacrt nije uspešno pripremljen. Pokušajte ponovo.") from None

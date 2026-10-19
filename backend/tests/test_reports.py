@@ -22,11 +22,15 @@ def test_reports_use_event_date_belgrade_scope_and_full_month(client, db, sales_
     login(client, "sales")
     report = client.get("/api/units/101/reports", params=params).json()
     assert report["total"] == 2 and report["opportunity_count"] == 1
-    assert [row["id"] for row in report["items"]] == [4003, 4002]
+    assert report["items"] == []
+    assert client.get("/api/units/101/reports", params={**params, "include_history": True}).status_code == 403
     assert report["realized_count"] == 1 and report["stage_change_count"] == 2
-    assert report["items"][0]["amount"] == "100.10"
+    assert client.get("/api/units/101/opportunities/2001/stage-history").status_code == 403
     assert client.get("/api/units/102/reports", params=params).status_code == 403
     login(client)
+    history = client.get("/api/units/101/reports", params={**params, "include_history": True, "owner_id": 102}).json()
+    assert [row["id"] for row in history["items"]] == [4003, 4002]
+    assert history["items"][0]["amount"] == "100.10"
     assert client.get("/api/units/101/reports", params=params).json()["total"] == 3
     monthly = client.get("/api/units/101/reports", params={"date_from": "2026-10-01", "date_to": "2026-10-31"}).json()
     assert monthly["total"] == 5 and monthly["opportunity_count"] == 2
@@ -43,8 +47,8 @@ def test_reports_paginate_all_changes_and_keep_amount_snapshot(client, db, sales
     for index in range(53):
         add_event(db, 5000 + index, 2001, 102, "Kontaktiran", "Ponuda", "2026-10-14T12:00:00+00:00")
     db.commit()
-    login(client, "sales")
-    params = {"date_from": "2026-10-14", "date_to": "2026-10-14"}
+    login(client)
+    params = {"date_from": "2026-10-14", "date_to": "2026-10-14", "include_history": True}
     first = client.get("/api/units/101/reports", params=params).json()
     second = client.get("/api/units/101/reports", params={**params, "offset": 50}).json()
     assert first["total"] == second["total"] == 53
@@ -62,6 +66,7 @@ def test_edits_and_creations_are_logged_without_false_noop_events(client, db, sa
     from sqlalchemy import select
     login(client, "sales")
     created = client.post("/api/units/101/opportunities", json=OPPORTUNITY, headers=ORIGIN).json()
+    login(client)
     history = client.get(f"/api/units/101/opportunities/{created['id']}/stage-history").json()
     assert len(history) == 1
     entry = db.get(OpportunityStageChange, history[0]["id"])
@@ -84,7 +89,7 @@ def test_admin_report_groups_by_owner_and_filters_without_leaking_other_salespeo
     add_event(db, 9001, 2001, 101, "Kontaktiran", "Dobijeno", "2026-10-15T12:00:00+00:00")
     add_event(db, 9002, 2002, 103, "Ponuda", "Izgubljeno", "2026-10-15T12:01:00+00:00")
     db.commit()
-    params = {"date_from": "2026-10-15", "date_to": "2026-10-15"}
+    params = {"date_from": "2026-10-15", "date_to": "2026-10-15", "include_history": True}
     login(client)
     report = client.get("/api/units/101/reports", params=params).json()
     assert {row["user_id"] for row in report["owners"]} == {102, 103}
@@ -96,7 +101,7 @@ def test_admin_report_groups_by_owner_and_filters_without_leaking_other_salespeo
     assert filtered["items"][0]["owner_id"] == 102 and filtered["items"][0]["owner_name"] == "sales"
     assert client.get("/api/units/101/reports", params={**params, "owner_id": 104}).status_code == 404
     login(client, "sales")
-    own = client.get("/api/units/101/reports", params=params).json()
+    own = client.get("/api/units/101/reports", params={**params, "include_history": False}).json()
     assert [p["id"] for p in own["people"]] == [102]
     assert [p["user_id"] for p in own["owners"]] == [102]
     assert client.get("/api/units/101/reports", params={**params, "owner_id": 103}).status_code == 403
@@ -111,7 +116,7 @@ def test_report_excludes_data_edits_before_aggregation_and_pagination_but_preser
     add_event(db, 10102, 2001, 102, "Ponuda", "Dobijeno", "2026-10-15T12:00:00+00:00")
     db.commit()
     login(client)
-    params = {"date_from": "2026-10-15", "date_to": "2026-10-15", "limit": 1}
+    params = {"date_from": "2026-10-15", "date_to": "2026-10-15", "limit": 1, "include_history": True}
     first = client.get("/api/units/101/reports", params=params).json()
     second = client.get("/api/units/101/reports", params={**params, "offset": 1}).json()
     assert first["total"] == second["total"] == 2

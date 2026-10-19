@@ -58,14 +58,9 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
     <div className="report-toolbar"><Target size={17} /><label className="target-month">Mesec<input type="month" required value={month} disabled={busy} onChange={e => { setMonth(e.target.value); setEditing(null); setMessage(""); }} /></label><span className="report-timezone">Vrednosti u RSD · vreme u Beogradu</span></div>
     {demo && <p className="section-hint">Demo cilj se čuva samo u ovom browseru. Ostvarenje prati demo prilike koje ste označili kao realizovane.</p>}
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
-    {(!demo || data) && <TeamBonus unit={unit} month={month} reload={reload + bonusReload} demo={demo && data ? {
-      organization: demo.organization,
-      individualTotal: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.target_amount ?? 0), 0).toFixed(2),
-      achieved: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.achieved_amount), 0).toFixed(2),
-      achievedCount: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + row.achieved_count, 0),
-    } : undefined} />}
     {!month ? <p className="empty">Izaberite mesec.</p> : loading ? <p className="empty" role="status">Učitavanje targeta…</p> : data && <>
       {!data.salespeople.length && <p className="empty">Nema aktivnih komercijalista u ovoj firmi. Pristup i uloge uređuje administrator.</p>}
+      {data.salespeople.length > 0 && <h2>{demo || !data.can_manage ? "Ovo je vaš target" : "Pojedinačni targeti"}</h2>}
       {data.salespeople.map(person => <section className="panel target-person" key={person.user_id}>
         <div className="panel-heading"><h2>{person.user_name}</h2>{data.can_manage && <button className="secondary-button" disabled={busy || !!editing} onClick={() => { setEditing(person); setDraft(Object.fromEntries(person.targets.map(t => [t.category, t.target_amount ?? "0"]))); setMessage(""); }}>Postavi target</button>}</div>
         {editing?.user_id === person.user_id ? <form className="target-form" onSubmit={save}>
@@ -82,5 +77,11 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
       </section>)}
       <p className="panel-note target-explanation">Ostvarenje se računa po poslednjem prelasku trenutno realizovane prilike u status Realizovano, prema datumu tog događaja. Jedna prilika se broji jednom. Koristi se vrednost i vrsta posla pri realizaciji; to nije fakturisan prihod. Demo zapisi iz baze ne ulaze u cilj. Starije prilike bez zabeležene realizacije ili istorijske vrednosti nisu uključene.</p>
     </>}
+    {data && <TeamBonus unit={unit} month={month} reload={reload + bonusReload} demo={demo && data ? {
+      organization: demo.organization,
+      individualTotal: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.target_amount ?? 0), 0).toFixed(2),
+      achieved: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + Number(row.achieved_amount), 0).toFixed(2),
+      achievedCount: data.salespeople.flatMap(person => person.targets).reduce((sum, row) => sum + row.achieved_count, 0),
+    } : undefined} />}
   </>;
 }

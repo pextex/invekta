@@ -189,6 +189,7 @@ def test_opportunity_creation_multiple_per_company_and_history(client, db):
     )
     page = client.get("/api/units/101/opportunities", params={"company_id": 101}).json()
     assert page["total"] == 2
+    login(client)
     history = client.get(
         f"/api/units/101/opportunities/{record['id']}/stage-history"
     ).json()
@@ -225,7 +226,7 @@ def test_opportunities_and_history_are_scoped(client, sales_records):
             client.get(
                 f"/api/units/101/opportunities/{target}/stage-history"
             ).status_code
-            == 404
+            == 403
         )
         assert (
             client.patch(
@@ -256,6 +257,7 @@ def test_stage_change_version_conflict_and_history(client, sales_records):
     )
     record = client.get("/api/units/101/opportunities").json()["items"][0]
     assert record["stage"] == "Ponuda"
+    login(client)
     history = client.get("/api/units/101/opportunities/2001/stage-history").json()
     assert (
         len(history) == 1

@@ -41,3 +41,12 @@ export const organizationName = (code: string) =>
   organizations.find((org) => org.code === code)?.name ?? code;
 export const isOrganizationCode = (value: unknown): value is OrganizationCode =>
   organizations.some((org) => org.code === value);
+
+export const organizationAiName = (code?: string) => {
+  switch (code?.toUpperCase()) {
+    case "LUU": return "LUU AI";
+    case "INVEKTA": return "INVEKTA AI";
+    case "CENOBOTS": return "CENOBOTS AI";
+    default: return "AI asistent";
+  }
+};

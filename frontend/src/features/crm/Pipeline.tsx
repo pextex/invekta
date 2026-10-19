@@ -30,11 +30,13 @@ export default function Pipeline({
   companies,
   companyId,
   organization = "LUU",
+  canViewHistory = false,
 }: {
   unit: number;
   companies: Company[];
   companyId?: number;
   organization?: string;
+  canViewHistory?: boolean;
 }) {
   const [items, setItems] = useState<Opportunity[]>([]),
     [total, setTotal] = useState(0),
@@ -409,14 +411,14 @@ export default function Pipeline({
                     >
                       Izmeni
                     </button>
-                    <button
+                    {canViewHistory && <button
                       className="text-button"
                       disabled={busy}
                       onClick={() => showHistory(item)}
                     >
                       <History size={13} />
                       Istorija
-                    </button>
+                    </button>}
                   </div>
                 </article>
               ))}

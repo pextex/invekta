@@ -1,0 +1,24 @@
+.tour-launch { display: flex; align-items: center; gap: 8px; width: 100%; margin: 12px 0; padding: 10px; border: 1px solid #ffffff45; border-radius: 8px; background: #ffffff12; color: white; font: inherit; font-size: 12px; cursor: pointer; }
+.tour-launch:disabled { opacity: .5; cursor: default; }
+.app-tour { position: fixed; z-index: 1100; right: 20px; bottom: 20px; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; padding: 18px; background: #fff; color: #17233b; border: 1px solid #b6c9ec; border-radius: 16px; box-shadow: 0 16px 65px #11284440; font-size: 13px; }
+.app-tour header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.app-tour header > span { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #2563eb; }
+.app-tour h2 { font-size: 19px; margin: 14px 0 10px; }
+.app-tour p { line-height: 1.65; margin: 10px 0; }
+.app-tour button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; border: 1px solid #d6deeb; border-radius: 8px; background: #f8faff; color: #213354; font: inherit; cursor: pointer; }
+.app-tour button:disabled { opacity: .45; cursor: default; }
+.app-tour button:focus-visible, .tour-launch:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.tour-lessons { display: grid; gap: 7px; margin-top: 14px; }
+.tour-lessons button { justify-content: space-between; text-align: left; }
+.tour-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.tour-options { display: flex; flex-wrap: wrap; gap: 14px; margin: 13px 0; }
+.tour-options label { display: flex; align-items: center; gap: 5px; }
+.tour-progress, .tour-note { display: block; color: #52627b; font-size: 12px; line-height: 1.5; margin-top: 12px; }
+.app-tour footer { display: flex; justify-content: space-between; gap: 6px; padding: 13px 0 0; margin: 14px 0 0; border-top: 1px solid #e2e8f0; }
+.app-tour .tour-next { background: #2563eb; color: #fff; border-color: #2563eb; }
+.tour-markers { position: fixed; inset: 0; z-index: 1090; pointer-events: none; overflow: hidden; }
+.tour-highlight { position: absolute; border: 3px solid #2563eb; border-radius: 10px; box-shadow: 0 0 0 5px #2563eb28; }
+.tour-pointer { position: absolute; filter: drop-shadow(1px 3px 3px #0006); transition: top .4s ease, left .4s ease; }
+@media (max-width: 600px) { .app-tour { right: 8px; bottom: 8px; width: calc(100vw - 16px); max-height: 54dvh; padding: 13px; } .app-tour h2 { font-size: 17px; } }
+@media (prefers-reduced-motion: reduce) { .tour-pointer { transition: none; } }
+@media (max-width: 690px) { .tour-launch { flex-shrink: 0; width: auto; white-space: nowrap; margin: 0 6px; } }

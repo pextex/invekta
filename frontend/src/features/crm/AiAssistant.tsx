@@ -6,6 +6,7 @@ import { api, errorText } from "../../lib/api";
 import { prepareLocalMessage } from "../../lib/messageTemplates";
 import type { Company } from "./types";
 import "./aiAssistant.css";
+import { organizationAiName } from "../../organizations";
 
 type Recipient = { id: number; name: string; position: string | null; email: string };
 type Draft = { subject: string; body: string; recipient: string | null; recipients: Recipient[]; model: string };
@@ -14,6 +15,7 @@ type RecipientsState = { company: number; items: Recipient[]; loading: boolean; 
 export default function AiAssistant({ unit, companies, demo = false, organization = "CRM" }: {
   unit: number; companies: Company[]; demo?: boolean; organization?: string;
 }) {
+  const assistantName = organizationAiName(organization);
   const [company, setCompany] = useState(0);
   const [companyName, setCompanyName] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -110,14 +112,14 @@ export default function AiAssistant({ unit, companies, demo = false, organizatio
   }
   return <>
     <div className="page-heading">
-      <div><h1>Invekta AI</h1><p>Opišite mejl i izaberite kompaniju. Kontakte popunjavamo automatski.</p></div>
+      <div><h1>{assistantName}</h1><p>Opišite mejl i izaberite kompaniju. Kontakte popunjavamo automatski.</p></div>
       {canManageKnowledge ? <button className="secondary-button" aria-expanded={showKnowledge} aria-controls="ai-brand-settings"
         onClick={() => setShowKnowledge(value => !value)}><BookOpen size={16} /> Znanje brenda</button> : <Sparkles size={28} />}
     </div>
     {error && <p className="error-message" role="alert">{error}</p>}
     {message && <p className="success-message" role="status">{message}</p>}
     {demo ? <p className="demo-notice">Demo koristi lokalni šablon. Automatski kontakti i Gemini AI rade u prijavljenom CRM-u.</p> :
-      !checking && !configured ? <p className="demo-notice">Invekta AI još nije povezan. Administrator treba da podesi Gemini ključ na serveru.</p> :
+      !checking && !configured ? <p className="demo-notice">{assistantName} još nije povezan. Administrator treba da podesi Gemini ključ na serveru.</p> :
         !checking && engine === "templates" ? <p className="demo-notice">Gemini AI je isključen. Lokalni šablon ne tumači slobodno uputstvo.</p> : null}
     {canManageKnowledge && showKnowledge && <div id="ai-brand-settings">
       <AiKnowledge unit={unit} brand={organization} canManage expanded />

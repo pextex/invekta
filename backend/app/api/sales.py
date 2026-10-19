@@ -305,6 +305,9 @@ def stage_history(
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ):
+    member = membership(db, user, unit_id)
+    if not user.is_platform_admin and member.role not in ("manager", "admin"):
+        raise HTTPException(403, "Hronologija promena je dostupna samo menadžerima i administratorima.")
     visible_opportunity(db, user, unit_id, opportunity_id)
     result = db.execute(
         select(OpportunityStageChange, User.name)
@@ -372,6 +375,7 @@ def sales_report(
     date_from: date,
     date_to: date,
     include_demo: bool = False,
+    include_history: bool = False,
     owner_id: int | None = Query(None, gt=0),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -381,6 +385,8 @@ def sales_report(
     if date_from > date_to or date_to == date.max:
         raise HTTPException(422, "Proverite početak i kraj perioda.")
     member = membership(db, user, unit_id)
+    if include_history and not user.is_platform_admin and member.role not in ("manager", "admin"):
+        raise HTTPException(403, "Hronologija promena je dostupna samo menadžerima i administratorima.")
     if member.role == "sales" and owner_id is not None and owner_id != user.id:
         raise HTTPException(403, "Možete pregledati samo svoj izveštaj.")
     company_scope = visible_query(db, user, unit_id)
@@ -429,7 +435,7 @@ def sales_report(
         .join(owner, owner.id == Company.owner_id)
         .where(*criteria).order_by(history.changed_at.desc(), history.id.desc())
         .limit(limit).offset(offset)
-    ).all()
+    ).all() if include_history else []
     return {
         "people": [{"id": person.id, "name": person.name} for person in people],
         "owners": list(owners.values()),
