@@ -128,10 +128,6 @@ export default function Dashboard({
                   Otvori prodajni levak →
                 </button>
               </div>
-              <p className="panel-note">
-                Ovo su podaci iz razvojne baze. Demo zapisi ulaze u pokazatelje
-                i nisu stvarni poslovni rezultati.
-              </p>
             </section>
           </>
         )

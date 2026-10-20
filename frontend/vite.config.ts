@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => {
+  const hosting = mode === "hosting";
   // Read only Codespaces metadata; never expose backend .env or credentials.
   const env = loadEnv(mode, process.cwd(), ["CODESPACE_NAME", "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN"]);
   const name = env.CODESPACE_NAME;
@@ -10,7 +11,10 @@ export default defineConfig(({ mode }) => {
   }
   const host = name ? `${name}-5173.${domain}` : undefined;
   return {
-    plugins: [react()],
+    plugins: [react(), ...(hosting ? [{
+      name: "company-hosting-entry",
+      transformIndexHtml: { order: "pre" as const, handler(html: string) { return html.replace("/src/main.tsx", "/src/main.production.tsx"); } },
+    }] : [])],
     server: {
       host: "0.0.0.0",
       port: 5173,

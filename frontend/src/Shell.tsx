@@ -117,7 +117,7 @@ export default function Shell({
           <button className="tour-launch" disabled={busy} onClick={() => setTourOpen(value => !value)}><CircleHelp size={17} />Vodič kroz aplikaciju</button>
         </div>
         <div className="sidebar-status">
-          <span>● {connected ? "Razvojni CRM" : "Demo režim"}</span>
+          <span>● {connected ? "CRM" : "Demo režim"}</span>
           <small>
             {connected
               ? "Pristup prema vašim ovlašćenjima"
@@ -144,7 +144,7 @@ export default function Shell({
                 connected ? "demo-badge connected-badge" : "demo-badge"
               }
             >
-              {connected ? "RAZVOJ" : "DEMO"}
+              {connected ? "CRM" : "DEMO"}
             </span>
             <div className="header-user">
               <UserRound size={16} />

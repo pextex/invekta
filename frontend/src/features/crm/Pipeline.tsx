@@ -378,7 +378,7 @@ export default function Pipeline({
                   <small>{businessTypeLabel(item.business_type)}</small>
                   <small>
                     {item.company_name}
-                    {item.is_demo ? " · DEMO" : ""}
+
                   </small>
                   <strong>{formatAmount(item.amount)}</strong>
                   <small>

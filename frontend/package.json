@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --mode hosting",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:hosting": "tsc -b && vite build --mode hosting",
+    "build:demo": "tsc -b && vite build"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

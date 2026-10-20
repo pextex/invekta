@@ -158,7 +158,7 @@ export default function Contacts({
                       <strong>{c.name}</strong>
                       <small>
                         {c.position || "Pozicija nije uneta"}
-                        {c.is_demo ? " · DEMO" : ""}
+
                       </small>
                     </td>
                     <td>{c.email || "—"}</td>

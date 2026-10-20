@@ -1,3 +1,5 @@
+> **Hosting firme:** standardni `npm run build` sada pravi produkcioni frontend bez ulaza u demo i izmišljenih klijenata. [Objava, konfiguracija servera i jednokratno čišćenje baze](docs/hosting/README.md). Prava baza nije obrisana pripremom koda; reset se izvršava posebno za utvrđenu bazu i administratora. Odvojeni demo se gradi samo komandom `npm run build:demo`.
+
 # LUU × INVEKTA × CENOBOTS — AI Sales CRM
 
 Zajednička CRM platforma za LUU, Invektu i Cenobots. Ciljani trajni Manus deployment koristi managed MySQL; CRM podaci su dostupni samo posle prijave. Javno objavljivanje je pod kontrolom vlasnika; automatsko objavljivanje nije uključeno.

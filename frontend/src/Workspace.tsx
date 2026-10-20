@@ -23,8 +23,8 @@ const blank: CompanyForm = { name: "", address: "", pib: "", city: "", sector: "
 export default function Workspace({
   onDemo,
 }: {
-  onBack: () => void;
-  onDemo: (code: OrganizationCode) => void;
+  onBack?: () => void;
+  onDemo?: (code: OrganizationCode) => void;
 }) {
   const [loginChoice, setLoginChoice] = useState<OrganizationCode | null>(
     () => readRoute().organization ?? null,
@@ -248,7 +248,7 @@ export default function Workspace({
               : "Prijavi se u " + organizationName(loginChoice ?? "")}
           </button>
         </form>
-        <div className="portal-demo-entry">
+        {onDemo && <div className="portal-demo-entry">
           <span>
             {window.location.protocol === "file:"
               ? "Preuzeti HTML nema povezan server za prijavu."
@@ -265,7 +265,7 @@ export default function Workspace({
             Pogledaj demo bez prijave
           </button>
           <small>Izmišljeni podaci · nema pristupa stvarnom CRM-u.</small>
-        </div>
+        </div>}
       </OrganizationPortal>
     );
   return (
@@ -299,9 +299,6 @@ export default function Workspace({
       busy={busy}
       onLogout={user ? logout : undefined}
     >
-      <div className="demo-notice">
-        CRM podaci se trajno čuvaju uz kontrolu pristupa po poslovnoj jedinici.
-      </div>
       {error && (
         <p className="error-message" role="alert">
           {error}
@@ -502,7 +499,6 @@ export default function Workspace({
                           <strong>{c.name}</strong>
                           <small>
                             {c.city}
-                            {c.is_demo ? " · DEMO" : ""}
                           </small>
                         </td>
                         <td>{c.sector}</td>

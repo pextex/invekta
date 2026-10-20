@@ -48,7 +48,7 @@ export default function CompanyProfile({
           <div className="page-heading">
             <div>
               <div className="eyebrow">
-                PROFIL KOMPANIJE{company.is_demo ? " · DEMO" : ""}
+                PROFIL KOMPANIJE
               </div>
               <h1>{company.name}</h1>
               <p>

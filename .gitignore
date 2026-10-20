@@ -13,3 +13,7 @@ __pycache__/
 *.pyc
 .vercel/
 backend/app/_vercel_data/
+
+# Production configuration contains credentials.
+.env.production
+!.env.production.example
