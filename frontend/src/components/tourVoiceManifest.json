@@ -1,0 +1,191 @@
+{
+  "models": [
+    "gemini-3.8-flash-lite-tts",
+    "gemini-3.8-flash-tts"
+  ],
+  "voice": "Kore",
+  "recordings": [
+    {
+      "text": "Početna tabla. Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja.",
+      "spoken": "Početna tabla. Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja.",
+      "file": "kore-bebea0d05ee83699.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Vaš plan za danas. U ovom delu nalaze se zadaci za danas. Dugme Otvori kalendar vodi na karticu Zadaci, gde možete pregledati druge dane i planirati sledeće aktivnosti.",
+      "spoken": "Vaš plan za danas. U ovom delu nalaze se zadaci za danas. Dugme Otvori kalendar vodi na karticu Zadaci, gde možete pregledati druge dane i planirati sledeće aktivnosti.",
+      "file": "kore-8dce3956eab21b8b.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pokazatelji prodaje. Ove kartice pokazuju ključne podatke o kompanijama i prodajnim prilikama. Vrednost otvorenih prilika predstavlja potencijal prodaje, a ne ostvaren prihod. Prikazane vrednosti pripadaju trenutno izabranom brendu.",
+      "spoken": "Pokazatelji prodaje. Ove kartice pokazuju ključne podatke o kompanijama i prodajnim prilikama. Vrednost otvorenih prilika predstavlja potencijal prodaje, a ne ostvaren prihod. Prikazane vrednosti pripadaju trenutno izabranom brendu.",
+      "file": "kore-805e4cd01c5a8aad.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pregled prodajnog levka. Ovaj pregled pokazuje koliko je prilika u svakoj fazi prodaje. Dugme Otvori prodajni levak vodi na detaljne kartice prilika. Vodič sada nastavlja na karticu Kompanije.",
+      "spoken": "Pregled prodajnog levka. Ovaj pregled pokazuje koliko je prilika u svakoj fazi prodaje. Dugme Otvori prodajni levak vodi na detaljne kartice prilika. Vodič sada nastavlja na karticu Kompanije.",
+      "file": "kore-322c4503ac21f29c.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Vaše kompanije. U kartici Kompanije nalaze se kompanije kojima imate pristup. Vodič pokazuje elemente aplikacije. Vi birate kada ćete preći na sledeći korak.",
+      "spoken": "Kompanije. U kartici Kompanije nalaze se kompanije kojima imate pristup. Vodič pokazuje elemente aplikacije. Vi birate kada ćete preći na sledeći korak.",
+      "file": "kore-cc2ef05f5c948f14.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pronađite kompaniju. U ovo polje unesite naziv kompanije ili delatnost. Pretraga sužava prikaz. Otvaranjem kompanije možete pregledati njene kontakte i prodajne prilike.",
+      "spoken": "Pronađite kompaniju. U ovo polje unesite naziv kompanije ili delatnost. Pretraga sužava prikaz. Otvaranjem kompanije možete pregledati njene kontakte i prodajne prilike.",
+      "file": "kore-e4616e9d16b19bc9.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Nova kompanija. Dugme za dodavanje kompanije otvara obrazac za naziv, adresu, PIB i kontakt osobe. Podaci se čuvaju tek kada potvrdite obrazac. Vodič neće dodavati kompanije umesto vas.",
+      "spoken": "Nova kompanija. Dugme za dodavanje kompanije otvara obrazac za naziv, adresu, PIB i kontakt osobe. Podaci se čuvaju tek kada potvrdite obrazac. Vodič neće dodavati kompanije umesto vas.",
+      "file": "kore-0092ebf6707aa01d.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pratite prodaju. Prodajni levak prikazuje prilike po fazama. Svaka kartica predstavlja jedan posao, njegovu vrednost i trenutno stanje.",
+      "spoken": "Prodajni levak. Prodajni levak prikazuje prilike po fazama. Svaka kartica predstavlja jedan posao, njegovu vrednost i trenutno stanje.",
+      "file": "kore-176bae8d3a41e37c.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Promena statusa. Priliku možete premestiti u drugu fazu pomoću dostupnih kontrola na kartici. Realizovano označava uspešan posao, a Nije realizovano posao koji nije zaključen. Promene utiču na izveštaje i ostvarenje targeta.",
+      "spoken": "Promena statusa. Priliku možete premestiti u drugu fazu pomoću dostupnih kontrola na kartici. Realizovano označava uspešan posao, a Nije realizovano posao koji nije zaključen. Promene utiču na izveštaje i ostvarenje targeta.",
+      "file": "kore-c7849466d7bb499a.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Izaberite mesec. Izaberite mesec za koji želite da pratite target. Ciljevi i ostvarenje prikazuju se za taj mesec.",
+      "spoken": "Targeti. Izaberite mesec za koji želite da pratite target. Ciljevi i ostvarenje prikazuju se za taj mesec.",
+      "file": "kore-41cc2f27b9904bfb.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Ovo je vaš target. Prvo su prikazani pojedinačni targeti po vrstama posla, sa ostvarenim iznosom i procentom napretka. Komercijalista vidi svoj target. Menadžeri i administratori mogu pregledati i postaviti pojedinačne ciljeve.",
+      "spoken": "Ovo je vaš target. Prvo su prikazani pojedinačni targeti po vrstama posla, sa ostvarenim iznosom i procentom napretka. Komercijalista vidi svoj target. Menadžeri i administratori mogu pregledati i postaviti pojedinačne ciljeve.",
+      "file": "kore-53c519c35437c9cb.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Kolektivni target. Ispod pojedinačnih targeta nalazi se kolektivni cilj tima. Ovde pratite zajedničko ostvarenje, svoj doprinos i opis zajedničkog bonusa.",
+      "spoken": "Kolektivni target. Ispod pojedinačnih targeta nalazi se kolektivni cilj tima. Ovde pratite zajedničko ostvarenje, svoj doprinos i opis zajedničkog bonusa.",
+      "file": "kore-30a5fb9f48ea8be2.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Plan za mesec. U kalendaru izaberite dan da pregledate njegove zadatke. Oznake razlikuju planirane i završene aktivnosti.",
+      "spoken": "Zadaci. U kalendaru izaberite dan da pregledate njegove zadatke. Oznake razlikuju planirane i završene aktivnosti.",
+      "file": "kore-62665098fb76f926.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Dodajte zadatak. Dugme Dodaj novi zadatak otvara unos naziva, datuma, vremena i kompanije. Vodič ne potvrđuje niti čuva zadatak. Sačuvajte ga sami kada proverite unete podatke.",
+      "spoken": "Dodajte zadatak. Dugme Dodaj novi zadatak otvara unos naziva, datuma, vremena i kompanije. Vodič ne potvrđuje niti čuva zadatak. Sačuvajte ga sami kada proverite unete podatke.",
+      "file": "kore-b19fc629d3a46e3e.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Zadaci za izabrani dan. Ovde se nalaze aktivnosti izabranog dana. Kada završite aktivnost, označite je kao završenu. Po potrebi možete izmeniti podatke zadatka.",
+      "spoken": "Zadaci za izabrani dan. Ovde se nalaze aktivnosti izabranog dana. Kada završite aktivnost, označite je kao završenu. Po potrebi možete izmeniti podatke zadatka.",
+      "file": "kore-580988b2a2cee414.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "LUU AI. LUU AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "spoken": "LUU AI. LUU AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "file": "kore-9785ef6de379b627.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Opišite poruku. Izaberite kompaniju i opišite kome se obraćate i šta želite da postignete. Kontakti se popunjavaju automatski. Klik na dugme za pripremu mejla pokreće generisanje; vodič ga neće pokrenuti umesto vas.",
+      "spoken": "Opišite poruku. Izaberite kompaniju i opišite kome se obraćate i šta želite da postignete. Kontakti se popunjavaju automatski. Klik na dugme za pripremu mejla pokreće generisanje; vodič ga neće pokrenuti umesto vas.",
+      "file": "kore-d638590d69935a1c.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pregledajte pa kopirajte. Ovde ćete dobiti predlog mejla. Proverite činjenice, primaoce i tekst, pa kopirajte mejl. Asistent ne šalje mejlove. Kopirajte tekst pre napuštanja stranice jer se nacrt ne čuva.",
+      "spoken": "Pregledajte pa kopirajte. Ovde ćete dobiti predlog mejla. Proverite činjenice, primaoce i tekst, pa kopirajte mejl. Asistent ne šalje mejlove. Kopirajte tekst pre napuštanja stranice jer se nacrt ne čuva.",
+      "file": "kore-5007ede784ff8fbf.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Dnevni i mesečni pregled. Izaberite dnevni ili mesečni period. Izveštaji prikazuju nove prilike, promene statusa i realizaciju u tom periodu, u okviru vaših ovlašćenja.",
+      "spoken": "Izveštaji. Izaberite dnevni ili mesečni period. Izveštaji prikazuju nove prilike, promene statusa i realizaciju u tom periodu, u okviru vaših ovlašćenja.",
+      "file": "kore-5933c7505d9ade06.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pratite rezultate. Grafikoni pokazuju kretanje kroz faze prodaje i odnos aktivnosti. Ako nema podataka, izaberite drugi period. Menadžeri imaju i pregled po komercijalistima.",
+      "spoken": "Pratite rezultate. Grafikoni pokazuju kretanje kroz faze prodaje i odnos aktivnosti. Ako nema podataka, izaberite drugi period. Menadžeri imaju i pregled po komercijalistima.",
+      "file": "kore-2129c358dc1ff60a.mp3",
+      "model": "gemini-3.8-flash-lite-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Hronologija promena - log. Ova kartica je dostupna samo menadžerima i administratorima. Prikazuje kreiranje prilika i promene statusa, sa vremenom promene i korisnikom koji ju je izvršio.",
+      "spoken": "Hronologija promena - log. Ova kartica je dostupna samo menadžerima i administratorima. Prikazuje kreiranje prilika i promene statusa, sa vremenom promene i korisnikom koji ju je izvršio.",
+      "file": "kore-f145dbf587d57b73.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Pronađite promenu. Izaberite period i komercijalistu. Promene su poređane od najnovije. Dugmad ispod tabele služe za prelazak na starije zapise.",
+      "spoken": "Pronađite promenu. Izaberite period i komercijalistu. Promene su poređane od najnovije. Dugmad ispod tabele služe za prelazak na starije zapise.",
+      "file": "kore-e57a7bfc048feeb0.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "Administracija pristupa. Ovde administrator upravlja korisnicima i njihovim pristupom poslovnim jedinicama. Pre promene uloge proverite kom brendu korisnik treba da pristupa. Vodič ne menja ovlašćenja.",
+      "spoken": "Korisnici i pristup. Ovde administrator upravlja korisnicima i njihovim pristupom poslovnim jedinicama. Pre promene uloge proverite kom brendu korisnik treba da pristupa. Vodič ne menja ovlašćenja.",
+      "file": "kore-602c22f5cd81a3af.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "INVEKTA AI. INVEKTA AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "spoken": "INVEKTA AI. INVEKTA AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "file": "kore-e33d91624c8671a5.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "CENOBOTS AI. CENOBOTS AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "spoken": "CENOBOTS AI. CENOBOTS AI priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "file": "kore-eed8906f1ccb4907.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    },
+    {
+      "text": "AI asistent. AI asistent priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "spoken": "AI asistent. AI asistent priprema poslovni mejl za izabrani brend. Koristi odabranu kompaniju, kontakte i dostupno odobreno znanje o brendu.",
+      "file": "kore-9eecf0fb4fcf8c77.mp3",
+      "model": "gemini-3.8-flash-tts",
+      "voice": "Kore"
+    }
+  ]
+}
