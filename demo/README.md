@@ -21,7 +21,7 @@ Forma ima samo zahtev i kompaniju. Stvarni kontakti se automatski popunjavaju sa
 
 ## Vodič sa naracijom
 
-Dugme **Vodič kroz aplikaciju** otvara lekcije sa pokazivačem, isticanjem elemenata i unapred pripremljenom AI naracijom ženskim glasom na srpskom. Svih 26 jedinstvenih koraka ima snimak, uključujući uvode za INVEKTA AI i CENOBOTS AI. Snimci su uključeni u HTML i pri reprodukciji ne zahtevaju nalog ili serverski ključ.
+Dugme **Vodič kroz aplikaciju** otvara lekcije sa pokazivačem, isticanjem elemenata i unapred pripremljenom AI naracijom ženskim glasom na srpskom. Svih 26 jedinstvenih koraka ima snimak izabranim ženskim glasom Kore, uključujući uvode za INVEKTA AI i CENOBOTS AI. Snimci su uključeni u HTML i pri reprodukciji ne zahtevaju nalog ili serverski ključ.
 
 **Pokreni vodič od početka** počinje lekcijom **Početna tabla**: današnji zadaci, pokazatelji prodaje i pregled levka. Posle nje automatski slede Kompanije i ostale dostupne lekcije. Naslovi odgovaraju nazivima kartica, a na početku snimljene lekcije izgovara se njen naziv. Uvodi za Zadaci i Izveštaji su celi snimci sa jasno odvojenim naslovom.
 

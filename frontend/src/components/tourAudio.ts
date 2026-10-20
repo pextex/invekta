@@ -1,30 +1,30 @@
-// Prerecorded Serbian female narration for every guide step.
-import audio0 from "../assets/tour-narration/d9e1189228121c03.mp3";
-import audio1 from "../assets/tour-narration/0444d46eaba06026.mp3";
-import audio2 from "../assets/tour-narration/5c98a5f0d4c8b0a8.mp3";
-import audio3 from "../assets/tour-narration/ebeb784200222025.mp3";
-import audio4 from "../assets/tour-narration/a889db026d3d5060.mp3";
-import audio5 from "../assets/tour-narration/f9b9c031b05917cd.mp3";
-import audio6 from "../assets/tour-narration/bcb144700a70e3d7.mp3";
-import audio7 from "../assets/tour-narration/0b63c87d41aebbb5.mp3";
-import audio8 from "../assets/tour-narration/51354b5a00a834be.mp3";
-import audio9 from "../assets/tour-narration/4eacbbbaf1935838.mp3";
-import audio10 from "../assets/tour-narration/d242cbecb55b5a95.mp3";
-import audio11 from "../assets/tour-narration/9d126b4ec1483527.mp3";
-import audio12 from "../assets/tour-narration/fbea3c8cf55a686f.mp3";
-import audio13 from "../assets/tour-narration/b154509066fe1507.mp3";
-import audio14 from "../assets/tour-narration/9315b6bb883971b5.mp3";
-import audio15 from "../assets/tour-narration/82aed62905730b13.mp3";
-import audio16 from "../assets/tour-narration/d053b12ceccfa594.mp3";
-import audio17 from "../assets/tour-narration/358051283ee8308d.mp3";
-import audio18 from "../assets/tour-narration/e54abb7c1117b84d.mp3";
-import audio19 from "../assets/tour-narration/397fbb5e4801c41f.mp3";
-import audio20 from "../assets/tour-narration/3fc6f3637ee28968.mp3";
-import audio21 from "../assets/tour-narration/f89d490d911defc1.mp3";
-import audio22 from "../assets/tour-narration/a49af4c6e19f7b63.mp3";
-import audio23 from "../assets/tour-narration/e92bc76f12d93abe.mp3";
-import audio24 from "../assets/tour-narration/40741b87b9a1d85f.mp3";
-import audio25 from "../assets/tour-narration/834c0842a8f03513.mp3";
+// Serbian female narration: Kore voice throughout; exact Gemini model recorded in tourVoiceManifest.json.
+import audio0 from "../assets/tour-narration/uniform/kore-bebea0d05ee83699.mp3";
+import audio1 from "../assets/tour-narration/uniform/kore-8dce3956eab21b8b.mp3";
+import audio2 from "../assets/tour-narration/uniform/kore-805e4cd01c5a8aad.mp3";
+import audio3 from "../assets/tour-narration/uniform/kore-322c4503ac21f29c.mp3";
+import audio4 from "../assets/tour-narration/uniform/kore-cc2ef05f5c948f14.mp3";
+import audio5 from "../assets/tour-narration/uniform/kore-e4616e9d16b19bc9.mp3";
+import audio6 from "../assets/tour-narration/uniform/kore-0092ebf6707aa01d.mp3";
+import audio7 from "../assets/tour-narration/uniform/kore-176bae8d3a41e37c.mp3";
+import audio8 from "../assets/tour-narration/uniform/kore-c7849466d7bb499a.mp3";
+import audio9 from "../assets/tour-narration/uniform/kore-41cc2f27b9904bfb.mp3";
+import audio10 from "../assets/tour-narration/uniform/kore-53c519c35437c9cb.mp3";
+import audio11 from "../assets/tour-narration/uniform/kore-30a5fb9f48ea8be2.mp3";
+import audio12 from "../assets/tour-narration/uniform/kore-62665098fb76f926.mp3";
+import audio13 from "../assets/tour-narration/uniform/kore-b19fc629d3a46e3e.mp3";
+import audio14 from "../assets/tour-narration/uniform/kore-580988b2a2cee414.mp3";
+import audio15 from "../assets/tour-narration/uniform/kore-9785ef6de379b627.mp3";
+import audio16 from "../assets/tour-narration/uniform/kore-d638590d69935a1c.mp3";
+import audio17 from "../assets/tour-narration/uniform/kore-5007ede784ff8fbf.mp3";
+import audio18 from "../assets/tour-narration/uniform/kore-5933c7505d9ade06.mp3";
+import audio19 from "../assets/tour-narration/uniform/kore-2129c358dc1ff60a.mp3";
+import audio20 from "../assets/tour-narration/uniform/kore-f145dbf587d57b73.mp3";
+import audio21 from "../assets/tour-narration/uniform/kore-e57a7bfc048feeb0.mp3";
+import audio22 from "../assets/tour-narration/uniform/kore-602c22f5cd81a3af.mp3";
+import audio23 from "../assets/tour-narration/uniform/kore-e33d91624c8671a5.mp3";
+import audio24 from "../assets/tour-narration/uniform/kore-eed8906f1ccb4907.mp3";
+import audio25 from "../assets/tour-narration/uniform/kore-9eecf0fb4fcf8c77.mp3";
 export const tourAudio: Record<string, string> = {
   "Početna tabla. Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja.": audio0,
   "Vaš plan za danas. U ovom delu nalaze se zadaci za danas. Dugme Otvori kalendar vodi na karticu Zadaci, gde možete pregledati druge dane i planirati sledeće aktivnosti.": audio1,
