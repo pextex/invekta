@@ -347,6 +347,7 @@ class MarketingOrder(Base):
         ForeignKeyConstraint(['owner_id','business_unit_id'],['memberships.user_id','memberships.business_unit_id'],name='marketing_order_owner_fk'),
         CheckConstraint("source IN ('website','phone')",name='valid_order_source'),
         CheckConstraint("status IN ('new','proposal_sent','won','lost')",name='valid_order_status'),
+        CheckConstraint('amount IS NULL OR amount > 0',name='positive_order_amount'),
         CheckConstraint('version >= 1',name='positive_order_version'),
         Index('ix_order_unit_owner_status','business_unit_id','owner_id','status'),
     )
@@ -357,6 +358,9 @@ class MarketingOrder(Base):
     last_name: Mapped[str] = mapped_column(String(100))
     phone: Mapped[str] = mapped_column(String(40))
     email: Mapped[str | None] = mapped_column(String(254))
+    amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    business_type: Mapped[str | None] = mapped_column(String(30))
+    realized_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     source: Mapped[str] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20),default='new',server_default='new')
     version: Mapped[int] = mapped_column(Integer,default=1,server_default='1')

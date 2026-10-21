@@ -1,5 +1,6 @@
 """Marketing orders, isolated by brand and owner."""
 import re
+from decimal import Decimal
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -19,6 +20,8 @@ class Fields(BaseModel):
     last_name: str = Field(min_length=1,max_length=100)
     phone: str = Field(min_length=6,max_length=40)
     email: EmailStr | None = Field(default=None,max_length=254)
+    amount: Decimal = Field(gt=0,max_digits=14,decimal_places=2)
+    business_type: Literal["sale","contracted","leasing","rental"] | None = None
     source: Literal['website','phone']
     @field_validator('phone')
     @classmethod
@@ -47,7 +50,9 @@ def visible(db,user,unit):
 
 
 def output(row):
-    return {key:getattr(row,key) for key in ('id','first_name','last_name','phone','email','source','status','version','created_at','updated_at')}
+    result = {key:getattr(row,key) for key in ('id','first_name','last_name','phone','email','amount','business_type','realized_at','source','status','version','created_at','updated_at')}
+    result['amount'] = format(row.amount, '.2f') if row.amount is not None else None
+    return result
 
 
 def period(query, date_from, date_to):
@@ -81,9 +86,19 @@ def listing(unit_id:int,search:str=Query('',max_length=200),limit:int=Query(100,
 @router.post('',status_code=201,dependencies=[Depends(require_origin)])
 def create(unit_id:int,data:Fields,user:User=Depends(current_user),db:Session=Depends(get_db)):
     visible(db,user,unit_id)
-    row=MarketingOrder(**data.model_dump(),business_unit_id=unit_id,owner_id=user.id,status='new')
+    values=order_values(db,unit_id,data)
+    row=MarketingOrder(**values,business_unit_id=unit_id,owner_id=user.id,status='new')
     db.add(row);db.commit();db.refresh(row)
     return output(row)
+
+
+def order_values(db,unit,data):
+    from ..business_types import resolve_business_type
+    values=data.model_dump(exclude={'version'})
+    values['business_type']=resolve_business_type(db,unit,values.get('business_type'))
+    if values['business_type'] is None:
+        raise HTTPException(422,'Izaberite vrstu posla: prodaja, lizing ili najam.')
+    return values
 
 
 def record(db,user,unit,id):
@@ -100,11 +115,18 @@ def save(db,row,version,values):
 
 @router.patch('/{order_id}',dependencies=[Depends(require_origin)])
 def edit(unit_id:int,order_id:int,data:Edit,user:User=Depends(current_user),db:Session=Depends(get_db)):
-    return save(db,record(db,user,unit_id,order_id),data.version,data.model_dump(exclude={'version'}))
+    return save(db,record(db,user,unit_id,order_id),data.version,order_values(db,unit_id,data))
 
 @router.patch('/{order_id}/status',dependencies=[Depends(require_origin)])
 def move(unit_id:int,order_id:int,data:Move,user:User=Depends(current_user),db:Session=Depends(get_db)):
-    return save(db,record(db,user,unit_id,order_id),data.version,{'status':data.status})
+    row=record(db,user,unit_id,order_id)
+    values={'status':data.status}
+    if data.status=='won':
+        if row.amount is None or row.amount<=0 or not row.business_type:
+            raise HTTPException(422,'Pre realizacije dopunite iznos i vrstu posla porudžbine.')
+        if row.status!='won' or row.realized_at is None:
+            values['realized_at']=datetime.now(timezone.utc)
+    return save(db,row,data.version,values)
 
 
 class DraftInput(BaseModel):

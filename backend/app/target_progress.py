@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from .models import Company, Opportunity, OpportunityStageChange
+from .models import Company, Opportunity, OpportunityStageChange, MarketingOrder
 
 def month_bounds(value: str):
     try:
@@ -36,4 +36,16 @@ def achievement_totals(db: Session, unit_id: int, first: date, after: date, ids:
                history.amount.is_not(None), history.changed_at >= datetime.combine(first, time.min, zone),
                history.changed_at < datetime.combine(after, time.min, zone))
         .group_by(Company.owner_id, category)).all()
-    return {(owner, kind): (amount or Decimal("0"), count) for owner, kind, amount, count in amounts}
+    totals = {(owner, kind): (amount or Decimal("0"), count) for owner, kind, amount, count in amounts}
+    orders = db.execute(select(MarketingOrder.owner_id, MarketingOrder.business_type,
+        func.sum(MarketingOrder.amount), func.count()).where(
+            MarketingOrder.business_unit_id == unit_id, MarketingOrder.owner_id.in_(ids),
+            MarketingOrder.status == "won", MarketingOrder.amount.is_not(None),
+            MarketingOrder.business_type.is_not(None),
+            MarketingOrder.realized_at >= datetime.combine(first, time.min, zone),
+            MarketingOrder.realized_at < datetime.combine(after, time.min, zone)
+        ).group_by(MarketingOrder.owner_id, MarketingOrder.business_type)).all()
+    for owner, kind, amount, count in orders:
+        previous, previous_count = totals.get((owner, kind), (Decimal("0"), 0))
+        totals[(owner, kind)] = (previous + (amount or Decimal("0")), previous_count + count)
+    return totals

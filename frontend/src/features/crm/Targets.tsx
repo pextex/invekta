@@ -75,7 +75,7 @@ export default function Targets({ unit, demo }: { unit: number; demo?: DemoTarge
           </article>;
         })}</div>}
       </section>)}
-      <p className="panel-note target-explanation">Ostvarenje se računa po poslednjem prelasku trenutno realizovane prilike u status Realizovano, prema datumu tog događaja. Jedna prilika se broji jednom. Koristi se vrednost i vrsta posla pri realizaciji; to nije fakturisan prihod. Starije prilike bez zabeležene realizacije ili istorijske vrednosti nisu uključene.</p>
+      <p className="panel-note target-explanation">Ostvarenje se računa po poslednjem prelasku trenutno realizovane prilike u status Realizovano, prema datumu tog događaja. Jedna prilika se broji jednom. Koristi se vrednost i vrsta posla pri realizaciji; to nije fakturisan prihod. Starije prilike bez zabeležene realizacije ili istorijske vrednosti nisu uključene. Realizovane marketing porudžbine računaju se po potvrđenom datumu realizacije i vrsti posla; ispravka iznosa porudžbine osvežava ostvarenje u tom mesecu.</p>
     </>}
     {data && <TeamBonus unit={unit} month={month} reload={reload + bonusReload} demo={demo && data ? {
       organization: demo.organization,

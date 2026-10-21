@@ -113,3 +113,22 @@ def test_invekta_allows_only_contracted_targets_and_daily_timezone_boundary(clie
     assert report["salespeople"][0]["targets"][0]["achieved_amount"] == "99.99"
     previous = client.get(f"/api/units/{unit.id}/targets?month=2026-09").json()
     assert previous["salespeople"][0]["targets"][0]["achieved_count"] == 0
+
+
+def test_realized_marketing_orders_merge_with_sales_in_personal_and_team_targets(client, db):
+    from app.models import MarketingOrder
+    # Exercise the migrated PostgreSQL schema and both public target endpoints.
+    db.get(Membership, (103, 101)).role = 'marketing'
+    db.add(Opportunity(id=8401, company_id=101, business_unit_id=101, title='Sale', amount=Decimal('100'), stage='Dobijeno', business_type='sale'))
+    db.flush()
+    stamp = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+    db.add(OpportunityStageChange(id=8402, opportunity_id=8401, business_unit_id=101, actor_id=102, from_stage='Ponuda', to_stage='Dobijeno', changed_at=stamp, amount=Decimal('100'), business_type='sale'))
+    db.add(MarketingOrder(business_unit_id=101, owner_id=103, first_name='Test', last_name='Buyer', phone='0601234567', source='phone', status='won', amount=Decimal('250.25'), business_type='sale', realized_at=stamp))
+    db.commit()
+    login(client, 'other')
+    personal = client.get('/api/units/101/targets?month=2026-10').json()['salespeople']
+    assert len(personal) == 1 and personal[0]['user_id'] == 103
+    assert personal[0]['targets'][0]['achieved_amount'] == '250.25'
+    team = client.get('/api/units/101/team-bonus?month=2026-10').json()
+    assert team['achieved_amount'] == '350.25' and team['my_achieved_amount'] == '250.25'
+    assert team['achieved_count'] == 2
