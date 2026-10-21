@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, false
 from sqlalchemy.orm import Session
 from .models import Company, User
 from .security import membership
@@ -7,8 +7,10 @@ from .security import membership
 
 def visible_query(db: Session, user: User, unit_id: int):
     member = membership(db, user, unit_id)
+    if member.role == "marketing":
+        return select(Company).where(Company.business_unit_id == unit_id, false())
     query = select(Company).where(Company.business_unit_id == unit_id)
-    if member.role == "sales":
+    if member.role in ("sales", "marketing"):
         query = query.where(Company.owner_id == user.id)
     return query
 

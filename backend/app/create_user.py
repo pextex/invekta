@@ -19,7 +19,7 @@ def main():
         "--unit", action="append", choices=["LUU", "INVEKTA", "CENOBOTS"], required=True
     )
     parser.add_argument(
-        "--role", choices=["sales", "manager", "admin"], default="sales"
+        "--role", choices=["sales", "marketing", "manager", "admin"], default="sales"
     )
     args = parser.parse_args()
     email = str(TypeAdapter(EmailStr).validate_python(args.email.strip())).lower()  # pyright: ignore[reportArgumentType]

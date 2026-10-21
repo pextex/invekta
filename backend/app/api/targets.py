@@ -21,8 +21,8 @@ def targets(unit_id: int, month: str = Query(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])
     categories = unit_categories(db, unit_id)
     people_query = select(User).join(Membership, Membership.user_id == User.id).where(
         Membership.business_unit_id == unit_id, Membership.enabled.is_(True),
-        Membership.role == "sales", User.active.is_(True))
-    if member.role == "sales":
+        Membership.role.in_(("sales", "marketing")), User.active.is_(True))
+    if member.role in ("sales", "marketing"):
         people_query = people_query.where(User.id == user.id)
     people = db.scalars(people_query.order_by(User.name, User.id)).all()
     ids = [person.id for person in people]
@@ -49,8 +49,8 @@ def set_targets(unit_id: int, data: TargetsInput,
     first, _ = month_bounds(data.month)
     owner = db.get(User, data.user_id)
     owner_member = db.get(Membership, (data.user_id, unit_id))
-    if owner is None or not owner.active or owner_member is None or not owner_member.enabled or owner_member.role != "sales":
-        raise HTTPException(422, "Izaberite aktivnog komercijalistu iz ove firme.")
+    if owner is None or not owner.active or owner_member is None or not owner_member.enabled or owner_member.role not in ("sales", "marketing"):
+        raise HTTPException(422, "Izaberite aktivnog korisnika prodaje ili marketinga iz ove firme.")
     allowed = unit_categories(db, unit_id)
     if any(entry.category not in allowed for entry in data.targets):
         raise HTTPException(422, "Vrsta targeta nije dozvoljena za ovu firmu.")

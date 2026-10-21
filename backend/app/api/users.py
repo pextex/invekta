@@ -32,7 +32,7 @@ def administrator(user: User = Depends(current_user)):
 class Grant(BaseModel):
     model_config = ConfigDict(extra="forbid")
     code: Literal["LUU", "INVEKTA", "CENOBOTS"]
-    role: Literal["sales", "manager", "admin"]
+    role: Literal["sales", "marketing", "manager", "admin"]
 
 
 class Profile(BaseModel):

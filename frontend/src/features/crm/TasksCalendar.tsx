@@ -8,7 +8,7 @@ import CompanyPicker, { type CompanyChoice } from "./CompanyPicker";
 type Draft = { title: string; due_date: string; due_time: string; notes: string; company_id: string; company_name?: string };
 const displayDate = (date: string, month = false) => new Intl.DateTimeFormat("sr-Latn-RS", month ? { month: "long", year: "numeric", timeZone: "UTC" } : { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 
-export default function TasksCalendar({ unit, companies, organization }: { unit: number; companies: CompanyChoice[]; organization?: string }) {
+export default function TasksCalendar({ unit, companies, organization, hideCompany = false }: { unit: number; companies: CompanyChoice[]; organization?: string; hideCompany?: boolean }) {
   const today = belgradeToday();
   const [month, setMonth] = useState(() => today.slice(0, 7));
   const [selected, setSelected] = useState(today);
@@ -56,10 +56,10 @@ export default function TasksCalendar({ unit, companies, organization }: { unit:
     {draft && <section className="panel task-editor"><h2>{editing ? "Izmena zadatka" : "Novi zadatak"}</h2><form onSubmit={submit}>
       <fieldset disabled={busy}><div className="form-grid">
         <label>Naziv zadatka<input ref={input} required minLength={2} maxLength={200} value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="Npr. Pozvati klijenta" /></label>
-        <CompanyPicker unit={unit} options={companies} value={Number(draft.company_id) || 0}
+        {!hideCompany && <CompanyPicker unit={unit} options={companies} value={Number(draft.company_id) || 0}
           selectedName={draft.company_name ?? editing?.company_name ?? undefined} optional local={!!organization}
           label="Kompanija (opciono)" ariaLabel="Kompanija zadatka" disabled={busy}
-          onChange={(id, name) => setDraft({ ...draft, company_id: id ? String(id) : "", company_name: name })} />
+          onChange={(id, name) => setDraft({ ...draft, company_id: id ? String(id) : "", company_name: name })} />}
         <label>Datum<input type="date" required value={draft.due_date} onChange={e => setDraft({ ...draft, due_date: e.target.value })} /></label>
         <label>Vreme (opciono)<input type="time" value={draft.due_time} onChange={e => setDraft({ ...draft, due_time: e.target.value })} /></label>
       </div><label>Beleška<textarea maxLength={2000} rows={3} value={draft.notes} onChange={e => setDraft({ ...draft, notes: e.target.value })} /></label></fieldset>

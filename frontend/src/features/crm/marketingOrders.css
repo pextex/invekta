@@ -1,0 +1,12 @@
+.order-fields { border:0;padding:0;min-width:0; }
+.order-search { display:grid;gap:7px;max-width:440px;margin:20px 0;font-weight:600;font-size:13px; }
+.order-board { display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:16px;overflow-x:auto;align-items:start;padding-bottom:15px; }
+.order-column { padding:16px;min-width:0; }
+.order-column > h2 { font-size:15px;display:flex;justify-content:space-between;gap:8px; }
+.order-column .deal { margin:16px 0;padding:14px;cursor:grab;overflow-wrap:anywhere; }
+.order-column .deal p { font-size:12px;line-height:1.7; }
+.order-column .deal label { display:grid;gap:5px;margin:12px 0;font-size:12px; }
+.order-column select { width:100%;min-width:0; }
+.order-column .panel-actions { flex-wrap:wrap;justify-content:space-between;gap:6px; }
+.order-column .panel-actions button { padding:7px;font-size:11px; }
+@media(max-width:690px) { .order-board { grid-template-columns:1fr;overflow:visible; } }

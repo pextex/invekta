@@ -1,6 +1,7 @@
 import { isOrganizationCode } from "../organizations";
 const pages: Record<string, string> = {
   companies: "Kompanije",
+  orders: "Porudžbine",
   pipeline: "Prodajni levak",
   dashboard: "Početna tabla",
   leads: "Kompanije",

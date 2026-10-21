@@ -14,6 +14,7 @@ from .api.targets import router as targets_router
 from .api.tasks import router as tasks_router
 from .api.sales import router as sales_router
 from .api.sales_documents import router as sales_documents_router
+from .api.orders import router as orders_router
 from .api.profile import router as profile_router
 from .api.users import router as users_router
 from .api.ai import router as ai_router
@@ -41,6 +42,7 @@ app.include_router(sales_router)
 app.include_router(sales_documents_router)
 app.include_router(users_router)
 app.include_router(profile_router)
+app.include_router(orders_router)
 app.include_router(ai_router)
 app.include_router(ai_knowledge_router)
 
@@ -78,6 +80,7 @@ def ready(db: Session = Depends(get_db)):
             )
         )
         db.execute(text("SELECT phone FROM users LIMIT 1"))
+        db.execute(text("SELECT id, status FROM marketing_orders LIMIT 1"))
         db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
         db.execute(text("SELECT changes, amount FROM opportunity_stage_changes LIMIT 1"))
         db.execute(text("SELECT id, due_date FROM tasks LIMIT 1"))
@@ -240,7 +243,9 @@ def create_company(
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    membership(db, user, unit_id)
+    member = membership(db, user, unit_id)
+    if member.role == "marketing":
+        raise HTTPException(403, "Marketing koristi porudžbine umesto kompanija.")
     company = Company(
         **data.model_dump(exclude={"contacts"}), business_unit_id=unit_id, owner_id=user.id, is_demo=False
     )

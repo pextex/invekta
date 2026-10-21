@@ -387,7 +387,7 @@ def sales_report(
     member = membership(db, user, unit_id)
     if include_history and not user.is_platform_admin and member.role not in ("manager", "admin"):
         raise HTTPException(403, "Hronologija promena je dostupna samo menadžerima i administratorima.")
-    if member.role == "sales" and owner_id is not None and owner_id != user.id:
+    if member.role in ("sales", "marketing") and owner_id is not None and owner_id != user.id:
         raise HTTPException(403, "Možete pregledati samo svoj izveštaj.")
     company_scope = visible_query(db, user, unit_id)
     people = db.execute(select(User.id, User.name).where(User.id.in_(

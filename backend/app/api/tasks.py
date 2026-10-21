@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/units/{unit_id}/tasks", tags=["Zadaci"])
 def visible_tasks(db: Session, user: User, unit_id: int):
     member = membership(db, user, unit_id)
     query = select(Task).where(Task.business_unit_id == unit_id)
-    if member.role == "sales":
+    if member.role in ("sales", "marketing"):
         companies = visible_query(db, user, unit_id).with_only_columns(Company.id)
         query = query.where(Task.owner_id == user.id,
                             or_(Task.company_id.is_(None), Task.company_id.in_(companies)))

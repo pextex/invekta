@@ -80,7 +80,7 @@ class Membership(Base):
     __tablename__ = "memberships"
     __table_args__ = (
         CheckConstraint(
-            "role IN ('sales', 'manager', 'admin')", name="valid_membership_role"
+            "role IN ('sales', 'marketing', 'manager', 'admin')", name="valid_membership_role"
         ),
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
@@ -339,3 +339,26 @@ class TeamBonus(Base):
     target_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     reward_note: Mapped[str | None] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+
+
+class MarketingOrder(Base):
+    __tablename__ = 'marketing_orders'
+    __table_args__ = (
+        ForeignKeyConstraint(['owner_id','business_unit_id'],['memberships.user_id','memberships.business_unit_id'],name='marketing_order_owner_fk'),
+        CheckConstraint("source IN ('website','phone')",name='valid_order_source'),
+        CheckConstraint("status IN ('new','proposal_sent','won','lost')",name='valid_order_status'),
+        CheckConstraint('version >= 1',name='positive_order_version'),
+        Index('ix_order_unit_owner_status','business_unit_id','owner_id','status'),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_unit_id: Mapped[int] = mapped_column(ForeignKey('business_units.id'))
+    owner_id: Mapped[int] = mapped_column(Integer)
+    first_name: Mapped[str] = mapped_column(String(100))
+    last_name: Mapped[str] = mapped_column(String(100))
+    phone: Mapped[str] = mapped_column(String(40))
+    email: Mapped[str | None] = mapped_column(String(254))
+    source: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20),default='new',server_default='new')
+    version: Mapped[int] = mapped_column(Integer,default=1,server_default='1')
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(),server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(),server_default=func.now(),onupdate=func.now())

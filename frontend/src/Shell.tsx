@@ -43,6 +43,8 @@ type Props = {
   connected?: boolean;
   canManageUsers?: boolean;
   canViewHistory?: boolean;
+  marketing?: boolean;
+  canViewOrders?: boolean;
   busy?: boolean;
   onConnect?: () => void;
   onBack?: () => void;
@@ -60,6 +62,8 @@ export default function Shell({
   connected = false,
   canManageUsers = false,
   canViewHistory = false,
+  marketing = false,
+  canViewOrders = false,
   busy = false,
   onConnect,
   onBack,
@@ -71,6 +75,7 @@ export default function Shell({
   function navigate(next: string) {
     onPage(next);
   }
+  const items = navigation.flatMap(item => item.title === "Kompanije" ? [{ ...item, title: marketing ? "Porudžbine" : item.title }, ...(canViewOrders && !marketing ? [{ title: "Porudžbine", icon: Building2 }] : [])] : [item]);
   const brand = organizations.find((org) => org.code === organization);
   return (
     <div className="app" data-organization={brand?.code} style={brand ? ({ "--blue": brand.accent, "--nav": brand.nav, "--bg": brand.background } as CSSProperties) : undefined}>
@@ -88,13 +93,13 @@ export default function Shell({
         </a>
         <div className="navigation-area">
           <nav aria-label="Glavna navigacija">
-            {navigation.filter(item => item.title !== "Hronologija promena - log" || canViewHistory).map(({ title, icon: Icon }) => (
+            {items.filter(item => item.title !== "Hronologija promena - log" || canViewHistory).map(({ title, icon: Icon }) => (
               <button
                 key={title}
                 data-tour-nav={title}
                 disabled={busy}
-                aria-current={page === title ? "page" : undefined}
-                className={page === title ? "active" : ""}
+                aria-current={(page === title || marketing && page === "Kompanije" && title === "Porudžbine") ? "page" : undefined}
+                className={(page === title || marketing && page === "Kompanije" && title === "Porudžbine") ? "active" : ""}
                 onClick={() => navigate(title)}
               >
                 <Icon size={16} />
@@ -132,8 +137,8 @@ export default function Shell({
             <Search size={16} />
             <input
               disabled={busy || !onSearch}
-              aria-label="Globalna pretraga kompanija"
-              placeholder="Pretraži kompanije i delatnosti…"
+              aria-label={marketing ? "Globalna pretraga porudžbina" : "Globalna pretraga kompanija"}
+              placeholder={marketing ? "Pretraži porudžbine…" : "Pretraži kompanije i delatnosti…"}
               value={search}
               onChange={(e) => onSearch?.(e.target.value)}
             />
@@ -182,7 +187,7 @@ export default function Shell({
         <div className="content" data-tour-content>{children}</div>
       </main>
       {profileOpen && <MyProfile name={user} demo={!connected} onClose={() => setProfileOpen(false)} />}
-      {tourOpen && <AppTour key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
+      {tourOpen && <AppTour marketing={marketing} key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

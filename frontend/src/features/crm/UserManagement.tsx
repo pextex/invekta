@@ -6,7 +6,7 @@ type Grant = { code: OrganizationCode; role: string };
 type Profile = { id: number; name: string; email: string | null; active: boolean; is_platform_admin: boolean; version: number; units: Grant[] };
 type Draft = { name: string; email: string; password: string; active: boolean; units: Grant[] };
 const empty = (): Draft => ({ name: "", email: "", password: "", active: true, units: [] });
-const roles = [{ value: "sales", label: "Komercijalista" }, { value: "manager", label: "Menadžer" }, { value: "admin", label: "Administrator firme" }];
+const roles = [{ value: "marketing", label: "Marketing" }, { value: "sales", label: "Komercijalista" }, { value: "manager", label: "Menadžer" }, { value: "admin", label: "Administrator firme" }];
 export default function UserManagement() {
   const [list, setList] = useState<Profile[]>([]), [total, setTotal] = useState(0), [offset, setOffset] = useState(0);
   const [draft, setDraft] = useState<Draft | null>(null), [editing, setEditing] = useState<Profile | null>(null);

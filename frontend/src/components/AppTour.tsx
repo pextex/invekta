@@ -4,10 +4,10 @@ import { nextTourPosition, previousTourPosition, tourLessons } from "./tourLesso
 import { getTourNarration } from "./tourOpenings";
 import "./appTour.css";
 
-type Props = { organization?: string; page: string; onPage: (page: string) => void; canViewHistory: boolean; canManageUsers: boolean; onClose: () => void };
+type Props = { organization?: string; page: string; onPage: (page: string) => void; canViewHistory: boolean; canManageUsers: boolean; marketing?: boolean; onClose: () => void };
 type Box = { top: number; left: number; width: number; height: number };
-export default function AppTour({ organization, page, onPage, canViewHistory, canManageUsers, onClose }: Props) {
-  const lessons = tourLessons(organization, canViewHistory, canManageUsers);
+export default function AppTour({ organization, page, onPage, canViewHistory, canManageUsers, marketing = false, onClose }: Props) {
+  const lessons = tourLessons(organization, canViewHistory, canManageUsers, marketing);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);

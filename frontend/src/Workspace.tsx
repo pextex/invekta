@@ -1,3 +1,4 @@
+import MarketingOrders from "./features/crm/MarketingOrders";
 import Targets from "./features/crm/Targets";
 import Quotes from "./features/crm/Quotes";
 import TasksCalendar from "./features/crm/TasksCalendar";
@@ -36,6 +37,7 @@ export default function Workspace({
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [unit, setUnit] = useState(0);
+  const marketing = user?.units.find(item => item.id === unit)?.role === "marketing";
   const [rows, setRows] = useState<Company[]>([]),
     [search, setSearch] = useState(""),
     [error, setError] = useState("");
@@ -106,6 +108,7 @@ export default function Workspace({
   }, [user, unit]);
   useEffect(() => {
     if (!user || !unit) return;
+    if (marketing) { setRows([]); setLoading(false); return; }
     const controller = new AbortController();
     setLoading(true);
     setRows([]);
@@ -122,7 +125,7 @@ export default function Workspace({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [user, unit, search, reload]);
+  }, [user, unit, search, reload, marketing]);
   async function login(e: FormEvent) {
     e.preventDefault();
     if (!loginChoice) return;
@@ -184,7 +187,7 @@ export default function Workspace({
     }
   }
   const roleName = (role: string) =>
-    role === "sales"
+    role === "marketing" ? "Marketing" : role === "sales"
       ? "Komercijalista"
       : role === "manager"
         ? "Menadžer prodaje"
@@ -270,6 +273,8 @@ export default function Workspace({
     );
   return (
     <Shell
+      marketing={marketing}
+      canViewOrders={!!canViewHistory}
       canViewHistory={canViewHistory}
       organization={
         user?.units.find((u) => u.id === unit)?.code as
@@ -313,6 +318,8 @@ export default function Workspace({
         <p className="empty">
           Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
         </p>
+      ) : page === "Porudžbine" || (marketing && ["Kompanije", "Početna tabla", "Prodajni levak", "Izveštaji", "Invekta AI"].includes(page)) ? (
+        <MarketingOrders key={`${unit}-${page}`} unit={unit} page={page} brand={user.units.find(item => item.id === unit)?.code ?? "CRM"} search={search} />
       ) : selectedCompany && page === "Kompanije" ? (
         <CompanyProfile
           key={`${unit}-${selectedCompany}`}
@@ -340,7 +347,7 @@ export default function Workspace({
       ) : page === "Ponude" ? (
         <Quotes key={unit} unit={unit} canUpload={user.is_platform_admin || activeRole === "admin"} />
       ) : page === "Zadaci" ? (
-        <TasksCalendar key={unit} unit={unit} companies={rows} />
+        <TasksCalendar key={unit} unit={unit} companies={rows} hideCompany={marketing} />
       ) : page === "Izveštaji" ? (
         <Reports key={unit} unit={unit} role={activeRole} />
       ) : page === "Hronologija promena - log" ? (

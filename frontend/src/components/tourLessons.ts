@@ -2,8 +2,18 @@ import { organizationAiName } from "../organizations";
 export type TourStep = { page: string; target: string; title: string; text: string };
 export type TourLesson = { id: string; title: string; steps: TourStep[] };
 const nav = (page: string) => `[data-tour-nav="${page}"]`;
-export function tourLessons(organization?: string, canViewHistory = false, canManageUsers = false): TourLesson[] {
+export function tourLessons(organization?: string, canViewHistory = false, canManageUsers = false, marketing = false): TourLesson[] {
   const ai = organizationAiName(organization);
+  if (marketing) return [
+    { id: "marketing-dashboard", title: "Početna tabla", steps: [{ page: "Početna tabla", target: ".metrics", title: "Marketing pregled", text: "Ovde pratite broj svojih porudžbina po četiri faze. Podaci pripadaju aktivnom brendu." }] },
+    { id: "marketing-orders", title: "Porudžbine", steps: [
+      { page: "Porudžbine", target: nav("Porudžbine"), title: "Porudžbine", text: "Ovde unosite ime, prezime, telefon, email i izvor porudžbine: sajt ili telefon. Email je opcion. Marketing vidi samo svoje porudžbine." },
+      { page: "Porudžbine", target: ".page-heading .primary-button", title: "Nova porudžbina", text: "Otvorite obrazac, unesite podatke i sačuvajte porudžbinu. Vodič ne unosi niti čuva podatke umesto vas." },
+    ] },
+    { id: "marketing-pipeline", title: "Prodajni levak", steps: [{ page: "Prodajni levak", target: ".order-board", title: "Četiri faze porudžbine", text: "Porudžbine, Ponuda poslata, Realizovano i Nije realizovano. Karticu prevucite u drugu kolonu ili promenite status izborom na kartici. Kolone imaju zasebne stranice za starije porudžbine." }] },
+    { id: "marketing-reports", title: "Izveštaji", steps: [{ page: "Izveštaji", target: ".report-toolbar", title: "Period porudžbina", text: "Izaberite period unosa porudžbina. Pokazatelji prikazuju njihov trenutni status, a ne istoriju promena statusa." }] },
+    { id: "marketing-ai", title: ai, steps: [{ page: "Invekta AI", target: ".ai-grid", title: ai, text: "Pronađite porudžbinu, izaberite je i opišite mejl. Pregledajte nacrt, pa ga kopirajte. Asistent ne šalje mejl." }] },
+  ];
   const lessons: TourLesson[] = [
     { id: "dashboard", title: "Početna tabla", steps: [
       { page: "Početna tabla", target: nav("Početna tabla"), title: "Početna tabla", text: "Početna tabla je polazni ekran za vaš radni dan. Ovde su pregled prodaje, današnji zadaci i prečice ka ostalim karticama. Podaci koje vidite zavise od izabranog brenda i vaših ovlašćenja." },

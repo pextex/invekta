@@ -19,7 +19,7 @@ def team_bonus(unit_id: int, month: str = Query(pattern=r"^[0-9]{4}-(0[1-9]|1[0-
     first, after = month_bounds(month)
     categories = unit_categories(db, unit_id)
     ids = list(db.scalars(select(User.id).join(Membership, Membership.user_id == User.id).where(
-        Membership.business_unit_id == unit_id, Membership.enabled.is_(True), Membership.role == "sales", User.active.is_(True))).all())
+        Membership.business_unit_id == unit_id, Membership.enabled.is_(True), Membership.role.in_(("sales", "marketing")), User.active.is_(True))).all())
     achieved = achievement_totals(db, unit_id, first, after, ids)
     relevant = [(owner, value, count) for (owner, kind), (value, count) in achieved.items() if kind in categories]
     total = sum((value for _, value, _ in relevant), Decimal("0"))
