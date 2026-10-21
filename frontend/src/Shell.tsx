@@ -119,7 +119,7 @@ export default function Shell({
               </button>
             </nav>
           )}
-          <button className="tour-launch" disabled={busy} onClick={() => setTourOpen(value => !value)}><CircleHelp size={17} />Vodič kroz aplikaciju</button>
+          {!marketing && <button className="tour-launch" disabled={busy} onClick={() => setTourOpen(value => !value)}><CircleHelp size={17} />Vodič kroz aplikaciju</button>}
         </div>
         <div className="sidebar-status">
           <span>● {connected ? "CRM" : "Demo režim"}</span>
@@ -187,7 +187,7 @@ export default function Shell({
         <div className="content" data-tour-content>{children}</div>
       </main>
       {profileOpen && <MyProfile name={user} demo={!connected} onClose={() => setProfileOpen(false)} />}
-      {tourOpen && <AppTour marketing={marketing} key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
+      {tourOpen && !marketing && <AppTour key={organization} organization={organization} page={page} onPage={onPage} canViewHistory={canViewHistory} canManageUsers={connected && canManageUsers} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

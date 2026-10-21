@@ -10,7 +10,7 @@ Marketing dashboard i izveštaji koriste porudžbine, ne komercijalističke pril
 
 Marketing AI bira porudžbinu umesto kompanije, preuzima njen email i koristi postojeća pravila brenda i potpis. Nacrt nije poslat niti trajno sačuvan. Ograničenje je 20 priprema za 15 minuta po korisniku, zajedno sa postojećim AI zahtevima. Kada je Gemini isključen, prikazuje se lokalni šablon uz odgovarajuću napomenu.
 
-Nov marketing vodič ima tekstualne korake prilagođene porudžbinama. Postojećih 26 Kore naracija za prodajni CRM ostaju neizmenjene; ne pušta se naracija o kompanijama preko marketing porudžbina.
+Marketing prikaz nema dugme za vodič i ne otvara vodič. Dodavanje marketing naracije je otkazano. Postojeći vodič i 26 Kore naracija za ostale uloge ostaju dostupni.
 
 Za objavu primeniti Alembic migraciju `bc38e7f012a4` standardnom komandom `python -m app.run_migrations`, zatim objaviti novi frontend i backend. Migracija je dodata iza `ab27d6e901f3`; ne briše postojeće naloge ili poslovne podatke. Ranije pripremljena komanda za reset automatski čisti i marketing porudžbine jer prati redosled stranih ključeva u šemi. Reset prave baze i dalje nije izvršen ovom izmenom.
 
