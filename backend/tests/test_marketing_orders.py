@@ -167,3 +167,14 @@ def test_order_target_month_uses_belgrade_boundaries(orders):
   db.commit()
   first,after=month_bounds('2026-10')
   assert achievement_totals(db,1,first,after,[1])=={(1,'sale'):(Decimal('6.00'),2)}
+
+
+def test_readiness_rejects_database_missing_order_amount_migration(orders):
+ from sqlalchemy import text
+ client,engine=orders
+ assert client.get('/api/ready').status_code==200
+ with engine.begin() as connection:
+  connection.execute(text('ALTER TABLE marketing_orders RENAME TO marketing_orders_before_amounts'))
+  connection.execute(text('CREATE TABLE marketing_orders (id INTEGER PRIMARY KEY, status TEXT)'))
+ response=client.get('/api/ready')
+ assert response.status_code==503 and response.json()['detail']=='Baza ili migracije nisu spremne.'

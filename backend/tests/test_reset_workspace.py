@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, event, select, func
 from sqlalchemy.orm import Session
 from app.db import Base
 from app.models import (User, BusinessUnit, Membership, Company, Contact, Opportunity, OpportunityStageChange,
-    Task, AiDraft, AiAttempt, AiBrandKnowledge, SalesDocument, MonthlyTarget, TeamBonus, LoginSession, LoginAttempt)
+    MarketingOrder, Task, AiDraft, AiAttempt, AiBrandKnowledge, SalesDocument, MonthlyTarget, TeamBonus, LoginSession, LoginAttempt)
 from app.reset_workspace import plan, reset, PRESERVE
 from app.security import hash_password, verify_password
 
@@ -29,6 +29,7 @@ def store():
         db.add(OpportunityStageChange(id=1,opportunity_id=1,business_unit_id=1,actor_id=2,to_stage='Ponuda'))
         db.add(Task(business_unit_id=1,owner_id=2,company_id=1,title='Task',due_date=date.today()))
         db.add(AiDraft(business_unit_id=1,company_id=1,actor_id=2,mode='email',subject='Subject',body='Private draft',model='test'))
+        db.add(MarketingOrder(business_unit_id=1,owner_id=2,first_name='Test',last_name='Buyer',phone='0601234567',source='phone',status='won',amount=250,business_type='sale',realized_at=datetime.now(timezone.utc)))
         db.add(AiAttempt(actor_id=2))
         db.add(AiBrandKnowledge(business_unit_id=1,content='Keep brand configuration',updated_by_id=2))
         db.add(SalesDocument(business_unit_id=1,uploaded_by_id=2,title='File',filename='file.pdf',content_type='application/pdf',size_bytes=4,data=b'test'))
@@ -45,6 +46,7 @@ def test_plan_is_read_only_and_apply_cleans_records_but_keeps_admin_configuratio
     with Session(store) as db:
         result=plan(db,'owner@example.com')
         assert result['other_users']==1 and result['delete']['sales_documents']==1
+        assert result['delete']['marketing_orders']==1
         assert db.get(User,2) is not None and db.get(SalesDocument,1).data==b'test'
         db.rollback()
     with Session(store) as db, db.begin(): reset(db,'OWNER@example.com')

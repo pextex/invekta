@@ -2,6 +2,8 @@
 
 Ovo izdanje koristi stvarnu prijavu. Produkcioni frontend nema ulaz u demo ni javni pregled izmišljenih klijenata. Vodič sa 26 naracija, lični profil, AI potpisi, redosled targeta i ovlašćenja ostaju uključeni. Odvojeni Gradient + 3D predlog nije primenjen.
 
+Za jednokratno čišćenje i pokretanje stvarnog rada na postojećem Manusu pogledati [poruku za Manus i korake pre početka rada](manus-production-launch.md). Administrator koji ostaje: `petar.milosevic@invekta.rs`; čišćenje prave baze još nije izvršeno.
+
 ## MyCity Hosting
 
 Provajder je potvrđen kao MyCity Hosting; konkretan paket i domen još nisu utvrđeni. Njihova [Cloud server stranica](https://mycity-hosting.rs/cloud-server/) navodi SSH pristup i managed Cloud/VPS ponudu (provereno 20.10.2026). Ovaj paket je pripremljen za server sa Docker Compose. Kompatibilnost postojećeg shared paketa mora se zasebno potvrditi sa hostingom.
@@ -19,7 +21,7 @@ Server sa Docker Compose, domen/poddomen za CRM, HTTPS reverse proxy i postojeć
 
    Standardni `npm run build` i eksplicitni `npm run build:hosting` grade produkcioni ulaz; zasebni demo se gradi samo sa `npm run build:demo`. Docker slika koristi `build:hosting`. Na pokretanju se izvršavaju samo Alembic migracije; ne pokreću se demo seed ili reset baze.
 3. Podesiti HTTPS reverse proxy sa izabranog domena na `127.0.0.1:3000`. Primer je u `nginx.example.conf`. Sertifikat mora biti stvaran i važeći. Baza ne treba da bude javno dostupna.
-4. Proveriti `/api/health` i `/api/ready`, pa prijavu administratora, sva tri brenda, prazan dashboard, dodavanje korisnika/kompanije, profil, AI, dokumente i vodič. `/api/ready` proverava i migraciju telefona.
+4. Proveriti `/api/health` i `/api/ready`, pa prijavu administratora, sva tri brenda, prazan dashboard, dodavanje korisnika/kompanije, profil, AI, dokumente i vodič. `/api/ready` proverava i migraciju telefona i novčana polja marketing porudžbina (`amount`, `business_type`, `realized_at`).
 
 Ako je baza nova i prazna, prvo treba eksplicitno kreirati/aktivirati administratorski nalog standardnim `app.bootstrap_admin` postupkom. To ne radi aplikacija automatski. Ako se čuva postojeći administrator, preneti njegov nalog i pristup iz postojeće baze; ne menjati njegovu lozinku bez zahteva vlasnika.
 

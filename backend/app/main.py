@@ -80,7 +80,7 @@ def ready(db: Session = Depends(get_db)):
             )
         )
         db.execute(text("SELECT phone FROM users LIMIT 1"))
-        db.execute(text("SELECT id, status FROM marketing_orders LIMIT 1"))
+        db.execute(text("SELECT id, status, amount, business_type, realized_at FROM marketing_orders LIMIT 1"))
         db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
         db.execute(text("SELECT changes, amount FROM opportunity_stage_changes LIMIT 1"))
         db.execute(text("SELECT id, due_date FROM tasks LIMIT 1"))
