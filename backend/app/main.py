@@ -9,6 +9,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from .access import visible_query
+from .api.contracts import router as contracts_router
 from .api.team_bonus import router as team_bonus_router
 from .api.targets import router as targets_router
 from .api.tasks import router as tasks_router
@@ -35,6 +36,7 @@ from .security import (
 
 app = FastAPI(title="LUU × INVEKTA × CENOBOTS CRM", version="0.4.0")
 
+app.include_router(contracts_router)
 app.include_router(team_bonus_router)
 app.include_router(targets_router)
 app.include_router(tasks_router)
@@ -81,7 +83,7 @@ def ready(db: Session = Depends(get_db)):
         )
         db.execute(text("SELECT phone FROM users LIMIT 1"))
         db.execute(text("SELECT id, status, amount, business_type, realized_at FROM marketing_orders LIMIT 1"))
-        db.execute(text("SELECT address, pib FROM companies LIMIT 1"))
+        db.execute(text("SELECT address, pib, contract_signed_on, contract_expires_on FROM companies LIMIT 1"))
         db.execute(text("SELECT changes, amount FROM opportunity_stage_changes LIMIT 1"))
         db.execute(text("SELECT id, due_date FROM tasks LIMIT 1"))
         db.execute(text("SELECT id, period FROM monthly_targets LIMIT 1"))
@@ -282,7 +284,12 @@ def update_company(
     )
     if company is None:
         raise HTTPException(404, "Kompanija nije pronađena.")
-    for key, value in data.model_dump(exclude_unset=True).items():
+    values = data.model_dump(exclude_unset=True)
+    signed = values.get("contract_signed_on", company.contract_signed_on)
+    expires = values.get("contract_expires_on", company.contract_expires_on)
+    if signed and expires and expires < signed:
+        raise HTTPException(422, "Datum isteka ne može biti pre datuma potpisivanja ugovora.")
+    for key, value in values.items():
         setattr(company, key, value)
     try:
         db.commit()

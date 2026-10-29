@@ -126,6 +126,8 @@ class Company(Base):
         ),
         UniqueConstraint("id", "business_unit_id", name="unique_company_id_unit"),
         Index("ix_company_unit_owner", "business_unit_id", "owner_id"),
+        Index("ix_company_unit_contract_end", "business_unit_id", "contract_expires_on"),
+        CheckConstraint("contract_signed_on IS NULL OR contract_expires_on IS NULL OR contract_expires_on >= contract_signed_on", name="valid_company_contract_dates"),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     business_unit_id: Mapped[int] = mapped_column(ForeignKey("business_units.id"))
@@ -134,6 +136,8 @@ class Company(Base):
     address: Mapped[str | None] = mapped_column(String(300))
     pib: Mapped[str | None] = mapped_column(String(9))
     city: Mapped[str] = mapped_column(String(100))
+    contract_signed_on: Mapped[date | None] = mapped_column(Date)
+    contract_expires_on: Mapped[date | None] = mapped_column(Date)
     sector: Mapped[str] = mapped_column(String(100))
     stage: Mapped[str] = mapped_column(String(30), default="Kontakt")
     potential_value: Mapped[Decimal] = mapped_column(

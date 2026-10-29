@@ -3,7 +3,7 @@ import { ArrowLeft, Building2 } from "lucide-react";
 import { api, errorText } from "../../lib/api";
 import Contacts from "./Contacts";
 import Pipeline from "./Pipeline";
-import type { Company } from "./types";
+import { formatDate, type Company } from "./types";
 export default function CompanyProfile({
   unit,
   id,
@@ -59,6 +59,12 @@ export default function CompanyProfile({
             </div>
             <Building2 size={30} />
           </div>
+          <section className="panel" aria-label="Ugovor kompanije">
+            <h2>Ugovor</h2>
+            <p>Datum potpisivanja: {company.contract_signed_on ? formatDate(company.contract_signed_on) : "Nije unet"}</p>
+            <p>Datum isteka: {company.contract_expires_on ? formatDate(company.contract_expires_on) : "Nije unet"}</p>
+            <small>Datume menjate kroz „Izmeni” na listi kompanija. Podsetnik se prikazuje 30 dana pre isteka.</small>
+          </section>
           <div
             className="profile-tabs"
             role="tablist"

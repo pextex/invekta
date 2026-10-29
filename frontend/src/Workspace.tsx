@@ -1,3 +1,4 @@
+import ContractReminders from "./features/crm/ContractReminders";
 import MarketingOrders from "./features/crm/MarketingOrders";
 import Targets from "./features/crm/Targets";
 import Quotes from "./features/crm/Quotes";
@@ -19,8 +20,8 @@ import { isCrmRoute, readRoute, writeRoute } from "./lib/routes";
 import CompanyProfile from "./features/crm/CompanyProfile";
 import Pipeline from "./features/crm/Pipeline";
 import Dashboard from "./features/crm/Dashboard";
-import type { User, Company, CompanyForm } from "./features/crm/types";
-const blank: CompanyForm = { name: "", address: "", pib: "", city: "", sector: "", contacts: [{ name: "", position: "", phone: "", email: "" }] };
+import { formatDate, type User, type Company, type CompanyForm } from "./features/crm/types";
+const blank: CompanyForm = { name: "", address: "", pib: "", city: "", sector: "", contract_signed_on: "", contract_expires_on: "", contacts: [{ name: "", position: "", phone: "", email: "" }] };
 export default function Workspace({
   onDemo,
 }: {
@@ -175,7 +176,7 @@ export default function Workspace({
     try {
       await api(`/units/${unit}/companies${editing ? "/" + editing : ""}`, {
         method: editing ? "PATCH" : "POST",
-        body: JSON.stringify({ ...form, address: form.address || null, pib: form.pib || null }),
+        body: JSON.stringify({ ...form, address: form.address || null, pib: form.pib || null, contract_signed_on: form.contract_signed_on || null, contract_expires_on: form.contract_expires_on || null }),
       });
       setForm(null);
       setMessage("Kompanija je sačuvana u CRM bazi.");
@@ -314,6 +315,7 @@ export default function Workspace({
           {message}
         </p>
       )}
+      {!!unit && !marketing && <ContractReminders key={unit} unit={unit} reload={reload} onOpen={id => navigate("Kompanije", id)} />}
       {!unit ? (
         <p className="empty">
           Nije vam dodeljena poslovna jedinica. Obratite se administratoru.
@@ -436,6 +438,11 @@ export default function Workspace({
                     </label>
                   ))}
                 </div>
+                <div className="form-grid">
+                  <label>Datum potpisivanja ugovora<input type="date" disabled={busy} value={form.contract_signed_on} max={form.contract_expires_on || "9999-12-31"} onChange={e => setForm({ ...form, contract_signed_on: e.target.value })}/></label>
+                  <label>Datum isteka ugovora<input type="date" disabled={busy} value={form.contract_expires_on} min={form.contract_signed_on || undefined} max="9999-12-31" onChange={e => setForm({ ...form, contract_expires_on: e.target.value })}/></label>
+                </div>
+                <p className="section-hint">Datumi su opcioni. Podsetnik se prikazuje u CRM-u 30 dana pre isteka ugovora.</p>
                 {!editing && <>
                   <h3>Kontakt osobe</h3>
                   {form.contacts?.map((contact, index) => (
@@ -495,6 +502,7 @@ export default function Workspace({
                     <tr>
                       <th>Kompanija</th>
                       <th>Delatnost</th>
+                      <th>Istek ugovora</th>
                       <th>Kontakti i prilike</th>
                       <th>Izmena</th>
                     </tr>
@@ -509,6 +517,7 @@ export default function Workspace({
                           </small>
                         </td>
                         <td>{c.sector}</td>
+                        <td>{c.contract_expires_on ? formatDate(c.contract_expires_on) : "Nije unet"}</td>
                         <td>
                           <button
                             className="text-button"
@@ -529,6 +538,8 @@ export default function Workspace({
                                 pib: c.pib ?? "",
                                 city: c.city,
                                 sector: c.sector,
+                                contract_signed_on: c.contract_signed_on ?? "",
+                                contract_expires_on: c.contract_expires_on ?? "",
                               });
                               setMessage("");
                             }}

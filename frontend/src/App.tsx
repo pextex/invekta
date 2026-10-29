@@ -434,6 +434,8 @@ export default function App() {
             name: c.name,
             address: null,
             pib: null,
+            contract_signed_on: null,
+            contract_expires_on: null,
             city: c.city,
             sector: c.sector,
             business_unit_id: 0,

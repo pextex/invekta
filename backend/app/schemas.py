@@ -32,10 +32,18 @@ class CompanyInput(BaseModel):
     pib: str | None = Field(default=None, pattern=r"^[0-9]{9}$")
     city: str = Field(min_length=2, max_length=100)
     sector: str = Field(min_length=2, max_length=100)
+    contract_signed_on: date | None = None
+    contract_expires_on: date | None = None
     stage: Literal["Kontakt", "Ponuda", "Pregovori"] = "Kontakt"
     potential_value: Decimal = Field(
         default=Decimal("0"), ge=0, max_digits=14, decimal_places=2
     )
+
+    @model_validator(mode="after")
+    def contract_dates(self):
+        if self.contract_signed_on and self.contract_expires_on and self.contract_expires_on < self.contract_signed_on:
+            raise ValueError("Datum isteka ne može biti pre datuma potpisivanja ugovora.")
+        return self
 
     @field_validator("name", "city", "sector")
     @classmethod
@@ -55,6 +63,8 @@ class CompanyOutput(BaseModel):
     pib: str | None
     city: str
     sector: str
+    contract_signed_on: date | None
+    contract_expires_on: date | None
     stage: str
     potential_value: Decimal
     is_demo: bool

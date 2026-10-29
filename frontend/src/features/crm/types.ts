@@ -10,10 +10,12 @@ export type Company = {
   pib: string | null;
   city: string;
   sector: string;
+  contract_signed_on: string | null;
+  contract_expires_on: string | null;
   is_demo: boolean;
 };
 export type ContactForm = { name: string; position: string; phone: string; email: string };
-export type CompanyForm = { name: string; address: string; pib: string; city: string; sector: string; contacts?: ContactForm[] };
+export type CompanyForm = { name: string; address: string; pib: string; city: string; sector: string; contract_signed_on: string; contract_expires_on: string; contacts?: ContactForm[] };
 export type Contact = {
   id: number;
   company_id: number;
