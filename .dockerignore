@@ -13,3 +13,7 @@ backend/app/static
 work
 **/.vercel
 backend/app/_vercel_data
+backups
+**/*.dump
+**/*.sql
+**/*.zip

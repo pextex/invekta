@@ -1,0 +1,43 @@
+# For a NEW installation with its own private PostgreSQL database.
+name: invekta-crm
+services:
+  db:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: crm
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - crm_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U crm -d crm']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  crm:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env.production
+    environment:
+      DATABASE_URL: postgresql+psycopg://crm:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/crm
+      CRM_COOKIE_SECURE: 'true'
+      PORT: '3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3000:3000'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:3000/api/ready", timeout=5)']
+      interval: 30s
+      timeout: 8s
+      start_period: 60s
+      retries: 3
+volumes:
+  crm_postgres:
